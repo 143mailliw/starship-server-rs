@@ -1,6 +1,35 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    components (id) {
+        id -> Int4,
+        name -> Varchar,
+        component_id -> Text,
+        planet -> Text,
+    }
+}
+
+diesel::table! {
+    planets (id) {
+        id -> Text,
+        created -> Nullable<Timestamp>,
+        name -> Text,
+        owner -> Text,
+        private -> Bool,
+        follower_count -> Int4,
+        components -> Array<Nullable<Text>>,
+        featured -> Bool,
+        verified -> Bool,
+        partnered -> Bool,
+        featured_description -> Text,
+        banned -> Array<Nullable<Text>>,
+        roles -> Array<Nullable<Text>>,
+        css -> Text,
+        description -> Text,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Text,
         created -> Nullable<Timestamp>,
@@ -30,3 +59,12 @@ diesel::table! {
         token_ip_locked -> Bool,
     }
 }
+
+diesel::joinable!(components -> planets (planet));
+diesel::joinable!(planets -> users (owner));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    components,
+    planets,
+    users,
+);
