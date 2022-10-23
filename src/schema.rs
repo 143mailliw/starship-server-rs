@@ -26,6 +26,7 @@ diesel::table! {
         roles -> Array<Nullable<Text>>,
         css -> Text,
         description -> Text,
+        default_component -> Int4,
     }
 }
 
@@ -60,7 +61,6 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(components -> planets (planet));
 diesel::joinable!(planets -> users (owner));
 
 diesel::allow_tables_to_appear_in_same_query!(
