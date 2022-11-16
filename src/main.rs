@@ -1,3 +1,6 @@
+mod entities;
+mod types;
+
 use std::io::Result;
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use async_graphql::{Schema, EmptyMutation, EmptySubscription, http::GraphiQLSource};
@@ -25,7 +28,7 @@ async fn gql_playgound() -> HttpResponse {
         .content_type("text/html; charset=utf-8")
         .body(
             GraphiQLSource::build()
-                .endpoint("http://localhost:8000")
+                //.endpoint("http://localhost:8000")
                 .finish(),
         )
 }

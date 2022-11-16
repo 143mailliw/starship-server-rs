@@ -11,7 +11,8 @@ async-graphql = {version = "4.0.14", features = ["tracing", "chrono"]}
 async-graphql-actix-web = "4.0.14"
 bcrypt = "0.13.0"
 chrono = "0.4.22"
-diesel = {version = "2.0.1", features = ["postgres"]}
 dotenv = "0.15.0"
 jwt = "0.16.0"
+sea-orm = {version = "0.10.3", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "postgres-array"]}
 tokio = "1.21.2"
+uuid = "1.2.2"
