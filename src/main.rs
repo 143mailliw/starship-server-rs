@@ -1,26 +1,25 @@
 mod entities;
 
-use std::io::Result;
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
-use async_graphql::{Schema, EmptyMutation, EmptySubscription, http::GraphiQLSource};
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use std::io::Result;
 
 struct Query;
 
 #[async_graphql::Object]
 impl Query {
-  async fn howdy(&self) -> &'static str {
-    "partner"
-  }
+    async fn howdy(&self) -> &'static str {
+        "partner"
+    }
 }
 
 async fn index(
     schema: web::Data<Schema<Query, EmptyMutation, EmptySubscription>>,
-    req: GraphQLRequest
+    req: GraphQLRequest,
 ) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
 }
-
 
 async fn gql_playgound() -> HttpResponse {
     HttpResponse::Ok()
@@ -32,16 +31,14 @@ async fn gql_playgound() -> HttpResponse {
         )
 }
 
-
 #[actix_web::main]
 async fn main() -> Result<()> {
-
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(Schema::new(
                 Query,
                 EmptyMutation,
-                EmptySubscription
+                EmptySubscription,
             )))
             .service(web::resource("/").guard(guard::Post()).to(index))
             .service(web::resource("/").guard(guard::Get()).to(gql_playgound))
