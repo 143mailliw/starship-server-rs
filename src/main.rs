@@ -1,5 +1,4 @@
 mod entities;
-mod types;
 
 use std::io::Result;
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
