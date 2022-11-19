@@ -1,11 +1,12 @@
 mod db;
 mod entities;
+mod errors;
+mod mutations;
 
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema, Context};
+use async_graphql::{http::GraphiQLSource, Context, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use db::set_up_db;
-use dotenv;
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend};
 use std::io::Result;
 
@@ -17,13 +18,13 @@ impl Query {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         match db.get_database_backend() {
             DbBackend::Postgres => "Correct",
-            _ => "Wrong"
+            _ => "Wrong",
         }
     }
 }
 
 async fn index(
-    schema: web::Data<Schema<Query, EmptyMutation, EmptySubscription>>,
+    schema: web::Data<Schema<Query, mutations::Mutation, EmptySubscription>>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
@@ -41,14 +42,16 @@ async fn gql_playgound() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> Result<()> {
+    env_logger::init();
+
     dotenv::dotenv().ok();
 
     let db = match set_up_db().await {
         Ok(db) => db,
-        Err(err) => panic!("fatal: {} ", err)
+        Err(err) => panic!("fatal: {} ", err),
     };
 
-    let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
+    let schema = Schema::build(Query, mutations::Mutation, EmptySubscription)
         .data(db)
         .finish();
 
