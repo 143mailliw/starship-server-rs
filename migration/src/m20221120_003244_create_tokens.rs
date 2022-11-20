@@ -1,3 +1,4 @@
+use super::m20221115_000001_create_users::User;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -19,6 +20,12 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Token::Latitude).float())
                     .col(ColumnDef::new(Token::Browser).string().not_null())
                     .col(ColumnDef::new(Token::OperatingSystem).string().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-token-user")
+                            .from(Token::Table, Token::User)
+                            .to(User::Table, User::Id),
+                    )
                     .to_owned(),
             )
             .await

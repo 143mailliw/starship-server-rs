@@ -2,9 +2,10 @@ mod db;
 mod entities;
 mod errors;
 mod mutations;
+mod sessions;
 
-use actix_web::{guard, web, App, HttpResponse, HttpServer};
-use async_graphql::{http::GraphiQLSource, Context, EmptyMutation, EmptySubscription, Schema};
+use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};
+use async_graphql::{http::GraphiQLSource, Context, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use db::set_up_db;
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend};
@@ -25,9 +26,14 @@ impl Query {
 
 async fn index(
     schema: web::Data<Schema<Query, mutations::Mutation, EmptySubscription>>,
-    req: GraphQLRequest,
+    db: web::Data<DatabaseConnection>,
+    req: HttpRequest,
+    gql_req: GraphQLRequest,
 ) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
+    let mut request = gql_req.into_inner();
+    request = request
+        .data(sessions::Session::make_session_from_request(&req, (*db.into_inner()).clone()).await);
+    schema.execute(request).await.into()
 }
 
 async fn gql_playgound() -> HttpResponse {
@@ -52,12 +58,13 @@ async fn main() -> Result<()> {
     };
 
     let schema = Schema::build(Query, mutations::Mutation, EmptySubscription)
-        .data(db)
+        .data(db.clone())
         .finish();
 
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(schema.clone()))
+            .app_data(web::Data::new(db.clone()))
             .service(web::resource("/").guard(guard::Post()).to(index))
             .service(web::resource("/").guard(guard::Get()).to(gql_playgound))
     })
