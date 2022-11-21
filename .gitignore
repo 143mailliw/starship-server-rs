@@ -2,3 +2,4 @@
 .env
 /migration/target
 .DS_Store
+.nova

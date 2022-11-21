@@ -1,7 +1,47 @@
 #![allow(non_snake_case)]
 use super::super::user::Model;
+use crate::errors;
+use crate::sessions::Session;
 use async_graphql::types::ID;
+use async_graphql::{Context, Error};
 use chrono::NaiveDateTime;
+
+impl Model {
+    fn user_id_is_same(&self, ctx: &Context<'_>, name: &str) -> Result<(), Error> {
+        let session = ctx.data::<Session>();
+
+        match session {
+            Ok(session) => match session.user.clone() {
+                Some(user) => {
+                    if user.id == self.id {
+                        Ok(())
+                    } else {
+                        Err(errors::create_forbidden_error(
+                            Some(
+                                ("You don't have permission to read the field '".to_string()
+                                    + name
+                                    + "'.")
+                                    .as_str(),
+                            ),
+                            "FORBIDDEN",
+                        ))
+                    }
+                }
+                None => Err(errors::create_forbidden_error(
+                    Some(
+                        ("You don't have permission to read the field '".to_string() + name + "'.")
+                            .as_str(),
+                    ),
+                    "FORBIDDEN",
+                )),
+            },
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "NO_SESSION_ERROR",
+            )),
+        }
+    }
+}
 
 #[async_graphql::Object]
 impl Model {
@@ -33,51 +73,58 @@ impl Model {
         self.banned
     }
 
-    // TODO: guard behind authentication
-    async fn following(&self) -> Vec<String> {
+    async fn following(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
         // TODO: return a vec of Planets instead
-        self.following.clone()
+        self.user_id_is_same(ctx, "following")?;
+
+        Ok(self.following.clone())
     }
 
-    // TODO: guard behind authentication
     // this function is obsolete
     #[graphql(deprecation = "memberOf is deprecated in favor of the role system, use following")]
-    async fn memberOf(&self) -> Vec<String> {
+    async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
+        self.user_id_is_same(ctx, "memberOf")?;
+
         // TODO: return a vec of Planets instead
-        vec![]
+        Ok(vec![])
     }
 
     async fn createdAt(&self) -> NaiveDateTime {
         self.created
     }
 
-    // TODO: guard behind authentication
-    async fn usedBytes(&self) -> f64 {
-        self.bytes_used as f64
+    async fn usedBytes(&self, ctx: &Context<'_>) -> Result<f64, Error> {
+        self.user_id_is_same(ctx, "usedBytes")?;
+
+        Ok(self.bytes_used as f64)
     }
 
-    // TODO: guard behind authentication
-    async fn capWaived(&self) -> bool {
-        self.cap_waived
+    async fn capWaived(&self, ctx: &Context<'_>) -> Result<bool, Error> {
+        self.user_id_is_same(ctx, "capWaived")?;
+
+        Ok(self.cap_waived)
     }
 
-    // TODO: guard behind authentication
-    async fn tfaEnabled(&self) -> bool {
-        self.tfa_enabled
+    async fn tfaEnabled(&self, ctx: &Context<'_>) -> Result<bool, Error> {
+        self.user_id_is_same(ctx, "tfaEnabled")?;
+
+        Ok(self.tfa_enabled)
     }
 
-    // TODO: guard behind authentication
-    async fn blockedUsers(&self) -> Vec<String> {
+    async fn blockedUsers(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
         // TODO: return a vec of Users instead
-        self.blocked.clone()
+        self.user_id_is_same(ctx, "blockedUsers")?;
+
+        Ok(self.blocked.clone())
     }
 
     async fn online(&self) -> bool {
-        self.sessions.len() > 0
+        !self.sessions.is_empty()
     }
 
-    // TODO: guard behind authentication
-    async fn notificationSetting(&self) -> i16 {
-        self.notification_setting
+    async fn notificationSetting(&self, ctx: &Context<'_>) -> Result<i16, Error> {
+        self.user_id_is_same(ctx, "notificationSetting")?;
+
+        Ok(self.notification_setting)
     }
 }

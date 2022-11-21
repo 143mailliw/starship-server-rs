@@ -10,7 +10,7 @@ actix-web = "4.2.1"
 async-graphql = {version = "4.0.14", features = ["tracing", "chrono"]}
 async-graphql-actix-web = "4.0.14"
 bcrypt = "0.13.0"
-chrono = "0.4.22"
+chrono = { version = "0.4.23", default-features = false, features = ["clock", "std"] }
 dotenv = "0.15.0"
 email_address = "0.2.4"
 env_logger = "0.9.3"
