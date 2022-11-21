@@ -3,5 +3,6 @@
 pub mod graphql;
 pub mod prelude;
 
+pub mod planet;
 pub mod token;
 pub mod user;

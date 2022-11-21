@@ -1,10 +1,13 @@
 #![allow(non_snake_case)]
+use super::super::planet;
+use super::super::user;
 use super::super::user::Model;
 use crate::errors;
 use crate::sessions::Session;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 impl Model {
     fn user_id_is_same(&self, ctx: &Context<'_>, name: &str) -> Result<(), Error> {
@@ -73,19 +76,29 @@ impl Model {
         self.banned
     }
 
-    async fn following(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
-        // TODO: return a vec of Planets instead
+    async fn following(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "following")?;
 
-        Ok(self.following.clone())
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match planet::Entity::find()
+            .filter(planet::Column::Id.is_in(self.following.clone()))
+            .all(db)
+            .await
+        {
+            Ok(value) => Ok(value),
+            Err(error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_FOLLOWING_ERROR",
+            )),
+        }
     }
 
     // this function is obsolete
     #[graphql(deprecation = "memberOf is deprecated in favor of the role system, use following")]
-    async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
+    async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "memberOf")?;
 
-        // TODO: return a vec of Planets instead
         Ok(vec![])
     }
 
@@ -111,12 +124,25 @@ impl Model {
         Ok(self.tfa_enabled)
     }
 
-    async fn blockedUsers(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
-        // TODO: return a vec of Users instead
+    async fn blockedUsers(&self, ctx: &Context<'_>) -> Result<Vec<Model>, Error> {
         self.user_id_is_same(ctx, "blockedUsers")?;
 
-        Ok(self.blocked.clone())
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match user::Entity::find()
+            .filter(user::Column::Id.is_in(self.blocked.clone()))
+            .all(db)
+            .await
+        {
+            Ok(value) => Ok(value),
+            Err(error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_BLOCKED_ERROR",
+            )),
+        }
     }
+
+    // TODO: customEmojis
 
     async fn online(&self) -> bool {
         !self.sessions.is_empty()
