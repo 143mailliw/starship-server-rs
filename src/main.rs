@@ -6,6 +6,7 @@ mod mutations;
 mod queries;
 mod sessions;
 
+use actix_cors::Cors;
 use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
@@ -51,11 +52,18 @@ async fn main() -> Result<()> {
         .finish();
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(schema.clone()))
             .app_data(web::Data::new(db.clone()))
-            .service(web::resource("/").guard(guard::Post()).to(index))
-            .service(web::resource("/").guard(guard::Get()).to(gql_playgound))
+            .service(web::resource("/graphql").guard(guard::Post()).to(index))
+            .service(
+                web::resource("/graphql")
+                    .guard(guard::Get())
+                    .to(gql_playgound),
+            )
     })
     .bind("127.0.0.1:8000")?
     .run()
