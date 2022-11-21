@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 actix-cors = "0.6.4"
 actix-web = "4.2.1"
-async-graphql = {version = "4.0.14", features = ["tracing", "chrono"]}
-async-graphql-actix-web = "4.0.14"
+async-graphql = {version = "4.0.16", features = ["tracing", "chrono"]}
+async-graphql-actix-web = "4.0.16"
 bcrypt = "0.13.0"
 chrono = { version = "0.4.23", default-features = false, features = ["clock", "std"] }
 dotenv = "0.15.0"

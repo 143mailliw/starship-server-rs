@@ -3,7 +3,7 @@ use super::super::user::Model;
 use crate::errors;
 use crate::sessions::Session;
 use async_graphql::types::ID;
-use async_graphql::{Context, Error};
+use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
 
 impl Model {
@@ -43,7 +43,7 @@ impl Model {
     }
 }
 
-#[async_graphql::Object]
+#[Object(name = "User")]
 impl Model {
     async fn id(&self) -> ID {
         ID(self.id.clone())

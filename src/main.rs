@@ -26,6 +26,14 @@ async fn index(
     schema.execute(request).await.into()
 }
 
+async fn gql_schema(
+    schema: web::Data<Schema<queries::Query, mutations::Mutation, EmptySubscription>>,
+) -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/plain; charset=utf-8")
+        .body(schema.sdl())
+}
+
 async fn gql_playgound() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -59,6 +67,7 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(schema.clone()))
             .app_data(web::Data::new(db.clone()))
             .service(web::resource("/graphql").guard(guard::Post()).to(index))
+            .service(web::resource("/schema").guard(guard::Get()).to(gql_schema))
             .service(
                 web::resource("/graphql")
                     .guard(guard::Get())
