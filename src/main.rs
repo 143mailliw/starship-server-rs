@@ -1,6 +1,7 @@
 mod db;
 mod entities;
 mod errors;
+mod guards;
 mod mutations;
 mod queries;
 mod sessions;

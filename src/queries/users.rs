@@ -1,6 +1,9 @@
+#![allow(non_snake_case)]
 use crate::entities::prelude::User;
 use crate::entities::user;
 use crate::errors;
+use crate::guards::session::{SessionGuard, SessionType};
+use crate::sessions::Session;
 use async_graphql::{Context, Error, Object, ID};
 use log::error;
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -23,5 +26,10 @@ impl super::Query {
                 ))
             }
         }
+    }
+
+    #[graphql(guard = "SessionGuard::new(SessionType::User)")]
+    async fn currentUser(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
+        Ok(ctx.data::<Session>().unwrap().user.clone().unwrap())
     }
 }
