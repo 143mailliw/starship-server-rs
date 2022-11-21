@@ -38,3 +38,18 @@ pub fn create_internal_server_error(message: Option<&str>, code: &str) -> Error 
         extensions: Some(extensions),
     }
 }
+
+pub fn create_forbidden_error(message: Option<&str>, code: &str) -> Error {
+    let mut extensions = ErrorExtensionValues::default();
+
+    extensions.set("type", "FORBIDDEN");
+    extensions.set("code", code);
+
+    Error {
+        message: message
+            .unwrap_or("You do not have permission to perform this action.")
+            .to_string(),
+        source: None,
+        extensions: Some(extensions),
+    }
+}

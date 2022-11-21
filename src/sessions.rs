@@ -21,6 +21,7 @@ impl Session {
     ) -> Session {
         let headers = request.headers();
 
+        // TODO: TFA Support
         let token = match headers.get(header::AUTHORIZATION) {
             Some(auth) => {
                 let auth_string = match auth.to_str() {

@@ -1,8 +1,11 @@
 #![allow(non_snake_case)]
+use crate::entities::prelude::Token;
 use crate::entities::prelude::User;
+use crate::entities::token;
 use crate::entities::user;
 use crate::errors;
-use async_graphql::{Context, Error, Object};
+use crate::sessions::Session;
+use async_graphql::{Context, Error, Object, SimpleObject};
 use bcrypt::hash;
 use email_address::EmailAddress;
 use log::error;
@@ -10,6 +13,14 @@ use nanoid::nanoid;
 use sea_orm::{
     ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, TryIntoModel,
 };
+use std::env;
+use std::net::SocketAddr;
+
+#[derive(SimpleObject)]
+struct LoginPayload {
+    token: String,
+    expectingTFA: bool,
+}
 
 #[Object]
 impl super::Mutation {
@@ -52,11 +63,9 @@ impl super::Mutation {
                     }
                 }
             }
-            Err(_error) => {
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "DATABASE_FAILURE",
-                ))
+            Err(error) => {
+                error!("{}", error);
+                return Err(errors::create_internal_server_error(None, "FIND_ERROR"));
             }
         };
 
@@ -117,6 +126,94 @@ impl super::Mutation {
                 Err(errors::create_internal_server_error(
                     None,
                     "RETRIEVAL_ERROR",
+                ))
+            }
+        }
+    }
+
+    async fn loginUser(
+        &self,
+        ctx: &Context<'_>,
+        username: String,
+        password: String,
+    ) -> Result<LoginPayload, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let user = match User::find()
+            .filter(user::Column::Username.eq(username.clone()))
+            .one(db)
+            .await
+        {
+            Ok(value) => match value {
+                Some(value) => value,
+                None => {
+                    return Err(errors::create_forbidden_error(
+                        Some("Invalid username or password."),
+                        "INVALID_USER",
+                    ))
+                }
+            },
+            Err(error) => {
+                error!("{}", error);
+                return Err(errors::create_internal_server_error(None, "FIND_ERROR"));
+            }
+        };
+
+        if env::var("SMTP_HOST").is_ok() && !user.verified {
+            return Err(errors::create_forbidden_error(
+                Some("You need to verify your email."),
+                "UNVERIFIED_EMAIL",
+            ));
+        };
+
+        match bcrypt::verify(password, &user.password) {
+            Ok(result) => {
+                if !result {
+                    return Err(errors::create_forbidden_error(
+                        Some("Invalid username or password."),
+                        "INVALID_USER",
+                    ));
+                }
+            }
+            Err(error) => {
+                error!("{}", error);
+                return Err(errors::create_internal_server_error(
+                    None,
+                    "VERIFICATION_ERROR",
+                ));
+            }
+        };
+
+        //TODO: Find approx. location from IP
+        //TODO: Find OS and Browser
+
+        let addr = match session.ip_address {
+            Some(value) => value.to_string(),
+            None => "0.0.0.0".to_string(),
+        };
+
+        let token = token::ActiveModel {
+            id: ActiveValue::Set(nanoid!(16)),
+            user: ActiveValue::Set(user.id),
+            ip: ActiveValue::Set(addr),
+            location: ActiveValue::Set("Unknown".to_string()),
+            latitude: ActiveValue::Set(None),
+            longitude: ActiveValue::Set(None),
+            browser: ActiveValue::Set("Unknown".to_string()),
+            operating_system: ActiveValue::Set("Unknown".to_string()),
+        };
+
+        match Token::insert(token).exec(db).await {
+            Ok(res) => Ok(LoginPayload {
+                token: res.last_insert_id,
+                expectingTFA: user.tfa_enabled,
+            }),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "INSERTION_ERROR",
                 ))
             }
         }
