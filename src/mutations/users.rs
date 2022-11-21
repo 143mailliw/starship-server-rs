@@ -10,11 +10,8 @@ use bcrypt::hash;
 use email_address::EmailAddress;
 use log::error;
 use nanoid::nanoid;
-use sea_orm::{
-    ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, TryIntoModel,
-};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use std::env;
-use std::net::SocketAddr;
 
 #[derive(SimpleObject)]
 struct LoginPayload {

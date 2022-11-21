@@ -2,30 +2,18 @@ mod db;
 mod entities;
 mod errors;
 mod mutations;
+mod queries;
 mod sessions;
 
 use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};
-use async_graphql::{http::GraphiQLSource, Context, EmptySubscription, Schema};
+use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use db::set_up_db;
-use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend};
+use sea_orm::DatabaseConnection;
 use std::io::Result;
 
-struct Query;
-
-#[async_graphql::Object]
-impl Query {
-    async fn howdy(&self, ctx: &Context<'_>) -> &str {
-        let db = ctx.data::<DatabaseConnection>().unwrap();
-        match db.get_database_backend() {
-            DbBackend::Postgres => "Correct",
-            _ => "Wrong",
-        }
-    }
-}
-
 async fn index(
-    schema: web::Data<Schema<Query, mutations::Mutation, EmptySubscription>>,
+    schema: web::Data<Schema<queries::Query, mutations::Mutation, EmptySubscription>>,
     db: web::Data<DatabaseConnection>,
     req: HttpRequest,
     gql_req: GraphQLRequest,
@@ -57,7 +45,7 @@ async fn main() -> Result<()> {
         Err(err) => panic!("fatal: {} ", err),
     };
 
-    let schema = Schema::build(Query, mutations::Mutation, EmptySubscription)
+    let schema = Schema::build(queries::Query, mutations::Mutation, EmptySubscription)
         .data(db.clone())
         .finish();
 
