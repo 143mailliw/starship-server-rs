@@ -1,3 +1,7 @@
+use async_graphql::MergedObject;
+
+mod sysinfo;
 mod users;
 
-pub struct Query;
+#[derive(MergedObject, Default)]
+pub struct Query(users::UserQuery, sysinfo::SysInfoQuery);

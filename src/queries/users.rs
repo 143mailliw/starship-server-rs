@@ -8,8 +8,11 @@ use async_graphql::{Context, Error, Object, ID};
 use log::error;
 use sea_orm::{DatabaseConnection, EntityTrait};
 
+#[derive(Default)]
+pub struct UserQuery;
+
 #[Object]
-impl super::Query {
+impl UserQuery {
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 

@@ -55,9 +55,13 @@ async fn main() -> Result<()> {
         Err(err) => panic!("fatal: {} ", err),
     };
 
-    let schema = Schema::build(queries::Query, mutations::Mutation, EmptySubscription)
-        .data(db.clone())
-        .finish();
+    let schema = Schema::build(
+        queries::Query::default(),
+        mutations::Mutation,
+        EmptySubscription,
+    )
+    .data(db.clone())
+    .finish();
 
     HttpServer::new(move || {
         let cors = Cors::permissive();
