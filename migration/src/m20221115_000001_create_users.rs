@@ -136,7 +136,7 @@ pub enum User {
     Verified,
     VerificationToken,
 
-    Following,
+    Following, // removed in later migration
     Blocked,
     Sessions,
 

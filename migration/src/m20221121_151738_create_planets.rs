@@ -86,7 +86,8 @@ pub enum Planet {
     Name,
     Owner,
     Private,
-    FollowerCount,
+    FollowerCount, // renamed to member_count
+    MemberCount,
 
     Featured,
     Verified,

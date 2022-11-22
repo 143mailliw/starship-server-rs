@@ -95,7 +95,6 @@ impl super::Mutation {
             password: ActiveValue::Set(hash),
             email_address: ActiveValue::Set(email),
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
-            following: ActiveValue::Set(vec![]),
             blocked: ActiveValue::Set(vec![]),
             sessions: ActiveValue::Set(vec![]),
             tfa_backup: ActiveValue::set(vec![]),

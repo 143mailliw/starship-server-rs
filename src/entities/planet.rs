@@ -11,7 +11,7 @@ pub struct Model {
     pub created: DateTime,
     pub owner: String,
     pub private: bool,
-    pub follower_count: i32,
+    pub member_count: i32,
     pub featured: bool,
     pub verified: bool,
     pub partnered: bool,
@@ -33,6 +33,8 @@ pub enum Relation {
     User,
     #[sea_orm(has_many = "super::custom_emoji::Entity")]
     CustomEmoji,
+    #[sea_orm(has_many = "super::planet_member::Entity")]
+    PlanetMember,
 }
 
 impl Related<super::user::Entity> for Entity {
@@ -44,6 +46,12 @@ impl Related<super::user::Entity> for Entity {
 impl Related<super::custom_emoji::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::CustomEmoji.def()
+    }
+}
+
+impl Related<super::planet_member::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PlanetMember.def()
     }
 }
 

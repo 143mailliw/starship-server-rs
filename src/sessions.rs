@@ -21,8 +21,7 @@ impl Session {
     ) -> Session {
         let headers = request.headers();
 
-        // TODO: TFA Support
-        let token = match headers.get(header::AUTHORIZATION) {
+        let data = match headers.get(header::AUTHORIZATION) {
             Some(auth) => {
                 let auth_string = match auth.to_str() {
                     Ok(value) => value,
@@ -30,27 +29,26 @@ impl Session {
                 };
 
                 if auth_string.starts_with("Bearer ") {
-                    let token = Token::find_by_id(auth_string.replace("Bearer ", ""))
+                    let data = Token::find_by_id(auth_string.replace("Bearer ", ""))
+                        .find_also_related(User)
                         .one(&db)
                         .await;
 
-                    match token {
-                        Ok(value) => value,
-                        Err(_error) => None,
+                    match data {
+                        Ok(value) => match value {
+                            Some(values) => match values.1 {
+                                Some(found_user) => (Some(values.0), Some(found_user)),
+                                None => (None, None),
+                            },
+                            None => (None, None),
+                        },
+                        Err(_error) => (None, None),
                     }
                 } else {
-                    None
+                    (None, None)
                 }
             }
-            None => None,
-        };
-
-        let user = match token.clone() {
-            Some(token) => match token.find_related(User).one(&db).await {
-                Ok(value) => value,
-                Err(_error) => None,
-            },
-            None => None,
+            None => (None, None),
         };
 
         let user_agent = match headers.get(header::USER_AGENT) {
@@ -62,8 +60,8 @@ impl Session {
         };
 
         Session {
-            token,
-            user,
+            token: data.0,
+            user: data.1,
             user_agent,
             ip_address: request.peer_addr(),
         }

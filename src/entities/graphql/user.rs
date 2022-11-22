@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use super::super::custom_emoji;
 use super::super::planet;
+use super::super::planet_member;
 use super::super::user;
 use super::super::user::Model;
 use crate::errors;
@@ -77,30 +78,39 @@ impl Model {
         self.banned
     }
 
+    #[graphql(deprecation = "following is deprecated in favor of the role system, use memberOf")]
     async fn following(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "following")?;
 
-        let db = ctx.data::<DatabaseConnection>().unwrap();
-
-        match planet::Entity::find()
-            .filter(planet::Column::Id.is_in(self.following.clone()))
-            .all(db)
-            .await
-        {
-            Ok(value) => Ok(value),
-            Err(error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_FOLLOWING_ERROR",
-            )),
-        }
+        Ok(vec![])
     }
 
-    // this function is obsolete
-    #[graphql(deprecation = "memberOf is deprecated in favor of the role system, use following")]
     async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "memberOf")?;
 
-        Ok(vec![])
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match planet_member::Entity::find()
+            .filter(planet_member::Column::User.eq(self.id.clone()))
+            .find_with_related(planet::Entity)
+            .all(db)
+            .await
+        {
+            Ok(members) => Ok(members
+                .iter()
+                .filter_map(|value| {
+                    if !value.1.is_empty() {
+                        Some(value.1[0].clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect()),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_PLANETS_ERROR",
+            )),
+        }
     }
 
     async fn createdAt(&self) -> NaiveDateTime {

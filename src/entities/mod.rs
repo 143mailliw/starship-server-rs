@@ -5,5 +5,6 @@ pub mod prelude;
 
 pub mod custom_emoji;
 pub mod planet;
+pub mod planet_member;
 pub mod token;
 pub mod user;

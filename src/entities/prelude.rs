@@ -2,5 +2,6 @@
 
 pub use super::custom_emoji::Entity as CustomEmoji;
 pub use super::planet::Entity as Planet;
+pub use super::planet_member::Entity as PlanetMember;
 pub use super::token::Entity as Token;
 pub use super::user::Entity as User;
