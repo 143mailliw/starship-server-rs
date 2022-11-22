@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+use super::super::custom_emoji;
 use super::super::planet;
 use super::super::user;
 use super::super::user::Model;
@@ -135,14 +136,32 @@ impl Model {
             .await
         {
             Ok(value) => Ok(value),
-            Err(error) => Err(errors::create_internal_server_error(
+            Err(_error) => Err(errors::create_internal_server_error(
                 None,
                 "FIND_BLOCKED_ERROR",
             )),
         }
     }
 
-    // TODO: customEmojis
+    async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match custom_emoji::Entity::find()
+            .filter(
+                custom_emoji::Column::Owner
+                    .eq(self.id.clone())
+                    .and(custom_emoji::Column::Planet.is_null()),
+            )
+            .all(db)
+            .await
+        {
+            Ok(value) => Ok(value),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_EMOJIS_ERROR",
+            )),
+        }
+    }
 
     async fn online(&self) -> bool {
         !self.sessions.is_empty()

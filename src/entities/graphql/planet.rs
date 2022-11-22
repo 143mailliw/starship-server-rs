@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
+use super::super::custom_emoji;
 use super::super::planet::Model;
 use super::super::user;
 use crate::errors;
-use crate::sessions::Session;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
@@ -33,7 +33,7 @@ impl Model {
                     "OWNER_MISSING_ERROR",
                 )),
             },
-            Err(error) => Err(errors::create_internal_server_error(
+            Err(_error) => Err(errors::create_internal_server_error(
                 None,
                 "FIND_OWNER_ERROR",
             )),
@@ -96,7 +96,22 @@ impl Model {
         self.description.clone()
     }
 
-    // TODO: customEmojis
+    async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match custom_emoji::Entity::find()
+            .filter(custom_emoji::Column::Planet.eq(self.id.clone()))
+            .all(db)
+            .await
+        {
+            Ok(value) => Ok(value),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_EMOJIS_ERROR",
+            )),
+        }
+    }
+
     // TODO: unread
     // TODO: mentioned
 }
