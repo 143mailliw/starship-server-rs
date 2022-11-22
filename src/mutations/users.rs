@@ -4,13 +4,16 @@ use crate::entities::prelude::User;
 use crate::entities::token;
 use crate::entities::user;
 use crate::errors;
-use crate::sessions::Session;
+use crate::sessions::{JWTLoginToken, Session};
 use async_graphql::{Context, Error, Object, SimpleObject};
 use bcrypt::hash;
 use email_address::EmailAddress;
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
 use log::error;
 use nanoid::nanoid;
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sha2::Sha256;
 use std::env;
 
 #[derive(SimpleObject)]
@@ -191,7 +194,7 @@ impl super::Mutation {
 
         let token = token::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
-            user: ActiveValue::Set(user.id),
+            user: ActiveValue::Set(user.id.clone()),
             ip: ActiveValue::Set(addr),
             location: ActiveValue::Set("Unknown".to_string()),
             latitude: ActiveValue::Set(None),
@@ -201,10 +204,21 @@ impl super::Mutation {
         };
 
         match Token::insert(token).exec(db).await {
-            Ok(res) => Ok(LoginPayload {
-                token: res.last_insert_id,
-                expectingTFA: user.tfa_enabled,
-            }),
+            Ok(res) => {
+                let jwt_data = JWTLoginToken {
+                    token: res.last_insert_id,
+                    user_id: user.id,
+                };
+
+                let secret = env::var("SECRET").unwrap();
+                let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes()).unwrap();
+                let token = jwt_data.sign_with_key(&key).unwrap();
+
+                Ok(LoginPayload {
+                    token,
+                    expectingTFA: user.tfa_enabled,
+                })
+            }
             Err(error) => {
                 error!("{}", error);
                 Err(errors::create_internal_server_error(

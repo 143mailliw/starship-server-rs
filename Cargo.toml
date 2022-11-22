@@ -15,10 +15,13 @@ chrono = { version = "0.4.23", default-features = false, features = ["clock", "s
 dotenv = "0.15.0"
 email_address = "0.2.4"
 env_logger = "0.9.3"
+hmac = "0.12.1"
 jwt = "0.16.0"
 log = "0.4.17"
 nanoid = "0.4.0"
 regex = "1.7.0"
-sea-orm = {version = "0.10.3", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "postgres-array"]}
+sea-orm = { version = "0.10.3", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "postgres-array"] }
+serde = { version = "1.0.147", features = ["derive"] }
+sha2 = "0.10.6"
 tokio = "1.21.2"
 uuid = "1.2.2"
