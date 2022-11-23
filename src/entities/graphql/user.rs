@@ -18,7 +18,7 @@ impl Model {
         match session {
             Ok(session) => match session.user.clone() {
                 Some(user) => {
-                    if user.id == self.id {
+                    if user.id == self.id || user.admin {
                         Ok(())
                     } else {
                         Err(errors::create_forbidden_error(
