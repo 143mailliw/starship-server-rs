@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
 
     let schema = Schema::build(
         queries::Query::default(),
-        mutations::Mutation,
+        mutations::Mutation::default(),
         EmptySubscription,
     )
     .data(db.clone())

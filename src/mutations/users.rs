@@ -4,15 +4,18 @@ use crate::entities::prelude::User;
 use crate::entities::token;
 use crate::entities::user;
 use crate::errors;
+use crate::guards::session::{SessionGuard, SessionType};
 use crate::sessions::{JWTLoginToken, Session};
-use async_graphql::{Context, Error, Object, SimpleObject};
+use async_graphql::{Context, Error, Object, SimpleObject, ID};
 use bcrypt::hash;
 use email_address::EmailAddress;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use log::error;
 use nanoid::nanoid;
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 use sha2::Sha256;
 use std::env;
 
@@ -22,8 +25,11 @@ struct LoginPayload {
     expectingTFA: bool,
 }
 
+#[derive(Default)]
+pub struct UserMutation;
+
 #[Object]
-impl super::Mutation {
+impl UserMutation {
     async fn insertUser(
         &self,
         ctx: &Context<'_>,
@@ -224,6 +230,37 @@ impl super::Mutation {
                 Err(errors::create_internal_server_error(
                     None,
                     "INSERTION_ERROR",
+                ))
+            }
+        }
+    }
+
+    #[graphql(guard = "SessionGuard::new(SessionType::Admin)")]
+    async fn banUser(&self, ctx: &Context<'_>, userId: ID) -> Result<user::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let id = userId.to_string();
+
+        match User::find_by_id(id).one(db).await {
+            Ok(value) => match value {
+                Some(user) => {
+                    let mut active_user: user::ActiveModel = user.clone().into();
+                    active_user.banned = ActiveValue::Set(!user.banned);
+
+                    match active_user.update(db).await {
+                        Ok(value) => Ok(value),
+                        Err(error) => {
+                            error!("{}", error);
+                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                        }
+                    }
+                }
+                None => Err(errors::create_not_found_error()),
+            },
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "RETRIEVAL_ERROR",
                 ))
             }
         }
