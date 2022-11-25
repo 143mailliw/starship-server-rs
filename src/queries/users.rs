@@ -14,6 +14,7 @@ pub struct UserQuery;
 
 #[Object]
 impl UserQuery {
+    #[graphql(complexity = 5)] //just ensure that they can't do it multiple times
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
@@ -32,20 +33,24 @@ impl UserQuery {
         }
     }
 
-    #[graphql(guard = "SessionGuard::new(SessionType::User)")]
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
     async fn currentUser(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         Ok(ctx.data::<Session>().unwrap().user.clone().unwrap())
     }
 
     #[graphql(
         guard = "SessionGuard::new(SessionType::Admin)",
-        deprecation = "use user, adminUser is redundant"
+        deprecation = "use user, adminUser is redundant",
+        complexity = 5
     )]
     async fn adminUser(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         self.user(ctx, id).await
     }
 
-    #[graphql(guard = "SessionGuard::new(SessionType::Admin)")]
+    #[graphql(
+        guard = "SessionGuard::new(SessionType::Admin)",
+        complexity = "5 + limit as usize * child_complexity"
+    )]
     async fn adminUsers(
         &self,
         ctx: &Context<'_>,

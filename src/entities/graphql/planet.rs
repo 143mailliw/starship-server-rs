@@ -10,18 +10,22 @@ use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 #[Object(name = "Planet")]
 impl Model {
+    #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
         ID(self.id.clone())
     }
 
+    #[graphql(complexity = 0)]
     async fn name(&self) -> String {
         self.name.clone()
     }
 
+    #[graphql(complexity = 0)]
     async fn createdAt(&self) -> NaiveDateTime {
         self.created
     }
 
+    #[graphql(complexity = 5)]
     async fn owner(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
@@ -40,15 +44,17 @@ impl Model {
         }
     }
 
+    #[graphql(complexity = 0)]
     async fn private(&self) -> bool {
         self.private
     }
 
-    #[graphql(deprecation = "use memberCount")]
+    #[graphql(deprecation = "use memberCount", complexity = 0)]
     async fn followerCount(&self) -> i32 {
         self.member_count
     }
 
+    #[graphql(complexity = 0)]
     async fn memberCount(&self) -> i32 {
         self.member_count
     }
@@ -56,26 +62,31 @@ impl Model {
     // TODO: components
     // TODO: homeComponent
 
+    #[graphql(complexity = 0)]
     async fn featured(&self) -> bool {
         self.featured
     }
 
+    #[graphql(complexity = 0)]
     async fn verified(&self) -> bool {
         self.verified
     }
 
+    #[graphql(complexity = 0)]
     async fn partnered(&self) -> bool {
         self.partnered
     }
 
     // TODO: members
 
+    #[graphql(complexity = 0)]
     async fn featuredDescription(&self) -> String {
         self.featured_description.clone()
     }
 
     // TODO: invites
 
+    #[graphql(complexity = 5)]
     async fn banned(&self, ctx: &Context<'_>) -> Result<Vec<user::Model>, Error> {
         // TODO: potentially lock this behind a permission
         let db = ctx.data::<DatabaseConnection>().unwrap();
@@ -93,14 +104,17 @@ impl Model {
         }
     }
 
+    #[graphql(complexity = 0)]
     async fn css(&self) -> String {
         self.css.clone()
     }
 
+    #[graphql(complexity = 0)]
     async fn description(&self) -> Option<String> {
         self.description.clone()
     }
 
+    #[graphql(complexity = 5)]
     async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 

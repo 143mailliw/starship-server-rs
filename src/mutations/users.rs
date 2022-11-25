@@ -6,7 +6,7 @@ use crate::entities::user;
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
 use crate::sessions::{JWTLoginToken, Session};
-use async_graphql::{Context, Error, Object, SimpleObject, ID};
+use async_graphql::{Context, Description, Error, Object, SimpleObject, ID};
 use bcrypt::hash;
 use email_address::EmailAddress;
 use hmac::{Hmac, Mac};
@@ -25,11 +25,13 @@ struct LoginPayload {
     expectingTFA: bool,
 }
 
-#[derive(Default)]
+#[derive(Default, Description)]
 pub struct UserMutation;
 
 #[Object]
 impl UserMutation {
+    /// Registers a new user.
+    #[graphql(complexity = 200)]
     async fn insertUser(
         &self,
         ctx: &Context<'_>,
@@ -136,6 +138,8 @@ impl UserMutation {
         }
     }
 
+    /// Creates a new token & and signs a JWT object containing it's ID.
+    #[graphql(complexity = 200)]
     async fn loginUser(
         &self,
         ctx: &Context<'_>,
@@ -235,7 +239,8 @@ impl UserMutation {
         }
     }
 
-    #[graphql(guard = "SessionGuard::new(SessionType::Admin)")]
+    /// Toggles whether or not a user is banned.
+    #[graphql(guard = "SessionGuard::new(SessionType::Admin)", complexity = 10)]
     async fn banUser(&self, ctx: &Context<'_>, userId: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let id = userId.to_string();

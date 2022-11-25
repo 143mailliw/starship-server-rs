@@ -9,10 +9,12 @@ use sea_orm::{DatabaseConnection, EntityTrait};
 
 #[Object(name = "CustomEmoji")]
 impl Model {
+    #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
         ID(self.id.clone())
     }
 
+    #[graphql(complexity = 5)]
     async fn owner(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
@@ -31,6 +33,7 @@ impl Model {
         }
     }
 
+    #[graphql(complexity = 5)]
     async fn planet(&self, ctx: &Context<'_>) -> Result<Option<planet::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
@@ -52,15 +55,20 @@ impl Model {
         }
     }
 
-    #[graphql(deprecation = "Field is redundant, consider using owner instead")]
+    #[graphql(
+        deprecation = "Field is redundant, consider using owner instead",
+        complexity = 5
+    )]
     async fn user(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         self.owner(ctx).await
     }
 
+    #[graphql(complexity = 0)]
     async fn name(&self) -> String {
         self.name.clone()
     }
 
+    #[graphql(complexity = 0)]
     async fn url(&self) -> String {
         self.url.clone()
     }

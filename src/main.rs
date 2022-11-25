@@ -60,6 +60,8 @@ async fn main() -> Result<()> {
         mutations::Mutation::default(),
         EmptySubscription,
     )
+    .limit_complexity(250)
+    .limit_depth(7)
     .data(db.clone())
     .finish();
 
