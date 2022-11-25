@@ -5,6 +5,7 @@ use async_graphql::{async_trait, Context, Error, Guard};
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub enum SessionType {
     User,
+    NotBanned,
     Admin,
 }
 
@@ -28,6 +29,8 @@ impl Guard for SessionGuard {
                 Some(user) => {
                     if self.session_type == SessionType::Admin && !user.admin {
                         Err(errors::create_forbidden_error(None, "NOT_GLOBAL_ADMIN"))
+                    } else if self.session_type == SessionType::NotBanned && user.banned {
+                        Err(errors::create_forbidden_error(None, "USER_BANNED"))
                     } else {
                         Ok(())
                     }

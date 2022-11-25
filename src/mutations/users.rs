@@ -325,4 +325,57 @@ impl UserMutation {
             }
         }
     }
+
+    /// Changes the current user's profile bio.
+    #[graphql(guard = "SessionGuard::new(SessionType::NotBanned)", complexity = 10)]
+    async fn updateProfileBio(&self, ctx: &Context<'_>, bio: String) -> Result<user::Model, Error> {
+        if bio.len() > 4000 {
+            return Err(errors::create_user_input_error(
+                "Your bio cannot be longer than 4000 characters.",
+                "BIO_TOO_LONG",
+            ));
+        };
+
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+        active_user.profile_bio = ActiveValue::Set(Some(bio));
+
+        match active_user.update(db).await {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
+
+    /// Changes the current user's notification setting.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
+    async fn setNotificationSetting(
+        &self,
+        ctx: &Context<'_>,
+        option: i16,
+    ) -> Result<user::Model, Error> {
+        if !(0..=4).contains(&option) {
+            return Err(errors::create_user_input_error(
+                "Invalid notification setting.",
+                "INVALID_SETTING",
+            ));
+        }
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+        active_user.notification_setting = ActiveValue::Set(option);
+
+        match active_user.update(db).await {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
 }
