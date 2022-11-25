@@ -248,8 +248,63 @@ impl UserMutation {
         match User::find_by_id(id).one(db).await {
             Ok(value) => match value {
                 Some(user) => {
+                    if (user.admin) {
+                        return Err(errors::create_forbidden_error(
+                            Some("You cannot ban an administrator."),
+                            "ADMINISTRATIVE_IMMUNITY",
+                        ));
+                    }
+
                     let mut active_user: user::ActiveModel = user.clone().into();
                     active_user.banned = ActiveValue::Set(!user.banned);
+
+                    match active_user.update(db).await {
+                        Ok(value) => Ok(value),
+                        Err(error) => {
+                            error!("{}", error);
+                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                        }
+                    }
+                }
+                None => Err(errors::create_not_found_error()),
+            },
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "RETRIEVAL_ERROR",
+                ))
+            }
+        }
+    }
+
+    /// Toggles whether or not a user is blocked.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
+    async fn toggleBlockUser(&self, ctx: &Context<'_>, userId: ID) -> Result<user::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let id = userId.to_string();
+
+        match User::find_by_id(id).one(db).await {
+            Ok(value) => match value {
+                Some(user) => {
+                    // unwrap is safe because guard guarantees we have a user
+                    if user.id == session.user.as_ref().unwrap().id {
+                        return Err(errors::create_user_input_error(
+                            "You cannot block yourself.",
+                            "INVALID_USER_SELF",
+                        ));
+                    }
+
+                    let mut blocked = session.user.as_ref().unwrap().blocked.clone();
+                    if blocked.contains(&user.id) {
+                        blocked.retain(|searched_user| **searched_user != user.id)
+                    } else {
+                        blocked.push(user.id);
+                    };
+
+                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+                    active_user.blocked = ActiveValue::Set(blocked);
 
                     match active_user.update(db).await {
                         Ok(value) => Ok(value),

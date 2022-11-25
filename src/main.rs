@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
         mutations::Mutation::default(),
         EmptySubscription,
     )
-    .limit_complexity(250)
+    .limit_complexity(1000) // just prevent the queries from being absurd for now
     .limit_depth(7)
     .data(db.clone())
     .finish();

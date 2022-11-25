@@ -7,7 +7,7 @@ use crate::sessions::Session;
 use async_graphql::{Context, Error, Object, ID};
 use chrono::NaiveDateTime;
 use log::error;
-use sea_orm::{CursorTrait, DatabaseConnection, EntityTrait, QueryOrder};
+use sea_orm::{CursorTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryOrder};
 
 #[derive(Default)]
 pub struct UserQuery;
@@ -49,21 +49,20 @@ impl UserQuery {
 
     #[graphql(
         guard = "SessionGuard::new(SessionType::Admin)",
-        complexity = "5 + limit as usize * child_complexity"
+        complexity = "5 * size as usize + size as usize * child_complexity"
     )]
     async fn adminUsers(
         &self,
         ctx: &Context<'_>,
-        limit: u64,
-        cursor: NaiveDateTime,
+        size: u64,
+        page: u64,
     ) -> Result<Vec<user::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match User::find()
-            .cursor_by(user::Column::Created)
-            .after(cursor)
-            .last(limit)
-            .all(db)
+            .order_by_desc(user::Column::Created)
+            .paginate(db, size)
+            .fetch_page(page)
             .await
         {
             Ok(values) => Ok(values),
