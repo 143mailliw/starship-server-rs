@@ -25,3 +25,4 @@ serde = { version = "1.0.147", features = ["derive"] }
 sha2 = "0.10.6"
 tokio = "1.21.2"
 uuid = "1.2.2"
+libreauth = { version = "0.15.0", features = ["oath-uri"] }

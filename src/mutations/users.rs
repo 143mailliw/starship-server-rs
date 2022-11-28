@@ -11,6 +11,8 @@ use bcrypt::hash;
 use email_address::EmailAddress;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
+use libreauth::key::KeyBuilder;
+use libreauth::oath::{TOTPBuilder, TOTP};
 use log::error;
 use nanoid::nanoid;
 use sea_orm::{
@@ -372,6 +374,36 @@ impl UserMutation {
 
         match active_user.update(db).await {
             Ok(value) => Ok(value),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
+
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
+    async fn generateTOTPSecret(&self, ctx: &Context<'_>) -> Result<String, Error> {
+        let secret = KeyBuilder::new().generate().as_hex();
+
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+        active_user.tfa_secret = ActiveValue::Set(Some(secret.clone()));
+
+        match active_user.update(db).await {
+            Ok(_value) => match TOTPBuilder::new().hex_key(&secret.to_owned()).finalize() {
+                Ok(totp) => Ok(totp
+                    .key_uri_format("Starship", &session.user.clone().unwrap().username)
+                    .finalize()),
+                Err(error) => {
+                    error!("{:?}", error);
+                    Err(errors::create_internal_server_error(
+                        None,
+                        "TOTP_BUILD_ERROR",
+                    ))
+                }
+            },
             Err(error) => {
                 error!("{}", error);
                 Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
