@@ -482,4 +482,53 @@ impl UserMutation {
             }
         }
     }
+
+    /// Validates the token, and, if the token is valid, disables TFA for the current user.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
+    async fn disableTFA(&self, ctx: &Context<'_>, token: u32) -> Result<user::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let user = session.user.clone().unwrap();
+
+        if !user.tfa_enabled {
+            return Err(errors::create_user_input_error(
+                "Two factor authentication is already disabled.",
+                "TFA_ALREADY_DISABLED",
+            ));
+        };
+
+        match TOTPBuilder::new()
+            .hex_key(&user.tfa_secret.unwrap())
+            .finalize()
+        {
+            Ok(totp) => {
+                if totp.is_valid(&token.to_string()) || user.tfa_backup.contains(&token.to_string())
+                {
+                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+                    active_user.tfa_enabled = ActiveValue::Set(false);
+
+                    match active_user.update(db).await {
+                        Ok(value) => Ok(value),
+                        Err(error) => {
+                            error!("{}", error);
+                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                        }
+                    }
+                } else {
+                    Err(errors::create_user_input_error(
+                        "Incorrect TFA or backup code.",
+                        "INCORRECT_CODE",
+                    ))
+                }
+            }
+            Err(error) => {
+                error!("{:?}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "TOTP_BUILD_ERROR",
+                ))
+            }
+        }
+    }
 }
