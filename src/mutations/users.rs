@@ -15,6 +15,7 @@ use libreauth::key::KeyBuilder;
 use libreauth::oath::{TOTPBuilder, TOTP};
 use log::error;
 use nanoid::nanoid;
+use rand::prelude::*;
 use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
 };
@@ -381,6 +382,8 @@ impl UserMutation {
         }
     }
 
+    /// Generates and stores a new TOTP secret for the current user.
+    /// NB: This is step 1/2 in the TOTP flow. You need to run the `confirmTFA` mutation as well.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
     async fn generateTOTPSecret(&self, ctx: &Context<'_>) -> Result<String, Error> {
         let secret = KeyBuilder::new().generate().as_hex();
@@ -407,6 +410,75 @@ impl UserMutation {
             Err(error) => {
                 error!("{}", error);
                 Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
+
+    /// Validates the token, and, if the token is valid, enables 2FA and generates backup codes.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
+    async fn confirmTFA(&self, ctx: &Context<'_>, token: u32) -> Result<Vec<u32>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let user = session.user.clone().unwrap();
+
+        if user.tfa_secret.is_none() {
+            return Err(errors::create_user_input_error(
+                "You must generate the TOTP secret before confirming it.",
+                "NO_SECRET",
+            ));
+        };
+
+        if user.tfa_enabled {
+            return Err(errors::create_user_input_error(
+                "Two factor authentication is already enabled & confirmed.",
+                "TFA_ALREADY_ENABLED",
+            ));
+        };
+
+        match TOTPBuilder::new()
+            .hex_key(&user.tfa_secret.unwrap())
+            .finalize()
+        {
+            Ok(totp) => {
+                if totp.is_valid(&token.to_string()) {
+                    let mut rng = StdRng::from_entropy();
+                    let numbers = vec![
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                        rng.gen_range(0..1000000000),
+                    ];
+
+                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+                    active_user.tfa_backup =
+                        ActiveValue::Set(numbers.iter().map(|code| code.to_string()).collect());
+                    active_user.tfa_enabled = ActiveValue::Set(true);
+
+                    match active_user.update(db).await {
+                        Ok(_value) => Ok(numbers),
+                        Err(error) => {
+                            error!("{}", error);
+                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                        }
+                    }
+                } else {
+                    Err(errors::create_user_input_error(
+                        "Incorrect TFA code.",
+                        "INCORRECT_CODE",
+                    ))
+                }
+            }
+            Err(error) => {
+                error!("{:?}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "TOTP_BUILD_ERROR",
+                ))
             }
         }
     }

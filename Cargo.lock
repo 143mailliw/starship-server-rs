@@ -2338,6 +2338,7 @@ dependencies = [
  "libreauth",
  "log",
  "nanoid",
+ "rand",
  "regex",
  "sea-orm",
  "serde",
