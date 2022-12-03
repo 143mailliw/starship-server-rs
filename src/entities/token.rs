@@ -14,6 +14,7 @@ pub struct Model {
     pub latitude: Option<f32>,
     pub browser: String,
     pub operating_system: String,
+    pub verified: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

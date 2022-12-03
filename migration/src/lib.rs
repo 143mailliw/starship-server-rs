@@ -7,6 +7,7 @@ mod m20221121_164753_create_custom_emojis;
 mod m20221122_143248_delete_users_following;
 mod m20221122_144144_rename_follower_count;
 mod m20221122_145255_create_planet_member;
+mod m20221202_222651_add_token_verified;
 
 pub struct Migrator;
 
@@ -21,6 +22,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20221122_143248_delete_users_following::Migration),
             Box::new(m20221122_144144_rename_follower_count::Migration),
             Box::new(m20221122_145255_create_planet_member::Migration),
+            Box::new(m20221202_222651_add_token_verified::Migration),
         ]
     }
 }

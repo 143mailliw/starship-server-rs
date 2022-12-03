@@ -40,7 +40,7 @@ impl MigrationTrait for Migration {
 
 /// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-enum Token {
+pub enum Token {
     Table,
     Id,
     User,
@@ -50,4 +50,5 @@ enum Token {
     Longitude,
     Browser,
     OperatingSystem,
+    Verified,
 }
