@@ -214,6 +214,7 @@ impl UserMutation {
             longitude: ActiveValue::Set(None),
             browser: ActiveValue::Set("Unknown".to_string()),
             operating_system: ActiveValue::Set("Unknown".to_string()),
+            verified: ActiveValue::Set(!user.tfa_enabled),
         };
 
         match Token::insert(token).exec(db).await {
@@ -513,6 +514,83 @@ impl UserMutation {
                         Err(error) => {
                             error!("{}", error);
                             Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                        }
+                    }
+                } else {
+                    Err(errors::create_user_input_error(
+                        "Incorrect TFA or backup code.",
+                        "INCORRECT_CODE",
+                    ))
+                }
+            }
+            Err(error) => {
+                error!("{:?}", error);
+                Err(errors::create_internal_server_error(
+                    None,
+                    "TOTP_BUILD_ERROR",
+                ))
+            }
+        }
+    }
+
+    /// Verifies the authenticity of the current token, provided in the Authorization header.
+    /// This mutation is only required if the user has TFA enabled.
+    #[graphql(guard = "SessionGuard::new(SessionType::Token)", complexity = 200)]
+    async fn finalizeAuthorization(&self, ctx: &Context<'_>, token: u32) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let user = session.user.clone().unwrap();
+        let auth_token = session.token.clone().unwrap();
+
+        if !user.tfa_enabled {
+            return Err(errors::create_user_input_error(
+                "This user does not have two-factor authentication enabled.",
+                "TFA_DISABLED",
+            ));
+        };
+
+        if auth_token.verified {
+            return Ok(true);
+        }
+
+        match TOTPBuilder::new()
+            .hex_key(&user.clone().tfa_secret.unwrap())
+            .finalize()
+        {
+            Ok(totp) => {
+                if totp.is_valid(&token.to_string()) || user.tfa_backup.contains(&token.to_string())
+                {
+                    if user.tfa_backup.contains(&token.to_string()) {
+                        let mut remaining_codes = user.tfa_backup.clone();
+                        remaining_codes.retain(|searched_code| searched_code != &token.to_string());
+
+                        let mut active_user: user::ActiveModel = user.into();
+                        active_user.tfa_backup = ActiveValue::Set(remaining_codes);
+
+                        match active_user.update(db).await {
+                            Ok(_value) => (),
+                            Err(error) => {
+                                error!("{}", error);
+                                return Err(errors::create_internal_server_error(
+                                    None,
+                                    "UPDATE_USER_ERROR",
+                                ));
+                            }
+                        }
+                    }
+
+                    let mut active_token: token::ActiveModel = auth_token.clone().into();
+                    active_token.verified = ActiveValue::Set(true);
+
+                    match active_token.update(db).await {
+                        Ok(_value) => Ok(true),
+                        Err(error) => {
+                            error!("{}", error);
+                            Err(errors::create_internal_server_error(
+                                None,
+                                "UPDATE_TOKEN_ERROR",
+                            ))
                         }
                     }
                 } else {

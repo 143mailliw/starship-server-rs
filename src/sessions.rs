@@ -17,6 +17,7 @@ pub struct Session {
     pub user: Option<user::Model>,
     pub user_agent: Option<String>,
     pub ip_address: Option<SocketAddr>,
+    pub verified: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -52,7 +53,7 @@ impl Session {
                         };
 
                     if jwt_token_data.token == *"" {
-                        (None, None)
+                        (None, None, false)
                     } else {
                         let data = Token::find_by_id(jwt_token_data.token)
                             .find_also_related(User)
@@ -62,19 +63,23 @@ impl Session {
                         match data {
                             Ok(value) => match value {
                                 Some(values) => match values.1 {
-                                    Some(found_user) => (Some(values.0), Some(found_user)),
-                                    None => (None, None),
+                                    Some(found_user) => (
+                                        Some(values.0.clone()),
+                                        Some(found_user),
+                                        values.0.verified,
+                                    ),
+                                    None => (None, None, false),
                                 },
-                                None => (None, None),
+                                None => (None, None, false),
                             },
-                            Err(_error) => (None, None),
+                            Err(_error) => (None, None, false),
                         }
                     }
                 } else {
-                    (None, None)
+                    (None, None, false)
                 }
             }
-            None => (None, None),
+            None => (None, None, false),
         };
 
         let user_agent = match headers.get(header::USER_AGENT) {
@@ -88,6 +93,7 @@ impl Session {
         Session {
             token: data.0,
             user: data.1,
+            verified: data.2,
             user_agent,
             ip_address: request.peer_addr(),
         }

@@ -4,6 +4,7 @@ use async_graphql::{async_trait, Context, Error, Guard};
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub enum SessionType {
+    Token,
     User,
     NotBanned,
     Admin,
@@ -31,6 +32,8 @@ impl Guard for SessionGuard {
                         Err(errors::create_forbidden_error(None, "NOT_GLOBAL_ADMIN"))
                     } else if self.session_type == SessionType::NotBanned && user.banned {
                         Err(errors::create_forbidden_error(None, "USER_BANNED"))
+                    } else if self.session_type != SessionType::Token && !session.verified {
+                        Err(errors::create_forbidden_error(None, "UNVERIFIED_TOKEN"))
                     } else {
                         Ok(())
                     }
