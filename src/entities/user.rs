@@ -38,23 +38,17 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::custom_emoji::Entity")]
     CustomEmoji,
-    #[sea_orm(has_many = "super::planet::Entity")]
-    Planet,
     #[sea_orm(has_many = "super::token::Entity")]
     Token,
     #[sea_orm(has_many = "super::planet_member::Entity")]
     PlanetMember,
+    #[sea_orm(has_many = "super::planet::Entity")]
+    Planet,
 }
 
 impl Related<super::custom_emoji::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::CustomEmoji.def()
-    }
-}
-
-impl Related<super::planet::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Planet.def()
     }
 }
 
@@ -67,6 +61,12 @@ impl Related<super::token::Entity> for Entity {
 impl Related<super::planet_member::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PlanetMember.def()
+    }
+}
+
+impl Related<super::planet::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Planet.def()
     }
 }
 

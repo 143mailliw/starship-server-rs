@@ -98,4 +98,6 @@ pub enum Planet {
 
     Css,
     Description,
+
+    Home,
 }

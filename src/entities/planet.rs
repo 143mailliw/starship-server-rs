@@ -19,10 +19,19 @@ pub struct Model {
     pub banned: Vec<String>,
     pub css: String,
     pub description: Option<String>,
+    pub home: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::planet_component::Entity",
+        from = "Column::Home",
+        to = "super::planet_component::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    PlanetComponent,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::Owner",
@@ -35,6 +44,12 @@ pub enum Relation {
     CustomEmoji,
     #[sea_orm(has_many = "super::planet_member::Entity")]
     PlanetMember,
+}
+
+impl Related<super::planet_component::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PlanetComponent.def()
+    }
 }
 
 impl Related<super::user::Entity> for Entity {

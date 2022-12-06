@@ -8,6 +8,8 @@ mod m20221122_143248_delete_users_following;
 mod m20221122_144144_rename_follower_count;
 mod m20221122_145255_create_planet_member;
 mod m20221202_222651_add_token_verified;
+mod m20221203_221004_create_planet_component;
+mod m20221206_032207_add_planet_home;
 
 pub struct Migrator;
 
@@ -23,6 +25,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20221122_144144_rename_follower_count::Migration),
             Box::new(m20221122_145255_create_planet_member::Migration),
             Box::new(m20221202_222651_add_token_verified::Migration),
+            Box::new(m20221203_221004_create_planet_component::Migration),
+            Box::new(m20221206_032207_add_planet_home::Migration),
         ]
     }
 }
