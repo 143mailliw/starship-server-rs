@@ -85,16 +85,6 @@ impl Model {
         self.banned
     }
 
-    #[graphql(
-        deprecation = "following is deprecated in favor of the role system, use memberOf",
-        complexity = 0
-    )]
-    async fn following(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
-        self.user_id_is_same(ctx, "following")?;
-
-        Ok(vec![])
-    }
-
     #[graphql(complexity = 5)]
     async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "memberOf")?;

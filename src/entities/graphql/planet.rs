@@ -49,11 +49,6 @@ impl Model {
         self.private
     }
 
-    #[graphql(deprecation = "use memberCount", complexity = 0)]
-    async fn followerCount(&self) -> i32 {
-        self.member_count
-    }
-
     #[graphql(complexity = 0)]
     async fn memberCount(&self) -> i32 {
         self.member_count
