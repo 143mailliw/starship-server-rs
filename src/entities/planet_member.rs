@@ -11,6 +11,7 @@ pub struct Model {
     pub user: String,
     pub roles: Vec<String>,
     pub permssions: Vec<String>,
+    pub created: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

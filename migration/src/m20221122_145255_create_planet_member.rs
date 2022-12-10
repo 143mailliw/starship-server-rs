@@ -57,11 +57,12 @@ impl MigrationTrait for Migration {
 
 /// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-enum PlanetMember {
+pub enum PlanetMember {
     Table,
     Id,
     Planet,
     User,
     Roles,
     Permssions,
+    Created,
 }

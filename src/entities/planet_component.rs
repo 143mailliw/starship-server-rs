@@ -11,6 +11,7 @@ pub struct Model {
     pub component_id: String,
     pub name: String,
     pub planet_id: String,
+    pub created: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -10,6 +10,8 @@ mod m20221122_145255_create_planet_member;
 mod m20221202_222651_add_token_verified;
 mod m20221203_221004_create_planet_component;
 mod m20221206_032207_add_planet_home;
+mod m20221210_051909_add_member_created;
+mod m20221210_051922_add_component_created;
 
 pub struct Migrator;
 
@@ -27,6 +29,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20221202_222651_add_token_verified::Migration),
             Box::new(m20221203_221004_create_planet_component::Migration),
             Box::new(m20221206_032207_add_planet_home::Migration),
+            Box::new(m20221210_051909_add_member_created::Migration),
+            Box::new(m20221210_051922_add_component_created::Migration),
         ]
     }
 }
