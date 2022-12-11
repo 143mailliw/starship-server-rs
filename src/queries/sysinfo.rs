@@ -29,7 +29,7 @@ impl Default for SysInfo {
         Self {
             server_name: "starship-server-rs".to_string(),
             version: "2023.0-dev-milestone1".to_string(),
-            feature_level: 0,
+            feature_level: 1,
             supported_features: vec!["users".to_string()],
             supported_components: vec![],
             client_flags: vec![],

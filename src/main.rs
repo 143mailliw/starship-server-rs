@@ -11,6 +11,7 @@ use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use db::set_up_db;
+use log::info;
 use sea_orm::DatabaseConnection;
 use std::io::Result;
 
@@ -48,13 +49,16 @@ async fn gql_playgound() -> HttpResponse {
 async fn main() -> Result<()> {
     env_logger::init();
 
+    info!("Leading environment variables");
     dotenv::dotenv().ok();
 
+    info!("Connecting to database");
     let db = match set_up_db().await {
         Ok(db) => db,
         Err(err) => panic!("fatal: {} ", err),
     };
 
+    info!("Creating schema");
     let schema = Schema::build(
         queries::Query::default(),
         mutations::Mutation::default(),
@@ -65,6 +69,7 @@ async fn main() -> Result<()> {
     .data(db.clone())
     .finish();
 
+    info!("Creating HttpServer");
     HttpServer::new(move || {
         let cors = Cors::permissive();
 
