@@ -16,7 +16,7 @@ struct SysInfoPaths {
 struct SysInfo {
     server_name: String,
     version: String,
-    schema_version: String,
+    feature_level: u16,
     supported_features: Vec<String>,
     supported_components: Vec<String>,
     client_flags: Vec<String>,
@@ -28,9 +28,9 @@ impl Default for SysInfo {
         // TODO: Fill this data out properly
         Self {
             server_name: "starship-server-rs".to_string(),
-            version: "dev-m1".to_string(),
-            schema_version: "next".to_string(),
-            supported_features: vec![],
+            version: "2023.0-dev-milestone1".to_string(),
+            feature_level: 0,
+            supported_features: vec!["users".to_string()],
             supported_components: vec![],
             client_flags: vec![],
             paths: SysInfoPaths {
