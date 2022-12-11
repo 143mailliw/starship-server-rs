@@ -40,15 +40,6 @@ impl UserQuery {
 
     #[graphql(
         guard = "SessionGuard::new(SessionType::Admin)",
-        deprecation = "use user, adminUser is redundant",
-        complexity = 5
-    )]
-    async fn adminUser(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
-        self.user(ctx, id).await
-    }
-
-    #[graphql(
-        guard = "SessionGuard::new(SessionType::Admin)",
         complexity = "5 * size as usize + size as usize * child_complexity"
     )]
     async fn adminUsers(
