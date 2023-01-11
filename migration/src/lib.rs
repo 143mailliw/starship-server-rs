@@ -13,6 +13,8 @@ mod m20221206_032207_add_planet_home;
 mod m20221210_051909_add_member_created;
 mod m20221210_051922_add_component_created;
 mod m20221218_002528_create_planet_role;
+mod m20230111_135136_rename_role_ids;
+mod m20230111_135142_rename_component_ids;
 
 pub struct Migrator;
 
@@ -33,6 +35,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20221210_051909_add_member_created::Migration),
             Box::new(m20221210_051922_add_component_created::Migration),
             Box::new(m20221218_002528_create_planet_role::Migration),
+            Box::new(m20230111_135136_rename_role_ids::Migration),
+            Box::new(m20230111_135142_rename_component_ids::Migration),
         ]
     }
 }

@@ -10,7 +10,7 @@ pub struct Model {
     pub name: String,
     pub color: String,
     pub permissions: Vec<String>,
-    pub planet_id: String,
+    pub planet: String,
     pub position: i32,
     pub default: bool,
 }
@@ -19,7 +19,7 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::planet::Entity",
-        from = "Column::PlanetId",
+        from = "Column::Planet",
         to = "super::planet::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"

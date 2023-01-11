@@ -57,5 +57,6 @@ pub enum PlanetComponent {
     ComponentId,
     Name,
     PlanetId,
+    Planet,
     Created,
 }

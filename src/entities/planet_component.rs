@@ -10,7 +10,7 @@ pub struct Model {
     pub r#type: String,
     pub component_id: String,
     pub name: String,
-    pub planet_id: String,
+    pub planet: String,
     pub created: DateTime,
 }
 
@@ -18,7 +18,7 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::planet::Entity",
-        from = "Column::PlanetId",
+        from = "Column::Planet",
         to = "super::planet::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
