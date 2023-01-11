@@ -40,6 +40,8 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     User,
+    #[sea_orm(has_many = "super::planet_role::Entity")]
+    PlanetRole,
     #[sea_orm(has_many = "super::custom_emoji::Entity")]
     CustomEmoji,
     #[sea_orm(has_many = "super::planet_member::Entity")]
@@ -55,6 +57,12 @@ impl Related<super::planet_component::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::planet_role::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PlanetRole.def()
     }
 }
 

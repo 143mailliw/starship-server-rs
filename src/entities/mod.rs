@@ -7,5 +7,6 @@ pub mod custom_emoji;
 pub mod planet;
 pub mod planet_component;
 pub mod planet_member;
+pub mod planet_role;
 pub mod token;
 pub mod user;
