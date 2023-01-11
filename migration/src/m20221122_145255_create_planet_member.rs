@@ -64,5 +64,6 @@ pub enum PlanetMember {
     User,
     Roles,
     Permssions,
+    Permissions,
     Created,
 }
