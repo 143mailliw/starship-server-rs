@@ -10,7 +10,7 @@ pub struct Model {
     pub planet: String,
     pub user: String,
     pub roles: Vec<String>,
-    pub permssions: Vec<String>,
+    pub permissions: Vec<String>,
     pub created: DateTime,
 }
 
