@@ -1,13 +1,12 @@
 #![allow(non_snake_case)]
 use super::super::planet;
-use super::super::planet_component::Model;
+use super::super::planet_role::Model;
 use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
-use chrono::NaiveDateTime;
 use sea_orm::{DatabaseConnection, EntityTrait};
 
-#[Object(name = "PlanetComponent")]
+#[Object(name = "PlanetRole")]
 impl Model {
     #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
@@ -20,18 +19,13 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn createdAt(&self) -> NaiveDateTime {
-        self.created
+    async fn color(&self) -> String {
+        self.color.clone()
     }
 
     #[graphql(complexity = 0)]
-    async fn componentId(&self) -> String {
-        self.component_id.clone()
-    }
-
-    #[graphql(complexity = 0)]
-    async fn r#type(&self) -> String {
-        self.r#type.clone()
+    async fn permissions(&self) -> Vec<String> {
+        self.permissions.clone()
     }
 
     #[graphql(complexity = 5)]
@@ -54,5 +48,15 @@ impl Model {
                 "FIND_PLANET_ERROR",
             )),
         }
+    }
+
+    #[graphql(complexity = 0)]
+    async fn position(&self) -> i32 {
+        self.position
+    }
+
+    #[graphql(complexity = 0)]
+    async fn default(&self) -> bool {
+        self.default
     }
 }
