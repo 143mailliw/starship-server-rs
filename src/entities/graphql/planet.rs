@@ -1,12 +1,18 @@
 #![allow(non_snake_case)]
 use super::super::custom_emoji;
 use super::super::planet::Model;
+use super::super::planet_component;
+use super::super::planet_member;
+use super::super::planet_role;
 use super::super::user;
 use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter,
+    QueryOrder,
+};
 
 #[Object(name = "Planet")]
 impl Model {
@@ -54,8 +60,40 @@ impl Model {
         self.member_count
     }
 
-    // TODO: components
-    // TODO: homeComponent
+    #[graphql(complexity = 5)]
+    async fn components(&self, ctx: &Context<'_>) -> Result<Vec<planet_component::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match self.find_related(planet_component::Entity).all(db).await {
+            Ok(value) => Ok(value),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_COMPONENTS_ERROR",
+            )),
+        }
+    }
+
+    #[graphql(complexity = 5)]
+    async fn homeComponent(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<planet_component::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match &self.home {
+            Some(id) => match planet_component::Entity::find_by_id(id.clone())
+                .one(db)
+                .await
+            {
+                Ok(value) => Ok(value),
+                Err(_error) => Err(errors::create_internal_server_error(
+                    None,
+                    "FIND_HOME_COMPONENT_ERROR",
+                )),
+            },
+            None => Ok(None),
+        }
+    }
 
     #[graphql(complexity = 0)]
     async fn featured(&self) -> bool {
@@ -72,7 +110,41 @@ impl Model {
         self.partnered
     }
 
-    // TODO: members
+    #[graphql(complexity = "5 * size as usize + size as usize * child_complexity")]
+    async fn members(
+        &self,
+        ctx: &Context<'_>,
+        size: u64,
+        page: u64,
+    ) -> Result<Vec<planet_member::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match self
+            .find_related(planet_member::Entity)
+            .order_by_desc(planet_member::Column::Created)
+            .paginate(db, size)
+            .fetch_page(page)
+            .await
+        {
+            Ok(values) => Ok(values),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_MEMBERS_ERROR",
+            )),
+        }
+    }
+
+    #[graphql(complexity = "5")]
+    async fn roles(&self, ctx: &Context<'_>) -> Result<Vec<planet_role::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        match self.find_related(planet_role::Entity).all(db).await {
+            Ok(value) => Ok(value),
+            Err(_error) => Err(errors::create_internal_server_error(
+                None,
+                "FIND_ROLES_ERROR",
+            )),
+        }
+    }
 
     #[graphql(complexity = 0)]
     async fn featuredDescription(&self) -> String {
@@ -113,11 +185,7 @@ impl Model {
     async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match custom_emoji::Entity::find()
-            .filter(custom_emoji::Column::Planet.eq(self.id.clone()))
-            .all(db)
-            .await
-        {
+        match self.find_related(custom_emoji::Entity).all(db).await {
             Ok(value) => Ok(value),
             Err(_error) => Err(errors::create_internal_server_error(
                 None,
