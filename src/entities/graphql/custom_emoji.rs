@@ -5,7 +5,7 @@ use super::super::user;
 use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, ModelTrait};
 
 #[Object(name = "CustomEmoji")]
 impl Model {
@@ -18,7 +18,7 @@ impl Model {
     async fn owner(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match user::Entity::find_by_id(self.owner.clone()).one(db).await {
+        match self.find_related(user::Entity).one(db).await {
             Ok(value) => match value {
                 Some(user) => Ok(user),
                 None => Err(errors::create_internal_server_error(
@@ -38,7 +38,7 @@ impl Model {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match self.planet.clone() {
-            Some(id) => match planet::Entity::find_by_id(id).one(db).await {
+            Some(_id) => match self.find_related(planet::Entity).one(db).await {
                 Ok(value) => match value {
                     Some(planet) => Ok(Some(planet)),
                     None => Err(errors::create_internal_server_error(
@@ -53,14 +53,6 @@ impl Model {
             },
             None => Ok(None),
         }
-    }
-
-    #[graphql(
-        deprecation = "Field is redundant, consider using owner instead",
-        complexity = 5
-    )]
-    async fn user(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
-        self.owner(ctx).await
     }
 
     #[graphql(complexity = 0)]
