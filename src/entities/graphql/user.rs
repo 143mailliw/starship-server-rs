@@ -9,7 +9,7 @@ use crate::sessions::Session;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
 
 impl Model {
     fn user_id_is_same(&self, ctx: &Context<'_>, name: &str) -> Result<(), Error> {
@@ -91,8 +91,8 @@ impl Model {
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match planet_member::Entity::find()
-            .filter(planet_member::Column::User.eq(self.id.clone()))
+        match self
+            .find_related(planet_member::Entity)
             .find_with_related(planet::Entity)
             .all(db)
             .await
@@ -163,12 +163,9 @@ impl Model {
     async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match custom_emoji::Entity::find()
-            .filter(
-                custom_emoji::Column::Owner
-                    .eq(self.id.clone())
-                    .and(custom_emoji::Column::Planet.is_null()),
-            )
+        match self
+            .find_related(custom_emoji::Entity)
+            .filter(custom_emoji::Column::Planet.is_null())
             .all(db)
             .await
         {
