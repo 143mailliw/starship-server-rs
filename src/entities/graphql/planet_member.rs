@@ -7,7 +7,7 @@ use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
 
 #[Object(name = "PlanetMember")]
 impl Model {
@@ -20,10 +20,7 @@ impl Model {
     async fn planet(&self, ctx: &Context<'_>) -> Result<planet::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match planet::Entity::find_by_id(self.planet.clone())
-            .one(db)
-            .await
-        {
+        match self.find_related(planet::Entity).one(db).await {
             Ok(value) => match value {
                 Some(planet) => Ok(planet),
                 None => Err(errors::create_internal_server_error(
@@ -42,7 +39,7 @@ impl Model {
     async fn user(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match user::Entity::find_by_id(self.user.clone()).one(db).await {
+        match self.find_related(user::Entity).one(db).await {
             Ok(value) => match value {
                 Some(user) => Ok(user),
                 None => Err(errors::create_internal_server_error(
