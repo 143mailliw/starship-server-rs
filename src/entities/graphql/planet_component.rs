@@ -5,7 +5,7 @@ use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, ModelTrait};
 
 #[Object(name = "PlanetComponent")]
 impl Model {
@@ -38,10 +38,7 @@ impl Model {
     async fn planet(&self, ctx: &Context<'_>) -> Result<planet::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match planet::Entity::find_by_id(self.planet.clone())
-            .one(db)
-            .await
-        {
+        match self.find_related(planet::Entity).one(db).await {
             Ok(value) => match value {
                 Some(planet) => Ok(planet),
                 None => Err(errors::create_internal_server_error(
