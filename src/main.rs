@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
         EmptySubscription,
     )
     .limit_complexity(1000) // just prevent the queries from being absurd for now
-    .limit_depth(7)
+    .limit_depth(10)
     .data(db.clone())
     .finish();
 
