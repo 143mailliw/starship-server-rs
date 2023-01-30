@@ -6,7 +6,7 @@ use actix_web::http::header;
 use actix_web::HttpRequest;
 use hmac::{Hmac, Mac};
 use jwt::VerifyWithKey;
-use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait};
+use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::env;

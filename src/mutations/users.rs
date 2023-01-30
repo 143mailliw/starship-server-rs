@@ -252,7 +252,7 @@ impl UserMutation {
         match User::find_by_id(id).one(db).await {
             Ok(value) => match value {
                 Some(user) => {
-                    if (user.admin) {
+                    if user.admin {
                         return Err(errors::create_forbidden_error(
                             Some("You cannot ban an administrator."),
                             "ADMINISTRATIVE_IMMUNITY",
