@@ -21,7 +21,10 @@ impl UserQuery {
         match User::find_by_id(id.to_string()).one(db).await {
             Ok(value) => match value {
                 Some(value) => Ok(value),
-                None => Err(errors::create_internal_server_error(None, "BAD_ID_ERROR")),
+                None => Err(errors::create_user_input_error(
+                    "User does not exist.",
+                    "INVALID_USER",
+                )),
             },
             Err(error) => {
                 error!("{error}");

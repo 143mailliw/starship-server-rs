@@ -58,27 +58,6 @@ impl PlanetMutation {
             }
         };
 
-        // retrieve the planet again to make sure all the info we have is synced with the db
-        // let final_planet = match planet::Entity::find_by_id(result.last_insert_id)
-        //     .one(db)
-        //     .await
-        // {
-        //     Ok(value) => match value {
-        //         Some(value) => Ok(value),
-        //         None => Err(errors::create_internal_server_error(
-        //             None,
-        //             "PLANET_BAD_ID_ERROR",
-        //         )),
-        //     },
-        //     Err(error) => {
-        //         error!("{}", error);
-        //         Err(errors::create_internal_server_error(
-        //             None,
-        //             "PLANET_RETRIEVAL_ERROR",
-        //         ))
-        //     }
-        // };
-
         let role = planet_role::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
             name: ActiveValue::Set("Default".to_string()),
