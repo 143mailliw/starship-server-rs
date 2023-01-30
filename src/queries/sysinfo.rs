@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use async_graphql::{Object, SimpleObject};
+use async_graphql::{Description, Object, SimpleObject};
 
 #[derive(SimpleObject)]
 struct SysInfoPaths {
@@ -43,11 +43,12 @@ impl Default for SysInfo {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Description)]
 pub struct SysInfoQuery;
 
 #[Object]
 impl SysInfoQuery {
+    /// Retrieves information about the server.
     async fn sysInfo(&self) -> SysInfo {
         SysInfo::default()
     }

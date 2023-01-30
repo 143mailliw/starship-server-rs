@@ -4,15 +4,16 @@ use crate::entities::user;
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
 use crate::sessions::Session;
-use async_graphql::{Context, Error, Object, ID};
+use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
 use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryOrder};
 
-#[derive(Default)]
+#[derive(Default, Description)]
 pub struct UserQuery;
 
 #[Object]
 impl UserQuery {
+    /// Finds a user from it's ID.
     #[graphql(complexity = 5)] //just ensure that they can't do it multiple times
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
@@ -35,11 +36,13 @@ impl UserQuery {
         }
     }
 
+    /// Retrieves the current session's user, if it have one.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
     async fn currentUser(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         Ok(ctx.data::<Session>().unwrap().user.clone().unwrap())
     }
 
+    /// Retrieves many users, for use in the system administration dashboard.
     #[graphql(
         guard = "SessionGuard::new(SessionType::Admin)",
         complexity = "5 * size as usize + size as usize * child_complexity"
