@@ -12,7 +12,7 @@ use email_address::EmailAddress;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use libreauth::key::KeyBuilder;
-use libreauth::oath::{TOTPBuilder, TOTP};
+use libreauth::oath::TOTPBuilder;
 use log::error;
 use nanoid::nanoid;
 use rand::prelude::*;

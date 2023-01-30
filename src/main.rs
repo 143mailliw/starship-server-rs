@@ -3,6 +3,7 @@ mod entities;
 mod errors;
 mod guards;
 mod mutations;
+mod permissions;
 mod queries;
 mod sessions;
 
