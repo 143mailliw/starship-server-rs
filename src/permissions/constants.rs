@@ -1,10 +1,24 @@
 // all permissions are in one of these three arrays
 
-pub const DEFAULT_PERMISSIONS: &[&str] = &[
+pub const VIEWER_PERMISSIONS: &[&str] = &[
+    // planet permissions
+    "+planet.view",
     // page permissions
     "+page.view", // view pages
     // forum permissions
-    "+forum.view",               // view forums & posts
+    "+forum.view",
+    // file permissions
+    "+files.view",             // view files
+    "+files.search",           // search the file tree
+    "+files.files.download",   // download files
+    "+files.folders.download", // download folders
+    // chat permissions
+    "+chat.view",   // view chats
+    "+chat.search", // search chat messages
+];
+
+pub const MEMBER_PERMISSIONS: &[&str] = &[
+    // forum permissions
     "+forum.posts.create",       // create a forum post
     "+forum.posts.edit.own",     // edit their own posts
     "+forum.posts.delete.own",   // delete their own posts
@@ -13,14 +27,7 @@ pub const DEFAULT_PERMISSIONS: &[&str] = &[
     "+forum.posts.attach",       // attach files to posts
     "+forum.post.reply",         // reply to posts
     "+forum.tags.use",           // use tags in their files
-    // file permissions
-    "+files.view",             // view files
-    "+files.search",           // search the file tree
-    "+files.files.download",   // download files
-    "+files.folders.download", // download folders
     // chat permissions
-    "+chat.view",                  // view chats
-    "+chat.search",                // search chat messages
     "+chat.messages.send",         // send chat messages
     "+chat.messages.delete.own",   // delete own chat messages
     "+chat.messages.edit.own",     // edit own chat messages

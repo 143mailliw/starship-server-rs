@@ -14,7 +14,7 @@ pub struct UserQuery;
 #[Object]
 impl UserQuery {
     /// Finds a user from it's ID.
-    #[graphql(complexity = 5)] //just ensure that they can't do it multiple times
+    #[graphql(complexity = 5)]
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 

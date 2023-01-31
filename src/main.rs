@@ -6,6 +6,7 @@ mod mutations;
 mod permissions;
 mod queries;
 mod sessions;
+mod tests;
 
 use actix_cors::Cors;
 use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};

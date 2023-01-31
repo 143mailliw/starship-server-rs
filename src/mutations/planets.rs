@@ -63,8 +63,9 @@ impl PlanetMutation {
             name: ActiveValue::Set("Default".to_string()),
             color: ActiveValue::Set("#FFFFFF".to_string()),
             permissions: ActiveValue::Set(
-                constants::DEFAULT_PERMISSIONS
+                constants::VIEWER_PERMISSIONS
                     .iter()
+                    .chain(constants::MEMBER_PERMISSIONS.iter())
                     .map(|perm| perm.to_string())
                     .collect(),
             ),
