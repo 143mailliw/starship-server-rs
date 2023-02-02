@@ -398,7 +398,7 @@ impl UserMutation {
         match active_user.update(db).await {
             Ok(_value) => match TOTPBuilder::new().hex_key(&secret.to_owned()).finalize() {
                 Ok(totp) => Ok(totp
-                    .key_uri_format("Starship", &session.user.as_ref().unwrap().username.clone())
+                    .key_uri_format("Starship", &session.user.as_ref().unwrap().username)
                     .finalize()),
                 Err(error) => {
                     error!("{:?}", error);
