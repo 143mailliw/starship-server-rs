@@ -16,7 +16,7 @@ impl Model {
         let session = ctx.data::<Session>();
 
         match session {
-            Ok(session) => match session.user.clone() {
+            Ok(session) => match session.user.as_ref() {
                 Some(user) => {
                     if user.id == self.id || user.admin {
                         Ok(())

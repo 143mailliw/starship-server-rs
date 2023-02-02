@@ -153,7 +153,7 @@ impl UserMutation {
         let session = ctx.data::<Session>().unwrap();
 
         let user = match User::find()
-            .filter(user::Column::Username.eq(username.clone()))
+            .filter(user::Column::Username.eq(username))
             .one(db)
             .await
         {
@@ -398,7 +398,7 @@ impl UserMutation {
         match active_user.update(db).await {
             Ok(_value) => match TOTPBuilder::new().hex_key(&secret.to_owned()).finalize() {
                 Ok(totp) => Ok(totp
-                    .key_uri_format("Starship", &session.user.clone().unwrap().username)
+                    .key_uri_format("Starship", &session.user.as_ref().unwrap().username.clone())
                     .finalize()),
                 Err(error) => {
                     error!("{:?}", error);
@@ -421,7 +421,7 @@ impl UserMutation {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
 
-        let user = session.user.clone().unwrap();
+        let user = session.user.as_ref().unwrap();
 
         if user.tfa_secret.is_none() {
             return Err(errors::create_user_input_error(
@@ -438,7 +438,7 @@ impl UserMutation {
         };
 
         match TOTPBuilder::new()
-            .hex_key(&user.tfa_secret.unwrap())
+            .hex_key(user.tfa_secret.as_ref().unwrap())
             .finalize()
         {
             Ok(totp) => {
@@ -541,7 +541,7 @@ impl UserMutation {
         let session = ctx.data::<Session>().unwrap();
 
         let user = session.user.clone().unwrap();
-        let auth_token = session.token.clone().unwrap();
+        let auth_token = session.token.as_ref().unwrap();
 
         if !user.tfa_enabled {
             return Err(errors::create_user_input_error(
@@ -555,7 +555,7 @@ impl UserMutation {
         }
 
         match TOTPBuilder::new()
-            .hex_key(&user.clone().tfa_secret.unwrap())
+            .hex_key(user.tfa_secret.as_ref().unwrap())
             .finalize()
         {
             Ok(totp) => {

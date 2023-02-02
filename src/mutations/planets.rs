@@ -26,7 +26,7 @@ impl PlanetMutation {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
         // unwrap is safe because guard guarantees we have a user
-        let user = session.user.clone().unwrap();
+        let user = session.user.as_ref().unwrap();
 
         // create the planet
         if name.len() > 128 {
@@ -88,7 +88,7 @@ impl PlanetMutation {
         let member = planet_member::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
             planet: ActiveValue::Set(result.last_insert_id.clone()),
-            user: ActiveValue::Set(user.id),
+            user: ActiveValue::Set(user.id.clone()),
             roles: ActiveValue::Set(vec![role_result.last_insert_id]),
             permissions: ActiveValue::Set(vec!["owner".to_string()]),
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
@@ -111,7 +111,7 @@ impl PlanetMutation {
             r#type: ActiveValue::Set("dummy".to_string()),
             component_id: ActiveValue::Set("dummy".to_string()),
             name: ActiveValue::Set("Dummy Component".to_string()),
-            planet: ActiveValue::Set(result.last_insert_id.clone()),
+            planet: ActiveValue::Set(result.last_insert_id),
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
             ..Default::default() // i don't know what's up with this but we have to have it
         };

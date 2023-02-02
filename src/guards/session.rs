@@ -26,7 +26,7 @@ impl Guard for SessionGuard {
         let session = ctx.data::<Session>();
 
         match session {
-            Ok(session) => match session.user.clone() {
+            Ok(session) => match session.user.as_ref() {
                 Some(user) => {
                     if self.session_type == SessionType::Admin && !user.admin {
                         Err(errors::create_forbidden_error(None, "NOT_GLOBAL_ADMIN"))

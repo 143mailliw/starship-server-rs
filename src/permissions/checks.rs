@@ -36,7 +36,7 @@ pub async fn has_permission(
                 return false;
             }
 
-            for permission in role.permissions.clone() {
+            for permission in &role.permissions {
                 if permission == "+administrator" {
                     println!("administrator found");
                     administrator = true;
