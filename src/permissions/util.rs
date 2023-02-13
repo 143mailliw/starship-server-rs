@@ -21,7 +21,7 @@ pub async fn get_planet(id: String, db: &DatabaseConnection) -> Result<planet::M
         },
         Err(_err) => Err(errors::create_internal_server_error(
             None,
-            "PERMISSIONS_PLANET_ERROR",
+            "PLANET_RETRIEVAL_ERROR",
         )),
     }
 }
@@ -46,7 +46,7 @@ pub async fn get_planet_member(
             Ok(member) => Ok(member),
             Err(_err) => Err(errors::create_internal_server_error(
                 None,
-                "PERMISSIONS_MEMBER_ERROR",
+                "MEMBER_RETRIEVAL_ERROR",
             )),
         },
         None => Ok(None),
@@ -72,7 +72,7 @@ pub async fn get_member_roles(
                 Ok(roles) => Ok(Some(roles)),
                 Err(_err) => Err(errors::create_internal_server_error(
                     None,
-                    "PERMISSIONS_ROLES_ERROR",
+                    "ROLES_RETRIEVAL_ERROR",
                 )),
             }
         }
