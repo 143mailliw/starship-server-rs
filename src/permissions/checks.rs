@@ -27,8 +27,8 @@ pub fn has_permission(
         return false;
     }
 
-    if roles.is_some() {
-        let mut role_vec = roles.unwrap();
+    if let Some(roles) = roles {
+        let mut role_vec = roles;
         role_vec.sort_by_key(|r| r.position);
 
         for role in role_vec.iter() {
@@ -38,7 +38,6 @@ pub fn has_permission(
 
             for permission in &role.permissions {
                 if permission == "+administrator" {
-                    println!("administrator found");
                     administrator = true;
                 }
 
@@ -51,14 +50,13 @@ pub fn has_permission(
         }
     }
 
-    if member.is_some() {
-        if member.clone().unwrap().planet != planet.id {
+    if let Some(member) = member {
+        if member.planet != planet.id {
             return false;
         }
 
-        for permission in member.unwrap().permissions {
+        for permission in member.permissions {
             if permission == "+administrator" {
-                println!("administrator found");
                 administrator = true;
             }
 
@@ -80,7 +78,6 @@ pub fn has_permission(
             .chain(constants::MEMBER_PERMISSIONS.iter())
             .map(|a| (*a).trim_start_matches('+').to_string())
         {
-            println!("setting {} true", permission);
             calculated_permissions.insert(permission, true);
         }
     }

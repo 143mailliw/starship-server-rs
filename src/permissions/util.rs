@@ -11,13 +11,7 @@ pub async fn get_planet(id: String, db: &DatabaseConnection) -> Result<planet::M
     match planet::Entity::find_by_id(id.clone()).one(db).await {
         Ok(planet) => match planet {
             Some(planet) => Ok(planet),
-            None => {
-                error!(
-                    "Planet {} no longer exists but some data with it was not scrubbed",
-                    id
-                );
-                Err(errors::create_not_found_error())
-            }
+            None => Err(errors::create_not_found_error()),
         },
         Err(_err) => Err(errors::create_internal_server_error(
             None,
