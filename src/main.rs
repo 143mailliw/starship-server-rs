@@ -15,6 +15,7 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use db::set_up_db;
 use log::info;
 use sea_orm::DatabaseConnection;
+use std::env;
 use std::io::Result;
 
 async fn index(
@@ -87,7 +88,13 @@ async fn main() -> Result<()> {
                     .to(gql_playgound),
             )
     })
-    .bind("127.0.0.1:8000")?
+    .bind((
+        env::var("IP_ADDR").expect("fatal: address unspecified"),
+        env::var("PORT")
+            .expect("fatal: port unspecified")
+            .parse()
+            .expect("fatal: port is not a number"),
+    ))?
     .run()
     .await
 }
