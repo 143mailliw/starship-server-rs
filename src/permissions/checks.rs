@@ -4,7 +4,7 @@ use crate::entities::planet_member;
 use crate::entities::planet_role;
 use std::collections::HashMap;
 
-pub async fn has_permission(
+pub fn has_permission(
     permission: String,
     planet: planet::Model,
     member: Option<planet_member::Model>,

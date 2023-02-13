@@ -8,7 +8,7 @@ use crate::permissions::checks::has_permission;
 async fn public_permissions() {
     let planet = create_planet(false);
 
-    let check = has_permission("planet.view".to_string(), planet, None, None).await;
+    let check = has_permission("planet.view".to_string(), planet, None, None);
 
     assert!(check, "planet.view not allowed");
 }
@@ -18,7 +18,7 @@ async fn public_permissions() {
 async fn private_permissions() {
     let planet = create_planet(true);
 
-    let check = has_permission("planet.view".to_string(), planet, None, None).await;
+    let check = has_permission("planet.view".to_string(), planet, None, None);
 
     assert!(!check, "planet.view allowed");
 }
@@ -29,7 +29,7 @@ async fn member_with_permission() {
     let planet = create_planet(true);
     let member = create_member(vec!["+planet.view".to_string()]);
 
-    let check = has_permission("planet.view".to_string(), planet, Some(member), None).await;
+    let check = has_permission("planet.view".to_string(), planet, Some(member), None);
 
     assert!(check, "planet.view not allowed");
 }
@@ -40,7 +40,7 @@ async fn member_without_permission() {
     let planet = create_planet(false);
     let member = create_member(vec!["-planet.view".to_string()]);
 
-    let check = has_permission("planet.view".to_string(), planet, Some(member), None).await;
+    let check = has_permission("planet.view".to_string(), planet, Some(member), None);
 
     assert!(!check, "planet.view allowed");
 }
@@ -57,8 +57,7 @@ async fn role_with_permission() {
         planet,
         Some(member),
         Some(vec![role]),
-    )
-    .await;
+    );
 
     assert!(check, "planet.view not allowed");
 }
@@ -75,8 +74,7 @@ async fn role_without_permission() {
         planet,
         Some(member),
         Some(vec![role]),
-    )
-    .await;
+    );
 
     assert!(!check, "planet.view allowed");
 }
@@ -93,8 +91,7 @@ async fn member_supersedes_role() {
         planet,
         Some(member),
         Some(vec![role]),
-    )
-    .await;
+    );
 
     assert!(check, "planet.view not allowed");
 }
@@ -112,8 +109,7 @@ async fn correct_role_order() {
         planet,
         Some(member),
         Some(vec![role2, role1]),
-    )
-    .await;
+    );
 
     assert!(check, "planet.view not allowed");
 }
@@ -131,8 +127,7 @@ async fn admin_overrides() {
         planet,
         Some(member),
         Some(vec![role1, role2]),
-    )
-    .await;
+    );
 
     assert!(check, "planet.view not allowed");
 }
@@ -149,8 +144,7 @@ async fn owner_overrides() {
         planet,
         Some(member),
         Some(vec![role]),
-    )
-    .await;
+    );
 
     assert!(check, "planet.view not allowed");
 }
@@ -162,7 +156,7 @@ async fn member_planet_locked() {
     let mut member = create_member(vec![]);
     member.planet = "different".to_string();
 
-    let check = has_permission("planet.view".to_string(), planet, Some(member), None).await;
+    let check = has_permission("planet.view".to_string(), planet, Some(member), None);
 
     assert!(!check, "permission check did not detect incorrect planet");
 }
@@ -180,8 +174,7 @@ async fn role_planet_locked() {
         planet,
         Some(member),
         Some(vec![role]),
-    )
-    .await;
+    );
 
     assert!(!check, "permission check did not detect incorrect planet");
 }
