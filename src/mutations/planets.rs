@@ -2,9 +2,9 @@
 use crate::entities::{planet, planet_component, planet_member, planet_role};
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
-use crate::permissions::constants;
+use crate::permissions::{constants, util};
 use crate::sessions::Session;
-use async_graphql::{Context, Description, Error, Object};
+use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
 use nanoid::nanoid;
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
@@ -22,7 +22,6 @@ impl PlanetMutation {
         name: String,
         private: bool,
     ) -> Result<planet::Model, Error> {
-        // Result<planet::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
         // unwrap is safe because guard guarantees we have a user
@@ -90,7 +89,7 @@ impl PlanetMutation {
             planet: ActiveValue::Set(result.last_insert_id.clone()),
             user: ActiveValue::Set(user.id.clone()),
             roles: ActiveValue::Set(vec![role_result.last_insert_id]),
-            permissions: ActiveValue::Set(vec!["owner".to_string()]),
+            permissions: ActiveValue::Set(vec!["+owner".to_string()]),
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
         };
 
@@ -130,6 +129,38 @@ impl PlanetMutation {
         planet.home = ActiveValue::Set(Some(component_result.last_insert_id));
 
         match planet.update(db).await {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
+
+    async fn renamePlanet(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        name: String,
+    ) -> Result<planet::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let planet = util::get_planet(id.to_string(), db).await?;
+        let member = util::get_planet_member(user_id, id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission(
+            "planet.change_name".to_string(),
+            planet.clone(),
+            member,
+            roles,
+        )?;
+
+        let mut active_planet: planet::ActiveModel = planet.into();
+        active_planet.name = ActiveValue::Set(name);
+
+        match active_planet.update(db).await {
             Ok(value) => Ok(value),
             Err(error) => {
                 error!("{}", error);
