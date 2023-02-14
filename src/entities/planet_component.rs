@@ -12,6 +12,8 @@ pub struct Model {
     pub name: String,
     pub planet: String,
     pub created: DateTime,
+    pub order: i32,
+    pub order_time: i64,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
