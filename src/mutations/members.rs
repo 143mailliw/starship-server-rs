@@ -7,7 +7,8 @@ use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
 use nanoid::nanoid;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait,
+    QueryFilter,
 };
 
 #[derive(Default, Description)]
@@ -41,7 +42,11 @@ impl MemberMutation {
             if let Some(role) = role {
                 if !planet.private {
                     if planet_member::Entity::find()
-                        .filter(planet_member::Column::User.eq(user_id.as_ref().unwrap().clone()))
+                        .filter(
+                            planet_member::Column::User
+                                .eq(user_id.as_ref().unwrap().clone())
+                                .and(planet_member::Column::Planet.eq(planet.id.clone())),
+                        )
                         .one(db)
                         .await
                         .map_err(|_| {
@@ -102,6 +107,58 @@ impl MemberMutation {
                     None,
                     "MISSING_DEFAULT_ROLE_ERROR",
                 ))
+            }
+        } else {
+            Err(errors::create_not_found_error())
+        }
+    }
+
+    /// Leaves a planet the current user is a member of.
+    async fn leave_planet(&self, ctx: &Context<'_>, id: ID) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let planet = planet::Entity::find_by_id(id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?;
+
+        if let Some(planet) = planet {
+            let user_id = user_id.as_ref().unwrap().clone();
+
+            if user_id == planet.owner {
+                return Err(errors::create_user_input_error(
+                    "You cannot leave a planet you are the owner of.",
+                    "PLANET_OWNER",
+                ));
+            }
+
+            match planet_member::Entity::find()
+                .filter(
+                    planet_member::Column::User
+                        .eq(user_id)
+                        .and(planet_member::Column::Planet.eq(planet.id.clone())),
+                )
+                .one(db)
+                .await
+            {
+                Ok(value) => match value {
+                    Some(member) => {
+                        member.delete(db).await.map_err(|_| {
+                            errors::create_internal_server_error(None, "MEMBER_DELETION_ERROR")
+                        })?;
+                        Ok(true)
+                    }
+                    None => Err(errors::create_user_input_error(
+                        "You aren't a member of that planet.",
+                        "NOT_MEMBER",
+                    )),
+                },
+                Err(_err) => Err(errors::create_internal_server_error(
+                    None,
+                    "MEMBER_RETRIEVAL_ERROR",
+                )),
             }
         } else {
             Err(errors::create_not_found_error())
