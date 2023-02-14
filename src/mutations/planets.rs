@@ -7,7 +7,9 @@ use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
 use nanoid::nanoid;
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 
 #[derive(Default, Description)]
 pub struct PlanetMutation;
@@ -167,6 +169,117 @@ impl PlanetMutation {
                 error!("{}", error);
                 Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
             }
+        }
+    }
+
+    /// Sets a planet's description.
+    async fn setPlanetDescription(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        description: String,
+    ) -> Result<planet::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let planet = util::get_planet(id.to_string(), db).await?;
+        let member = util::get_planet_member(user_id, id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission(
+            "planet.change_name".to_string(),
+            planet.clone(),
+            member,
+            roles,
+        )?;
+
+        let mut active_planet: planet::ActiveModel = planet.into();
+        active_planet.description = ActiveValue::Set(Some(description));
+
+        match active_planet.update(db).await {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                error!("{}", error);
+                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
+            }
+        }
+    }
+
+    /// Joins a public planet.
+    async fn joinPlanet(&self, ctx: &Context<'_>, id: ID) -> Result<planet_member::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        match planet::Entity::find_by_id(id.to_string()).one(db).await {
+            Ok(value) => {
+                match value {
+                    Some(planet) => {
+                        if !planet.private && user_id.is_some() {
+                            match planet_role::Entity::find()
+                                .filter(
+                                    planet_role::Column::Planet
+                                        .eq(planet.id.clone())
+                                        .and(planet_role::Column::Default.eq(true)),
+                                )
+                                .one(db)
+                                .await
+                            {
+                                Ok(value) => {
+                                    match value {
+                                        Some(role) => {
+                                            let member = planet_member::ActiveModel {
+                                                id: ActiveValue::Set(nanoid!(16)),
+                                                planet: ActiveValue::Set(planet.id),
+                                                user: ActiveValue::Set(user_id.unwrap()),
+                                                roles: ActiveValue::Set(vec![role.id]),
+                                                permissions: ActiveValue::Set(vec![]),
+                                                created: ActiveValue::Set(
+                                                    chrono::offset::Utc::now().naive_utc(),
+                                                ),
+                                            };
+
+                                            match planet_member::Entity::insert(member).exec(db).await {
+                                                Ok(value) => {
+                                                    match planet_member::Entity::find_by_id(value.last_insert_id).one(db).await {
+                                                        Ok(value) => match value {
+                                                            Some(member) => Ok(member),
+                                                            None => Err(errors::create_internal_server_error(None, "FIND_ERROR"))
+                                                        },
+                                                        Err(_err) => Err(errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))
+                                                    }
+                                                }
+                                                Err(error) => {
+                                                    error!("{}", error);
+                                                    Err(errors::create_internal_server_error(
+                                                        None,
+                                                        "INSERTION_ERROR",
+                                                    ))
+                                                }
+                                            }
+                                        }
+                                        None => Err(errors::create_internal_server_error(
+                                            None,
+                                            "MISSING_DEFAULT_ROLE_ERROR",
+                                        )),
+                                    }
+                                }
+                                Err(_err) => Err(errors::create_internal_server_error(
+                                    None,
+                                    "ROLE_RETRIEVAL_ERROR",
+                                )),
+                            }
+                        } else {
+                            Err(errors::create_not_found_error())
+                        }
+                    }
+                    None => Err(errors::create_not_found_error()),
+                }
+            }
+            Err(_err) => Err(errors::create_internal_server_error(
+                None,
+                "PLANET_RETRIEVAL_ERROR",
+            )),
         }
     }
 }
