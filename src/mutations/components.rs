@@ -4,8 +4,6 @@ use crate::errors;
 use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
-use log::error;
-use nanoid::nanoid;
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 
 #[derive(Default, Description)]

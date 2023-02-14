@@ -2,7 +2,6 @@ use super::checks;
 use crate::entities::{planet, planet_member, planet_role};
 use crate::errors;
 use async_graphql::Error;
-use log::error;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 /// Gets a planet. If an error occurs or the planet is not found, an error ready for presentation to

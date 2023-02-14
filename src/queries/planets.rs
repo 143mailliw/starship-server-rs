@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 use crate::entities::planet;
 use crate::errors;
-use crate::permissions::{checks, util};
+use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
