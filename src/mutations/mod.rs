@@ -1,4 +1,5 @@
 mod components;
+mod members;
 mod planets;
 mod users;
 
@@ -9,4 +10,5 @@ pub struct Mutation(
     users::UserMutation,
     planets::PlanetMutation,
     components::ComponentMutation,
+    members::MemberMutation,
 );
