@@ -137,6 +137,7 @@ impl PlanetMutation {
         }
     }
 
+    /// Renames a planet.
     async fn renamePlanet(
         &self,
         ctx: &Context<'_>,
