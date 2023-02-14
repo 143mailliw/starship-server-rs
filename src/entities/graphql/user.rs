@@ -55,8 +55,8 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn username(&self) -> String {
-        self.username.clone()
+    async fn username(&self) -> &String {
+        &self.username
     }
 
     #[graphql(complexity = 0)]
@@ -65,18 +65,18 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn profile_picture(&self) -> Option<String> {
-        self.profile_picture.clone()
+    async fn profile_picture(&self) -> &Option<String> {
+        &self.profile_picture
     }
 
     #[graphql(complexity = 0)]
-    async fn profile_banner(&self) -> Option<String> {
-        self.profile_banner.clone()
+    async fn profile_banner(&self) -> &Option<String> {
+        &self.profile_banner
     }
 
     #[graphql(complexity = 0)]
-    async fn profile_bio(&self) -> Option<String> {
-        self.profile_bio.clone()
+    async fn profile_bio(&self) -> &Option<String> {
+        &self.profile_bio
     }
 
     #[graphql(complexity = 0)]

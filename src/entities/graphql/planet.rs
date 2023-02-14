@@ -25,8 +25,8 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn name(&self) -> String {
-        self.name.clone()
+    async fn name(&self) -> &String {
+        &self.name
     }
 
     #[graphql(complexity = 0)]
@@ -150,8 +150,8 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn featured_description(&self) -> String {
-        self.featured_description.clone()
+    async fn featured_description(&self) -> &String {
+        &self.featured_description
     }
 
     // TODO: invites
@@ -175,13 +175,13 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn css(&self) -> String {
-        self.css.clone()
+    async fn css(&self) -> &String {
+        &self.css
     }
 
     #[graphql(complexity = 0)]
-    async fn description(&self) -> Option<String> {
-        self.description.clone()
+    async fn description(&self) -> &Option<String> {
+        &self.description
     }
 
     #[graphql(complexity = 5)]

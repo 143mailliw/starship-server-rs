@@ -17,18 +17,18 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn name(&self) -> String {
-        self.name.clone()
+    async fn name(&self) -> &String {
+        &self.name
     }
 
     #[graphql(complexity = 0)]
-    async fn color(&self) -> String {
-        self.color.clone()
+    async fn color(&self) -> &String {
+        &self.color
     }
 
     #[graphql(complexity = 0)]
-    async fn permissions(&self) -> Vec<String> {
-        self.permissions.clone()
+    async fn permissions(&self) -> &Vec<String> {
+        &self.permissions
     }
 
     #[graphql(complexity = 5)]

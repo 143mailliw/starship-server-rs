@@ -75,8 +75,8 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn permissions(&self) -> Vec<String> {
-        self.permissions.clone()
+    async fn permissions(&self) -> &Vec<String> {
+        &self.permissions
     }
 
     #[graphql(complexity = 0)]

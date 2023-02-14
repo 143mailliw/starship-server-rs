@@ -18,8 +18,8 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn name(&self) -> String {
-        self.name.clone()
+    async fn name(&self) -> &String {
+        &self.name
     }
 
     #[graphql(complexity = 0)]
@@ -28,13 +28,13 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn component_id(&self) -> String {
-        self.component_id.clone()
+    async fn component_id(&self) -> &String {
+        &self.component_id
     }
 
     #[graphql(complexity = 0)]
-    async fn r#type(&self) -> String {
-        self.r#type.clone()
+    async fn r#type(&self) -> &String {
+        &self.r#type
     }
 
     #[graphql(complexity = 5)]

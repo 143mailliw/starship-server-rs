@@ -59,12 +59,12 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn name(&self) -> String {
-        self.name.clone()
+    async fn name(&self) -> &String {
+        &self.name
     }
 
     #[graphql(complexity = 0)]
-    async fn url(&self) -> String {
-        self.url.clone()
+    async fn url(&self) -> &String {
+        &self.url
     }
 }
