@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::super::custom_emoji;
 use super::super::planet;
 use super::super::planet_member;
@@ -48,7 +47,7 @@ impl Model {
     }
 }
 
-#[Object(name = "User")]
+#[Object(name = "User", rename_fields = "camelCase", rename_args = "camelCase")]
 impl Model {
     #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
@@ -66,17 +65,17 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn profilePicture(&self) -> Option<String> {
+    async fn profile_picture(&self) -> Option<String> {
         self.profile_picture.clone()
     }
 
     #[graphql(complexity = 0)]
-    async fn profileBanner(&self) -> Option<String> {
+    async fn profile_banner(&self) -> Option<String> {
         self.profile_banner.clone()
     }
 
     #[graphql(complexity = 0)]
-    async fn profileBio(&self) -> Option<String> {
+    async fn profile_bio(&self) -> Option<String> {
         self.profile_bio.clone()
     }
 
@@ -86,7 +85,7 @@ impl Model {
     }
 
     #[graphql(complexity = 5)]
-    async fn memberOf(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
+    async fn member_of(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
         self.user_id_is_same(ctx, "memberOf")?;
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
@@ -115,33 +114,33 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn createdAt(&self) -> NaiveDateTime {
+    async fn created_at(&self) -> NaiveDateTime {
         self.created
     }
 
     #[graphql(complexity = 0)]
-    async fn usedBytes(&self, ctx: &Context<'_>) -> Result<f64, Error> {
+    async fn used_bytes(&self, ctx: &Context<'_>) -> Result<f64, Error> {
         self.user_id_is_same(ctx, "usedBytes")?;
 
         Ok(self.bytes_used as f64)
     }
 
     #[graphql(complexity = 0)]
-    async fn capWaived(&self, ctx: &Context<'_>) -> Result<bool, Error> {
+    async fn cap_waived(&self, ctx: &Context<'_>) -> Result<bool, Error> {
         self.user_id_is_same(ctx, "capWaived")?;
 
         Ok(self.cap_waived)
     }
 
     #[graphql(complexity = 0)]
-    async fn tfaEnabled(&self, ctx: &Context<'_>) -> Result<bool, Error> {
+    async fn tfa_enabled(&self, ctx: &Context<'_>) -> Result<bool, Error> {
         self.user_id_is_same(ctx, "tfaEnabled")?;
 
         Ok(self.tfa_enabled)
     }
 
     #[graphql(complexity = 5)]
-    async fn blockedUsers(&self, ctx: &Context<'_>) -> Result<Vec<Model>, Error> {
+    async fn blocked_users(&self, ctx: &Context<'_>) -> Result<Vec<Model>, Error> {
         self.user_id_is_same(ctx, "blockedUsers")?;
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
@@ -160,7 +159,7 @@ impl Model {
     }
 
     #[graphql(complexity = 5)]
-    async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
+    async fn custom_emojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match self
@@ -183,7 +182,7 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn notificationSetting(&self, ctx: &Context<'_>) -> Result<i16, Error> {
+    async fn notification_setting(&self, ctx: &Context<'_>) -> Result<i16, Error> {
         self.user_id_is_same(ctx, "notificationSetting")?;
 
         Ok(self.notification_setting)

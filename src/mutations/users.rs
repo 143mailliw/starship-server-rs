@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::entities::prelude::Token;
 use crate::entities::prelude::User;
 use crate::entities::token;
@@ -25,17 +24,18 @@ use std::env;
 #[derive(SimpleObject)]
 struct LoginPayload {
     token: String,
-    expectingTFA: bool,
+    #[graphql(name = "expectingTfa")]
+    expecting_tfa: bool,
 }
 
 #[derive(Default, Description)]
 pub struct UserMutation;
 
-#[Object]
+#[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl UserMutation {
     /// Registers a new user.
     #[graphql(complexity = 200)]
-    async fn insertUser(
+    async fn insert_user(
         &self,
         ctx: &Context<'_>,
         email: String,
@@ -143,7 +143,7 @@ impl UserMutation {
 
     /// Creates a new token & and signs a JWT object containing it's ID.
     #[graphql(complexity = 200)]
-    async fn loginUser(
+    async fn login_user(
         &self,
         ctx: &Context<'_>,
         username: String,
@@ -230,7 +230,7 @@ impl UserMutation {
 
                 Ok(LoginPayload {
                     token,
-                    expectingTFA: user.tfa_enabled,
+                    expecting_tfa: user.tfa_enabled,
                 })
             }
             Err(error) => {
@@ -245,9 +245,9 @@ impl UserMutation {
 
     /// Toggles whether or not a user is banned.
     #[graphql(guard = "SessionGuard::new(SessionType::Admin)", complexity = 10)]
-    async fn banUser(&self, ctx: &Context<'_>, userId: ID) -> Result<user::Model, Error> {
+    async fn ban_user(&self, ctx: &Context<'_>, user_id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
-        let id = userId.to_string();
+        let id = user_id.to_string();
 
         match User::find_by_id(id).one(db).await {
             Ok(value) => match value {
@@ -284,10 +284,14 @@ impl UserMutation {
 
     /// Toggles whether or not a user is blocked.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn toggleBlockUser(&self, ctx: &Context<'_>, userId: ID) -> Result<user::Model, Error> {
+    async fn toggle_block_user(
+        &self,
+        ctx: &Context<'_>,
+        user_id: ID,
+    ) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
-        let id = userId.to_string();
+        let id = user_id.to_string();
 
         match User::find_by_id(id).one(db).await {
             Ok(value) => match value {
@@ -332,7 +336,11 @@ impl UserMutation {
 
     /// Changes the current user's profile bio.
     #[graphql(guard = "SessionGuard::new(SessionType::NotBanned)", complexity = 10)]
-    async fn updateProfileBio(&self, ctx: &Context<'_>, bio: String) -> Result<user::Model, Error> {
+    async fn update_profile_bio(
+        &self,
+        ctx: &Context<'_>,
+        bio: String,
+    ) -> Result<user::Model, Error> {
         if bio.len() > 4000 {
             return Err(errors::create_user_input_error(
                 "Your bio cannot be longer than 4000 characters.",
@@ -357,7 +365,7 @@ impl UserMutation {
 
     /// Changes the current user's notification setting.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn setNotificationSetting(
+    async fn set_notification_setting(
         &self,
         ctx: &Context<'_>,
         option: i16,
@@ -386,7 +394,7 @@ impl UserMutation {
     /// Generates and stores a new TOTP secret for the current user.
     /// NB: This is step 1/2 in the TOTP flow. You need to run the `confirmTFA` mutation as well.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn generateTOTPSecret(&self, ctx: &Context<'_>) -> Result<String, Error> {
+    async fn generate_totp_secret(&self, ctx: &Context<'_>) -> Result<String, Error> {
         let secret = KeyBuilder::new().generate().as_hex();
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
@@ -417,7 +425,7 @@ impl UserMutation {
 
     /// Validates the token, and, if the token is valid, enables 2FA and generates backup codes.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn confirmTFA(&self, ctx: &Context<'_>, token: u32) -> Result<Vec<u32>, Error> {
+    async fn confirm_tfa(&self, ctx: &Context<'_>, token: u32) -> Result<Vec<u32>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
 
@@ -486,7 +494,7 @@ impl UserMutation {
 
     /// Validates the token, and, if the token is valid, disables TFA for the current user.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn disableTFA(&self, ctx: &Context<'_>, token: u32) -> Result<user::Model, Error> {
+    async fn disable_tfa(&self, ctx: &Context<'_>, token: u32) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
 
@@ -536,7 +544,7 @@ impl UserMutation {
     /// Verifies the authenticity of the current token, provided in the Authorization header.
     /// This mutation is only required if the user has TFA enabled.
     #[graphql(guard = "SessionGuard::new(SessionType::Token)", complexity = 200)]
-    async fn finalizeAuthorization(&self, ctx: &Context<'_>, token: u32) -> Result<bool, Error> {
+    async fn finalize_authorization(&self, ctx: &Context<'_>, token: u32) -> Result<bool, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
 

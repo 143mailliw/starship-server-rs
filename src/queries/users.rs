@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::entities::prelude::User;
 use crate::entities::user;
 use crate::errors;
@@ -11,7 +10,7 @@ use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryOrder};
 #[derive(Default, Description)]
 pub struct UserQuery;
 
-#[Object]
+#[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl UserQuery {
     /// Finds a user from it's ID.
     #[graphql(complexity = 5)]
@@ -38,7 +37,7 @@ impl UserQuery {
 
     /// Retrieves the current session's user, if it have one.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 10)]
-    async fn currentUser(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
+    async fn current_user(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         Ok(ctx.data::<Session>().unwrap().user.clone().unwrap())
     }
 
@@ -47,7 +46,7 @@ impl UserQuery {
         guard = "SessionGuard::new(SessionType::Admin)",
         complexity = "5 * size as usize + size as usize * child_complexity"
     )]
-    async fn adminUsers(
+    async fn admin_users(
         &self,
         ctx: &Context<'_>,
         size: u64,

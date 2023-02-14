@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::super::custom_emoji::Model;
 use super::super::planet;
 use super::super::user;
@@ -7,7 +6,11 @@ use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use sea_orm::{DatabaseConnection, ModelTrait};
 
-#[Object(name = "CustomEmoji")]
+#[Object(
+    name = "CustomEmoji",
+    rename_fields = "camelCase",
+    rename_args = "camelCase"
+)]
 impl Model {
     #[graphql(complexity = 0)]
     async fn id(&self) -> ID {

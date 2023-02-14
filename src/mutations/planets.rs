@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::entities::{planet, planet_component, planet_member, planet_role};
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
@@ -14,11 +13,11 @@ use sea_orm::{
 #[derive(Default, Description)]
 pub struct PlanetMutation;
 
-#[Object]
+#[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl PlanetMutation {
     /// Creates a new planet.
     #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 200)]
-    async fn insertPlanet(
+    async fn insert_planet(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -140,7 +139,7 @@ impl PlanetMutation {
     }
 
     /// Renames a planet.
-    async fn renamePlanet(
+    async fn rename_planet(
         &self,
         ctx: &Context<'_>,
         id: ID,
@@ -173,7 +172,7 @@ impl PlanetMutation {
     }
 
     /// Sets a planet's description.
-    async fn setPlanetDescription(
+    async fn set_planet_description(
         &self,
         ctx: &Context<'_>,
         id: ID,
@@ -206,7 +205,7 @@ impl PlanetMutation {
     }
 
     /// Joins a public planet.
-    async fn joinPlanet(&self, ctx: &Context<'_>, id: ID) -> Result<planet_member::Model, Error> {
+    async fn join_planet(&self, ctx: &Context<'_>, id: ID) -> Result<planet_member::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
         let user_id = session.user.as_ref().map(|user| user.id.clone());

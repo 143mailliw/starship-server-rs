@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::super::planet;
 use super::super::planet_component::Model;
 use crate::errors;
@@ -7,7 +6,11 @@ use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
 use sea_orm::{DatabaseConnection, ModelTrait};
 
-#[Object(name = "PlanetComponent")]
+#[Object(
+    name = "PlanetComponent",
+    rename_fields = "camelCase",
+    rename_args = "camelCase"
+)]
 impl Model {
     #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
@@ -20,12 +23,12 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn createdAt(&self) -> NaiveDateTime {
+    async fn created_at(&self) -> NaiveDateTime {
         self.created
     }
 
     #[graphql(complexity = 0)]
-    async fn componentId(&self) -> String {
+    async fn component_id(&self) -> String {
         self.component_id.clone()
     }
 

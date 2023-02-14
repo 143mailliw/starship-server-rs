@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::entities::planet;
 use crate::errors;
 use crate::permissions::util;
@@ -10,7 +9,7 @@ use sea_orm::{DatabaseConnection, EntityTrait};
 #[derive(Default, Description)]
 pub struct PlanetQuery;
 
-#[Object]
+#[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl PlanetQuery {
     /// Finds a planet from it's ID.
     #[graphql(complexity = 5)]

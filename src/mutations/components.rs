@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::entities::planet_component;
 use crate::errors;
 use crate::permissions::util;
@@ -9,9 +8,9 @@ use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 #[derive(Default, Description)]
 pub struct ComponentMutation;
 
-#[Object]
+#[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl ComponentMutation {
-    async fn renameComponent(
+    async fn rename_component(
         &self,
         ctx: &Context<'_>,
         id: ID,

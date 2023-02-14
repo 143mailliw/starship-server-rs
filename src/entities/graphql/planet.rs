@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::super::custom_emoji;
 use super::super::planet::Model;
 use super::super::planet_component;
@@ -14,7 +13,11 @@ use sea_orm::{
     QueryOrder,
 };
 
-#[Object(name = "Planet")]
+#[Object(
+    name = "Planet",
+    rename_fields = "camelCase",
+    rename_args = "camelCase"
+)]
 impl Model {
     #[graphql(complexity = 0)]
     async fn id(&self) -> ID {
@@ -27,7 +30,7 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn createdAt(&self) -> NaiveDateTime {
+    async fn created_at(&self) -> NaiveDateTime {
         self.created
     }
 
@@ -56,7 +59,7 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn memberCount(&self) -> i32 {
+    async fn member_count(&self) -> i32 {
         self.member_count
     }
 
@@ -74,7 +77,7 @@ impl Model {
     }
 
     #[graphql(complexity = 5)]
-    async fn homeComponent(
+    async fn home_component(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<planet_component::Model>, Error> {
@@ -147,7 +150,7 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn featuredDescription(&self) -> String {
+    async fn featured_description(&self) -> String {
         self.featured_description.clone()
     }
 
@@ -182,7 +185,7 @@ impl Model {
     }
 
     #[graphql(complexity = 5)]
-    async fn customEmojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
+    async fn custom_emojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match self.find_related(custom_emoji::Entity).all(db).await {
