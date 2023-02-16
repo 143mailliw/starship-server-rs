@@ -2,11 +2,12 @@
 
 pub const VIEWER_PERMISSIONS: &[&str] = &[
     // planet permissions
-    "+planet.view",
+    "+planet.view",        // view the planet
+    "+planet.member.view", // view members
     // page permissions
     "+page.view", // view pages
     // forum permissions
-    "+forum.view",
+    "+forum.view", // view forums
     // file permissions
     "+files.view",             // view files
     "+files.search",           // search the file tree
