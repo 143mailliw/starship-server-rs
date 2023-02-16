@@ -32,7 +32,7 @@ Once these are set, the server can be run using `cargo run`.
 | Users          | 70% complete | No PFPs, banners, forgot password, register function (insertUser) is incomplete |
 | Tokens         | 30% complete | Basic backend only (just enough to allow for logging in)                        |
 | Planets        | 40% complete | Basic implementation only                                                       |
-| Permissions    | 30% complete | Permission check flow complete, but role & member management missing            |
+| Permissions    | 40% complete | Permission check flow complete, but role & member management missing            |
 | Components     | 50% complete | Missing ordering, folders, deletion, and creation                               |
 | Pages          | 0% complete  |                                                                                 |
 | Files          | 0% complete  |                                                                                 |
