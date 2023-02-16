@@ -42,23 +42,24 @@ pub const ADMINISTRATOR_PERMISSIONS: &[&str] = &[
     "+administrator.read_all",  // overrides per-component read rules
     "+administrator.write_all", // overrides per-component write rules
     // planet permissions
-    "+planet.change_name",        // change the planet name
-    "+planet.change_description", // change the planet description
-    "+planet.component.create",   // create new components
-    "+planet.component.rename",   // rename components
-    "+planet.component.delete",   // delete components
-    "+planet.component.move",     // move components
-    "+planet.component.set_home", // change the home component
-    "+planet.roles.create",       // create roles
-    "+planet.roles.rename",       // rename roles
-    "+planet.roles.change_color", // change the color of roles
-    "+planet.roles.edit",         // change the permissions of roles
-    "+planet.roles.delete",       // delete roles
-    "+planet.roles.reorder",      // change the order of roles
-    "+planet.roles.add_member",   // add new members to roles
-    "+planet.emojis.create",      // create emojis
-    "+planet.emojis.delete",      // delete emojis
-    "+planet.change_css",         // change the planet's css
+    "+planet.change_name",             // change the planet name
+    "+planet.change_description",      // change the planet description
+    "+planet.component.create",        // create new components
+    "+planet.component.rename",        // rename components
+    "+planet.component.delete",        // delete components
+    "+planet.component.move",          // move components
+    "+planet.component.set_home",      // change the home component
+    "+planet.roles.create",            // create roles
+    "+planet.roles.rename",            // rename roles
+    "+planet.roles.change_color",      // change the color of roles
+    "+planet.roles.edit",              // change the permissions of roles
+    "+planet.roles.delete",            // delete roles
+    "+planet.roles.reorder",           // change the order of roles
+    "+planet.roles.add_member",        // add new members to roles
+    "+planet.member.edit_permissions", // edit a member's permissions
+    "+planet.emojis.create",           // create emojis
+    "+planet.emojis.delete",           // delete emojis
+    "+planet.change_css",              // change the planet's css
     // page permissions
     "+page.edit", // edit pages
     // forum permissions

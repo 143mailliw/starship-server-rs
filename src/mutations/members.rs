@@ -164,4 +164,62 @@ impl MemberMutation {
             Err(errors::create_not_found_error())
         }
     }
+
+    /// Sets a permission for the specified planet member.
+    ///
+    /// + grants the permission
+    /// * falls back to the previous permission set (for this function, the highest priority role)
+    /// - explicitly denies the permission
+    async fn set_member_permission(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        permission: String,
+    ) -> Result<planet_member::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        match planet_member::Entity::find_by_id(id.to_string())
+            .one(db)
+            .await
+        {
+            Ok(value) => match value {
+                Some(member) => {
+                    let planet = util::get_planet(member.planet.clone().to_string(), db).await?;
+                    let requesting_member =
+                        util::get_planet_member(user_id, member.planet.clone().to_string(), db)
+                            .await?;
+                    let roles = util::get_member_roles(requesting_member.clone(), db).await?;
+                    util::check_permission(
+                        "planet.member.edit_permissions".to_string(),
+                        planet.clone(),
+                        requesting_member,
+                        roles,
+                    )?;
+
+                    if permission.ends_with("owner") {
+                        return Err(errors::create_user_input_error(
+                            "You cannot grant or remove the 'owner' permission.",
+                            "SPECIAL_PERMISSION",
+                        ));
+                    }
+
+                    let mut active_member: planet_member::ActiveModel = member.clone().into();
+                    active_member.permissions =
+                        ActiveValue::Set(util::update_permissions(member.permissions, permission));
+
+                    active_member
+                        .update(db)
+                        .await
+                        .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+                }
+                None => Err(errors::create_not_found_error()),
+            },
+            Err(_err) => Err(errors::create_internal_server_error(
+                None,
+                "TARGET_RETRIEVAL_ERROR",
+            )),
+        }
+    }
 }

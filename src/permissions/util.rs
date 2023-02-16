@@ -87,3 +87,30 @@ pub fn check_permission(
         Err(errors::create_not_found_error())
     }
 }
+
+/// Modifies a permission vector based on an input permission string's prefix.
+///
+/// Prefixes:
+/// '+' grants the permission.
+/// '*' (or any other unspecified character) falls back to the previous permission set.
+/// '-' explicitly denies the permission.
+pub fn update_permissions(mut permission_vec: Vec<String>, permission: String) -> Vec<String> {
+    // remove the permission from the array
+    let mut permission_chars = permission.chars();
+    let permission_prefix = permission_chars.next();
+    let base_permission: String = permission_chars.collect();
+
+    permission_vec.retain(|p| {
+        let mut p_chars = p.chars();
+        p_chars.next();
+        let base_p: String = p_chars.collect();
+
+        base_p != base_permission
+    });
+
+    if permission_prefix == Some('-') || permission_prefix == Some('+') {
+        permission_vec.push(permission);
+    }
+
+    permission_vec
+}
