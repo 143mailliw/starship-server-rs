@@ -4,7 +4,7 @@ use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 #[derive(Default, Description)]
 pub struct PlanetQuery;
@@ -40,6 +40,24 @@ impl PlanetQuery {
                     "RETRIEVAL_ERROR",
                 ))
             }
+        }
+    }
+
+    /// Finds all the featured planets.
+    #[graphql(complexity = 5)]
+    async fn featured_planets(&self, ctx: &Context<'_>) -> Result<Vec<planet::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+
+        match planet::Entity::find()
+            .filter(planet::Column::Featured.eq(true))
+            .all(db)
+            .await
+        {
+            Ok(value) => Ok(value),
+            Err(_err) => Err(errors::create_internal_server_error(
+                None,
+                "RETRIEVAL_ERROR",
+            )),
         }
     }
 }
