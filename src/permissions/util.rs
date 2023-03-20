@@ -7,16 +7,11 @@ use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 /// Gets a planet. If an error occurs or the planet is not found, an error ready for presentation to
 /// the client is returned.
 pub async fn get_planet(id: String, db: &DatabaseConnection) -> Result<planet::Model, Error> {
-    match planet::Entity::find_by_id(id.clone()).one(db).await {
-        Ok(planet) => match planet {
-            Some(planet) => Ok(planet),
-            None => Err(errors::create_not_found_error()),
-        },
-        Err(_err) => Err(errors::create_internal_server_error(
-            None,
-            "PLANET_RETRIEVAL_ERROR",
-        )),
-    }
+    planet::Entity::find_by_id(id.clone())
+        .one(db)
+        .await
+        .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?
+        .ok_or(errors::create_not_found_error())
 }
 
 /// Gets a planet member. If an error occurs, an error ready for presentation to the client
@@ -27,7 +22,7 @@ pub async fn get_planet_member(
     db: &DatabaseConnection,
 ) -> Result<Option<planet_member::Model>, Error> {
     match user_id {
-        Some(user_id) => match planet_member::Entity::find()
+        Some(user_id) => planet_member::Entity::find()
             .filter(
                 planet_member::Column::User
                     .eq(user_id)
@@ -35,13 +30,7 @@ pub async fn get_planet_member(
             )
             .one(db)
             .await
-        {
-            Ok(member) => Ok(member),
-            Err(_err) => Err(errors::create_internal_server_error(
-                None,
-                "MEMBER_RETRIEVAL_ERROR",
-            )),
-        },
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR")),
         None => Ok(None),
     }
 }
@@ -56,19 +45,12 @@ pub async fn get_member_roles(
     db: &DatabaseConnection,
 ) -> Result<Option<Vec<planet_role::Model>>, Error> {
     match planet_member {
-        Some(member) => {
-            match planet_role::Entity::find()
-                .filter(planet_role::Column::Id.is_in(member.roles))
-                .all(db)
-                .await
-            {
-                Ok(roles) => Ok(Some(roles)),
-                Err(_err) => Err(errors::create_internal_server_error(
-                    None,
-                    "ROLES_RETRIEVAL_ERROR",
-                )),
-            }
-        }
+        Some(member) => planet_role::Entity::find()
+            .filter(planet_role::Column::Id.is_in(member.roles))
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLES_RETRIEVAL_ERROR"))
+            .map(Some),
         None => Ok(None),
     }
 }
