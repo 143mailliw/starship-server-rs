@@ -12,7 +12,6 @@ use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use libreauth::key::KeyBuilder;
 use libreauth::oath::TOTPBuilder;
-use log::error;
 use nanoid::nanoid;
 use rand::prelude::*;
 use sea_orm::{
@@ -48,7 +47,7 @@ impl UserMutation {
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match User::find()
+        let existing_user = User::find()
             .filter(
                 user::Column::Username
                     .eq(username.clone())
@@ -56,29 +55,23 @@ impl UserMutation {
             )
             .one(db)
             .await
-        {
-            Ok(value) => {
-                if let Some(value) = value {
-                    if value.email_address == email {
-                        return Err(errors::create_user_input_error(
-                            "An account is already registered with that email.",
-                            "EMAIL_ALREADY_EXISTS",
-                        ));
-                    }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_ERROR"))?;
 
-                    if value.username == username {
-                        return Err(errors::create_user_input_error(
-                            "An account is already registered with that username",
-                            "USERNAME_ALREADY_EXISTS",
-                        ));
-                    }
-                }
+        if let Some(existing_user) = existing_user {
+            if existing_user.email_address == email {
+                return Err(errors::create_user_input_error(
+                    "An account is already registered with that email.",
+                    "EMAIL_ALREADY_EXISTS",
+                ));
             }
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(None, "FIND_ERROR"));
+
+            if existing_user.username == username {
+                return Err(errors::create_user_input_error(
+                    "An account is already registered with that username",
+                    "USERNAME_ALREADY_EXISTS",
+                ));
             }
-        };
+        }
 
         if username.len() < 4 {
             return Err(errors::create_user_input_error(
@@ -95,13 +88,8 @@ impl UserMutation {
         };
 
         // inputs are valid
-        let hash = match hash(password, 4) {
-            Ok(value) => value,
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(None, "HASH_ERROR"));
-            }
-        };
+        let hash = hash(password, 4)
+            .map_err(|_| errors::create_internal_server_error(None, "HASH_ERROR"))?;
 
         let user = user::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
@@ -115,30 +103,16 @@ impl UserMutation {
             ..Default::default()
         };
 
-        let result = match User::insert(user).exec(db).await {
-            Ok(value) => value,
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "INSERTION_ERROR",
-                ));
-            }
-        };
+        let result = User::insert(user)
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "INSERTION_ERROR"))?;
 
-        match User::find_by_id(result.last_insert_id).one(db).await {
-            Ok(value) => match value {
-                Some(value) => Ok(value),
-                None => Err(errors::create_internal_server_error(None, "BAD_ID_ERROR")),
-            },
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
-        }
+        User::find_by_id(result.last_insert_id)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_internal_server_error(None, "BAD_ID_ERROR"))
     }
 
     /// Creates a new token & and signs a JWT object containing it's ID.
@@ -152,25 +126,15 @@ impl UserMutation {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
 
-        let user = match User::find()
+        let user = User::find()
             .filter(user::Column::Username.eq(username))
             .one(db)
             .await
-        {
-            Ok(value) => match value {
-                Some(value) => value,
-                None => {
-                    return Err(errors::create_forbidden_error(
-                        Some("Invalid username or password."),
-                        "INVALID_USER",
-                    ))
-                }
-            },
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(None, "FIND_ERROR"));
-            }
-        };
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_ERROR"))?
+            .ok_or(errors::create_forbidden_error(
+                Some("Invalid username or password."),
+                "INVALID_USER",
+            ))?;
 
         if env::var("SMTP_HOST").is_ok() && !user.verified {
             return Err(errors::create_forbidden_error(
@@ -179,23 +143,15 @@ impl UserMutation {
             ));
         };
 
-        match bcrypt::verify(password, &user.password) {
-            Ok(result) => {
-                if !result {
-                    return Err(errors::create_forbidden_error(
-                        Some("Invalid username or password."),
-                        "INVALID_USER",
-                    ));
-                }
-            }
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "VERIFICATION_ERROR",
-                ));
-            }
-        };
+        let result = bcrypt::verify(password, &user.password)
+            .map_err(|_| errors::create_internal_server_error(None, "VERIFICATION_ERROR"))?;
+
+        if !result {
+            return Err(errors::create_forbidden_error(
+                Some("Invalid username or password."),
+                "INVALID_USER",
+            ));
+        }
 
         //TODO: Find approx. location from IP
         //TODO: Find OS and Browser
@@ -217,30 +173,24 @@ impl UserMutation {
             verified: ActiveValue::Set(!user.tfa_enabled),
         };
 
-        match Token::insert(token).exec(db).await {
-            Ok(res) => {
-                let jwt_data = JWTLoginToken {
-                    token: res.last_insert_id,
-                    user_id: user.id,
-                };
+        let res = Token::insert(token)
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "INSERTION_ERROR"))?;
 
-                let secret = env::var("SECRET").unwrap();
-                let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes()).unwrap();
-                let token = jwt_data.sign_with_key(&key).unwrap();
+        let jwt_data = JWTLoginToken {
+            token: res.last_insert_id,
+            user_id: user.id,
+        };
 
-                Ok(LoginPayload {
-                    token,
-                    expecting_tfa: user.tfa_enabled,
-                })
-            }
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "INSERTION_ERROR",
-                ))
-            }
-        }
+        let secret = env::var("SECRET").unwrap();
+        let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes()).unwrap();
+        let token = jwt_data.sign_with_key(&key).unwrap();
+
+        Ok(LoginPayload {
+            token,
+            expecting_tfa: user.tfa_enabled,
+        })
     }
 
     /// Toggles whether or not a user is banned.
@@ -249,37 +199,26 @@ impl UserMutation {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let id = user_id.to_string();
 
-        match User::find_by_id(id).one(db).await {
-            Ok(value) => match value {
-                Some(user) => {
-                    if user.admin {
-                        return Err(errors::create_forbidden_error(
-                            Some("You cannot ban an administrator."),
-                            "ADMINISTRATIVE_IMMUNITY",
-                        ));
-                    }
+        let user = User::find_by_id(id)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-                    let mut active_user: user::ActiveModel = user.clone().into();
-                    active_user.banned = ActiveValue::Set(!user.banned);
-
-                    match active_user.update(db).await {
-                        Ok(value) => Ok(value),
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                        }
-                    }
-                }
-                None => Err(errors::create_not_found_error()),
-            },
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
+        if user.admin {
+            return Err(errors::create_forbidden_error(
+                Some("You cannot ban an administrator."),
+                "ADMINISTRATIVE_IMMUNITY",
+            ));
         }
+
+        let mut active_user: user::ActiveModel = user.clone().into();
+        active_user.banned = ActiveValue::Set(!user.banned);
+
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Toggles whether or not a user is blocked.
@@ -293,45 +232,33 @@ impl UserMutation {
         let session = ctx.data::<Session>().unwrap();
         let id = user_id.to_string();
 
-        match User::find_by_id(id).one(db).await {
-            Ok(value) => match value {
-                Some(user) => {
-                    // unwrap is safe because guard guarantees we have a user
-                    if user.id == session.user.as_ref().unwrap().id {
-                        return Err(errors::create_user_input_error(
-                            "You cannot block yourself.",
-                            "INVALID_USER_SELF",
-                        ));
-                    }
+        let user = User::find_by_id(id)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-                    let mut blocked = session.user.as_ref().unwrap().blocked.clone();
-                    if blocked.contains(&user.id) {
-                        blocked.retain(|searched_user| **searched_user != user.id)
-                    } else {
-                        blocked.push(user.id);
-                    };
-
-                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
-                    active_user.blocked = ActiveValue::Set(blocked);
-
-                    match active_user.update(db).await {
-                        Ok(value) => Ok(value),
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                        }
-                    }
-                }
-                None => Err(errors::create_not_found_error()),
-            },
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
+        if user.id == session.user.as_ref().unwrap().id {
+            return Err(errors::create_user_input_error(
+                "You cannot block yourself.",
+                "INVALID_USER_SELF",
+            ));
         }
+
+        let mut blocked = session.user.as_ref().unwrap().blocked.clone();
+        if blocked.contains(&user.id) {
+            blocked.retain(|searched_user| **searched_user != user.id)
+        } else {
+            blocked.push(user.id);
+        };
+
+        let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+        active_user.blocked = ActiveValue::Set(blocked);
+
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Changes the current user's profile bio.
@@ -354,13 +281,10 @@ impl UserMutation {
         let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
         active_user.profile_bio = ActiveValue::Set(Some(bio));
 
-        match active_user.update(db).await {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Changes the current user's notification setting.
@@ -382,13 +306,10 @@ impl UserMutation {
         let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
         active_user.notification_setting = ActiveValue::Set(option);
 
-        match active_user.update(db).await {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Generates and stores a new TOTP secret for the current user.
@@ -403,24 +324,17 @@ impl UserMutation {
         let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
         active_user.tfa_secret = ActiveValue::Set(Some(secret.clone()));
 
-        match active_user.update(db).await {
-            Ok(_value) => match TOTPBuilder::new().hex_key(&secret.to_owned()).finalize() {
-                Ok(totp) => Ok(totp
-                    .key_uri_format("Starship", &session.user.as_ref().unwrap().username)
-                    .finalize()),
-                Err(error) => {
-                    error!("{:?}", error);
-                    Err(errors::create_internal_server_error(
-                        None,
-                        "TOTP_BUILD_ERROR",
-                    ))
-                }
-            },
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))?;
+
+        Ok(TOTPBuilder::new()
+            .hex_key(&secret.to_owned())
+            .finalize()
+            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+            .key_uri_format("Starship", &session.user.as_ref().unwrap().username)
+            .finalize())
     }
 
     /// Validates the token, and, if the token is valid, enables 2FA and generates backup codes.
@@ -445,50 +359,41 @@ impl UserMutation {
             ));
         };
 
-        match TOTPBuilder::new()
+        let is_valid = TOTPBuilder::new()
             .hex_key(user.tfa_secret.as_ref().unwrap())
             .finalize()
-        {
-            Ok(totp) => {
-                if totp.is_valid(&token.to_string()) {
-                    let mut rng = StdRng::from_entropy();
-                    let numbers = vec![
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                        rng.gen_range(0..1000000000),
-                    ];
+            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+            .is_valid(&token.to_string());
 
-                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
-                    active_user.tfa_backup =
-                        ActiveValue::Set(numbers.iter().map(|code| code.to_string()).collect());
-                    active_user.tfa_enabled = ActiveValue::Set(true);
+        if is_valid {
+            let mut rng = StdRng::from_entropy();
+            let numbers = vec![
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1000000000),
+            ];
 
-                    match active_user.update(db).await {
-                        Ok(_value) => Ok(numbers),
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                        }
-                    }
-                } else {
-                    Err(errors::create_user_input_error(
-                        "Incorrect TFA code.",
-                        "INCORRECT_CODE",
-                    ))
-                }
-            }
-            Err(error) => {
-                error!("{:?}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "TOTP_BUILD_ERROR",
-                ))
-            }
+            let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+            active_user.tfa_backup =
+                ActiveValue::Set(numbers.iter().map(|code| code.to_string()).collect());
+            active_user.tfa_enabled = ActiveValue::Set(true);
+
+            active_user
+                .update(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))?;
+
+            Ok(numbers)
+        } else {
+            Err(errors::create_user_input_error(
+                "Incorrect TFA code.",
+                "INCORRECT_CODE",
+            ))
         }
     }
 
@@ -507,37 +412,25 @@ impl UserMutation {
             ));
         };
 
-        match TOTPBuilder::new()
+        let is_valid = TOTPBuilder::new()
             .hex_key(&user.tfa_secret.unwrap())
             .finalize()
-        {
-            Ok(totp) => {
-                if totp.is_valid(&token.to_string()) || user.tfa_backup.contains(&token.to_string())
-                {
-                    let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
-                    active_user.tfa_enabled = ActiveValue::Set(false);
+            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+            .is_valid(&token.to_string());
 
-                    match active_user.update(db).await {
-                        Ok(value) => Ok(value),
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                        }
-                    }
-                } else {
-                    Err(errors::create_user_input_error(
-                        "Incorrect TFA or backup code.",
-                        "INCORRECT_CODE",
-                    ))
-                }
-            }
-            Err(error) => {
-                error!("{:?}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "TOTP_BUILD_ERROR",
-                ))
-            }
+        if is_valid || user.tfa_backup.contains(&token.to_string()) {
+            let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+            active_user.tfa_enabled = ActiveValue::Set(false);
+
+            active_user
+                .update(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+        } else {
+            Err(errors::create_user_input_error(
+                "Incorrect TFA or backup code.",
+                "INCORRECT_CODE",
+            ))
         }
     }
 
@@ -562,59 +455,39 @@ impl UserMutation {
             return Ok(true);
         }
 
-        match TOTPBuilder::new()
+        let is_valid = TOTPBuilder::new()
             .hex_key(user.tfa_secret.as_ref().unwrap())
             .finalize()
-        {
-            Ok(totp) => {
-                if totp.is_valid(&token.to_string()) || user.tfa_backup.contains(&token.to_string())
-                {
-                    if user.tfa_backup.contains(&token.to_string()) {
-                        let mut remaining_codes = user.tfa_backup.clone();
-                        remaining_codes.retain(|searched_code| searched_code != &token.to_string());
+            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+            .is_valid(&token.to_string());
 
-                        let mut active_user: user::ActiveModel = user.into();
-                        active_user.tfa_backup = ActiveValue::Set(remaining_codes);
+        if is_valid || user.tfa_backup.contains(&token.to_string()) {
+            if user.tfa_backup.contains(&token.to_string()) {
+                let mut remaining_codes = user.tfa_backup.clone();
+                remaining_codes.retain(|searched_code| searched_code != &token.to_string());
 
-                        match active_user.update(db).await {
-                            Ok(_value) => (),
-                            Err(error) => {
-                                error!("{}", error);
-                                return Err(errors::create_internal_server_error(
-                                    None,
-                                    "UPDATE_USER_ERROR",
-                                ));
-                            }
-                        }
-                    }
+                let mut active_user: user::ActiveModel = user.into();
+                active_user.tfa_backup = ActiveValue::Set(remaining_codes);
 
-                    let mut active_token: token::ActiveModel = auth_token.clone().into();
-                    active_token.verified = ActiveValue::Set(true);
-
-                    match active_token.update(db).await {
-                        Ok(_value) => Ok(true),
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(
-                                None,
-                                "UPDATE_TOKEN_ERROR",
-                            ))
-                        }
-                    }
-                } else {
-                    Err(errors::create_user_input_error(
-                        "Incorrect TFA or backup code.",
-                        "INCORRECT_CODE",
-                    ))
-                }
+                active_user
+                    .update(db)
+                    .await
+                    .map_err(|_| errors::create_internal_server_error(None, "UPDATE_USER_ERROR"))?;
             }
-            Err(error) => {
-                error!("{:?}", error);
-                Err(errors::create_internal_server_error(
-                    None,
-                    "TOTP_BUILD_ERROR",
-                ))
-            }
+
+            let mut active_token: token::ActiveModel = auth_token.clone().into();
+            active_token.verified = ActiveValue::Set(true);
+
+            active_token
+                .update(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "UPDATE_TOKEN_ERROR"))
+                .map(|_| true)
+        } else {
+            Err(errors::create_user_input_error(
+                "Incorrect TFA or backup code.",
+                "INCORRECT_CODE",
+            ))
         }
     }
 }

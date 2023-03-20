@@ -12,37 +12,29 @@ use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFil
 
 impl Model {
     fn user_id_is_same(&self, ctx: &Context<'_>, name: &str) -> Result<(), Error> {
-        let session = ctx.data::<Session>();
+        let user = ctx
+            .data::<Session>()
+            .map_err(|_| errors::create_internal_server_error(None, "NO_SESSION_ERROR"))?
+            .user
+            .as_ref()
+            .ok_or(errors::create_forbidden_error(
+                Some(
+                    ("You don't have permission to read the field '".to_string() + name + "'.")
+                        .as_str(),
+                ),
+                "FORBIDDEN",
+            ))?;
 
-        match session {
-            Ok(session) => match session.user.as_ref() {
-                Some(user) => {
-                    if user.id == self.id || user.admin {
-                        Ok(())
-                    } else {
-                        Err(errors::create_forbidden_error(
-                            Some(
-                                ("You don't have permission to read the field '".to_string()
-                                    + name
-                                    + "'.")
-                                    .as_str(),
-                            ),
-                            "FORBIDDEN",
-                        ))
-                    }
-                }
-                None => Err(errors::create_forbidden_error(
-                    Some(
-                        ("You don't have permission to read the field '".to_string() + name + "'.")
-                            .as_str(),
-                    ),
-                    "FORBIDDEN",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "NO_SESSION_ERROR",
-            )),
+        if user.id == self.id || user.admin {
+            Ok(())
+        } else {
+            Err(errors::create_forbidden_error(
+                Some(
+                    ("You don't have permission to read the field '".to_string() + name + "'.")
+                        .as_str(),
+                ),
+                "FORBIDDEN",
+            ))
         }
     }
 }
@@ -90,27 +82,21 @@ impl Model {
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self
+        Ok(self
             .find_related(planet_member::Entity)
             .find_with_related(planet::Entity)
             .all(db)
             .await
-        {
-            Ok(members) => Ok(members
-                .iter()
-                .filter_map(|value| {
-                    if !value.1.is_empty() {
-                        Some(value.1[0].clone())
-                    } else {
-                        None
-                    }
-                })
-                .collect()),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_PLANETS_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_PLANETS_ERROR"))?
+            .iter()
+            .filter_map(|value| {
+                if !value.1.is_empty() {
+                    Some(value.1[0].clone())
+                } else {
+                    None
+                }
+            })
+            .collect())
     }
 
     #[graphql(complexity = 0)]
@@ -145,35 +131,22 @@ impl Model {
 
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match user::Entity::find()
+        user::Entity::find()
             .filter(user::Column::Id.is_in(self.blocked.clone()))
             .all(db)
             .await
-        {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_BLOCKED_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_BLOCKED_ERROR"))
     }
 
     #[graphql(complexity = 5)]
     async fn custom_emojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self
-            .find_related(custom_emoji::Entity)
+        self.find_related(custom_emoji::Entity)
             .filter(custom_emoji::Column::Planet.is_null())
             .all(db)
             .await
-        {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_EMOJIS_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_EMOJIS_ERROR"))
     }
 
     #[graphql(complexity = 0)]

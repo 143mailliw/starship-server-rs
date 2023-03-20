@@ -17,22 +17,11 @@ impl UserQuery {
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match User::find_by_id(id.to_string()).one(db).await {
-            Ok(value) => match value {
-                Some(value) => Ok(value),
-                None => Err(errors::create_user_input_error(
-                    "User does not exist.",
-                    "INVALID_USER",
-                )),
-            },
-            Err(error) => {
-                error!("{error}");
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
-        }
+        User::find_by_id(id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())
     }
 
     /// Retrieves the current session's user, if it have one.
@@ -54,20 +43,11 @@ impl UserQuery {
     ) -> Result<Vec<user::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match User::find()
+        User::find()
             .order_by_desc(user::Column::Created)
             .paginate(db, size)
             .fetch_page(page)
             .await
-        {
-            Ok(values) => Ok(values),
-            Err(error) => {
-                error!("{error}");
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))
     }
 }
