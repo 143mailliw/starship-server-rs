@@ -26,88 +26,62 @@ impl MemberMutation {
         let planet = planet::Entity::find_by_id(id.to_string())
             .one(db)
             .await
-            .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?;
+            .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-        if let Some(planet) = planet {
-            let role = planet_role::Entity::find()
+        let role = planet_role::Entity::find()
+            .filter(
+                planet_role::Column::Planet
+                    .eq(planet.id.clone())
+                    .and(planet_role::Column::Default.eq(true)),
+            )
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
+                None,
+                "MISSING_DEFAULT_ROLE_ERROR",
+            ))?;
+
+        if !planet.private {
+            if planet_member::Entity::find()
                 .filter(
-                    planet_role::Column::Planet
-                        .eq(planet.id.clone())
-                        .and(planet_role::Column::Default.eq(true)),
+                    planet_member::Column::User
+                        .eq(user_id.as_ref().unwrap().clone())
+                        .and(planet_member::Column::Planet.eq(planet.id.clone())),
                 )
                 .one(db)
                 .await
-                .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?;
-
-            if let Some(role) = role {
-                if !planet.private {
-                    if planet_member::Entity::find()
-                        .filter(
-                            planet_member::Column::User
-                                .eq(user_id.as_ref().unwrap().clone())
-                                .and(planet_member::Column::Planet.eq(planet.id.clone())),
-                        )
-                        .one(db)
-                        .await
-                        .map_err(|_| {
-                            errors::create_internal_server_error(
-                                None,
-                                "MEMBER_CHECK_RETRIEVAL_ERROR",
-                            )
-                        })?
-                        .is_some()
-                    {
-                        return Err(errors::create_user_input_error(
-                            "You are already a member of this planet.",
-                            "ALREADY_MEMBER",
-                        ));
-                    }
-
-                    let member = planet_member::ActiveModel {
-                        id: ActiveValue::Set(nanoid!(16)),
-                        planet: ActiveValue::Set(planet.id),
-                        user: ActiveValue::Set(user_id.unwrap()),
-                        roles: ActiveValue::Set(vec![role.id]),
-                        permissions: ActiveValue::Set(vec![]),
-                        created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
-                    };
-
-                    match planet_member::Entity::insert(member).exec(db).await {
-                        Ok(value) => {
-                            match planet_member::Entity::find_by_id(value.last_insert_id)
-                                .one(db)
-                                .await
-                            {
-                                Ok(value) => match value {
-                                    Some(member) => Ok(member),
-                                    None => Err(errors::create_internal_server_error(
-                                        None,
-                                        "FIND_ERROR",
-                                    )),
-                                },
-                                Err(_err) => Err(errors::create_internal_server_error(
-                                    None,
-                                    "MEMBER_RETRIEVAL_ERROR",
-                                )),
-                            }
-                        }
-                        Err(error) => {
-                            error!("{}", error);
-                            Err(errors::create_internal_server_error(
-                                None,
-                                "INSERTION_ERROR",
-                            ))
-                        }
-                    }
-                } else {
-                    Err(errors::create_not_found_error())
-                }
-            } else {
-                Err(errors::create_internal_server_error(
-                    None,
-                    "MISSING_DEFAULT_ROLE_ERROR",
-                ))
+                .map_err(|_| {
+                    errors::create_internal_server_error(None, "MEMBER_CHECK_RETRIEVAL_ERROR")
+                })?
+                .is_some()
+            {
+                return Err(errors::create_user_input_error(
+                    "You are already a member of this planet.",
+                    "ALREADY_MEMBER",
+                ));
             }
+
+            let member = planet_member::ActiveModel {
+                id: ActiveValue::Set(nanoid!(16)),
+                planet: ActiveValue::Set(planet.id),
+                user: ActiveValue::Set(user_id.unwrap()),
+                roles: ActiveValue::Set(vec![role.id]),
+                permissions: ActiveValue::Set(vec![]),
+                created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
+            };
+
+            let insertion = planet_member::Entity::insert(member)
+                .exec(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "INSERTION_ERROR"))?;
+
+            Ok(planet_member::Entity::find_by_id(insertion.last_insert_id)
+                .one(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))?
+                .ok_or(errors::create_internal_server_error(None, "FIND_ERROR"))?)
         } else {
             Err(errors::create_not_found_error())
         }
@@ -122,47 +96,38 @@ impl MemberMutation {
         let planet = planet::Entity::find_by_id(id.to_string())
             .one(db)
             .await
-            .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?;
+            .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-        if let Some(planet) = planet {
-            let user_id = user_id.as_ref().unwrap().clone();
+        let user_id = user_id.as_ref().unwrap().clone();
 
-            if user_id == planet.owner {
-                return Err(errors::create_user_input_error(
-                    "You cannot leave a planet you are the owner of.",
-                    "PLANET_OWNER",
-                ));
-            }
-
-            match planet_member::Entity::find()
-                .filter(
-                    planet_member::Column::User
-                        .eq(user_id)
-                        .and(planet_member::Column::Planet.eq(planet.id.clone())),
-                )
-                .one(db)
-                .await
-            {
-                Ok(value) => match value {
-                    Some(member) => {
-                        member.delete(db).await.map_err(|_| {
-                            errors::create_internal_server_error(None, "MEMBER_DELETION_ERROR")
-                        })?;
-                        Ok(true)
-                    }
-                    None => Err(errors::create_user_input_error(
-                        "You aren't a member of that planet.",
-                        "NOT_MEMBER",
-                    )),
-                },
-                Err(_err) => Err(errors::create_internal_server_error(
-                    None,
-                    "MEMBER_RETRIEVAL_ERROR",
-                )),
-            }
-        } else {
-            Err(errors::create_not_found_error())
+        if user_id == planet.owner {
+            return Err(errors::create_user_input_error(
+                "You cannot leave a planet you are the owner of.",
+                "PLANET_OWNER",
+            ));
         }
+
+        let member = planet_member::Entity::find()
+            .filter(
+                planet_member::Column::User
+                    .eq(user_id)
+                    .and(planet_member::Column::Planet.eq(planet.id.clone())),
+            )
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_user_input_error(
+                "You aren't a member of that planet.",
+                "NOT_MEMBER",
+            ))?;
+
+        member
+            .delete(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_DELETION_ERROR"))?;
+
+        Ok(true)
     }
 
     /// Sets a permission for the specified planet member.
@@ -180,46 +145,38 @@ impl MemberMutation {
         let session = ctx.data::<Session>().unwrap();
         let user_id = session.user.as_ref().map(|user| user.id.clone());
 
-        match planet_member::Entity::find_by_id(id.to_string())
+        let member = planet_member::Entity::find_by_id(id.to_string())
             .one(db)
             .await
-        {
-            Ok(value) => match value {
-                Some(member) => {
-                    let planet = util::get_planet(member.planet.clone().to_string(), db).await?;
-                    let requesting_member =
-                        util::get_planet_member(user_id, member.planet.clone().to_string(), db)
-                            .await?;
-                    let roles = util::get_member_roles(requesting_member.clone(), db).await?;
-                    util::check_permission(
-                        "planet.member.edit_permissions".to_string(),
-                        planet.clone(),
-                        requesting_member,
-                        roles,
-                    )?;
+            .map_err(|_| errors::create_internal_server_error(None, "TARGET_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-                    if permission.ends_with("owner") {
-                        return Err(errors::create_user_input_error(
-                            "You cannot grant or remove the 'owner' permission.",
-                            "SPECIAL_PERMISSION",
-                        ));
-                    }
+        let planet = util::get_planet(member.planet.clone().to_string(), db).await?;
+        let requesting_member =
+            util::get_planet_member(user_id, member.planet.clone().to_string(), db).await?;
 
-                    let mut active_member: planet_member::ActiveModel = member.clone().into();
-                    active_member.permissions =
-                        ActiveValue::Set(util::update_permissions(member.permissions, permission));
+        let roles = util::get_member_roles(requesting_member.clone(), db).await?;
+        util::check_permission(
+            "planet.member.edit_permissions".to_string(),
+            planet.clone(),
+            requesting_member,
+            roles,
+        )?;
 
-                    active_member
-                        .update(db)
-                        .await
-                        .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                }
-                None => Err(errors::create_not_found_error()),
-            },
-            Err(_err) => Err(errors::create_internal_server_error(
-                None,
-                "TARGET_RETRIEVAL_ERROR",
-            )),
+        if permission.ends_with("owner") {
+            return Err(errors::create_user_input_error(
+                "You cannot grant or remove the 'owner' permission.",
+                "SPECIAL_PERMISSION",
+            ));
         }
+
+        let mut active_member: planet_member::ActiveModel = member.clone().into();
+        active_member.permissions =
+            ActiveValue::Set(util::update_permissions(member.permissions, permission));
+
+        active_member
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 }

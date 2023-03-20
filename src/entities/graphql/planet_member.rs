@@ -23,55 +23,39 @@ impl Model {
     async fn planet(&self, ctx: &Context<'_>) -> Result<planet::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(planet::Entity).one(db).await {
-            Ok(value) => match value {
-                Some(planet) => Ok(planet),
-                None => Err(errors::create_internal_server_error(
-                    None,
-                    "PLANET_MISSING_ERROR",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
+        self.find_related(planet::Entity)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_PLANET_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
                 None,
-                "FIND_PLANET_ERROR",
-            )),
-        }
+                "PLANET_MISSING_ERROR",
+            ))
     }
 
     #[graphql(complexity = 5)]
     async fn user(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(user::Entity).one(db).await {
-            Ok(value) => match value {
-                Some(user) => Ok(user),
-                None => Err(errors::create_internal_server_error(
-                    None,
-                    "USER_MISSING_ERROR",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
+        self.find_related(user::Entity)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_USER_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
                 None,
-                "FIND_USER_ERROR",
-            )),
-        }
+                "USER_MISSING_ERROR",
+            ))
     }
 
     #[graphql(complexity = 5)]
     async fn roles(&self, ctx: &Context<'_>) -> Result<Vec<planet_role::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match planet_role::Entity::find()
+        planet_role::Entity::find()
             .filter(planet_role::Column::Id.is_in(self.roles.clone()))
             .all(db)
             .await
-        {
-            Ok(roles) => Ok(roles),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_ROLES_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_ROLES_ERROR"))
     }
 
     #[graphql(complexity = 0)]

@@ -22,39 +22,22 @@ impl MemberQuery {
         let session = ctx.data::<Session>().unwrap();
         let user_id = session.user.as_ref().map(|user| user.id.clone());
 
-        match planet_member::Entity::find_by_id(id.to_string())
+        let queried_member = planet_member::Entity::find_by_id(id.to_string())
             .one(db)
             .await
-        {
-            Ok(value) => match value {
-                Some(value) => {
-                    let planet = util::get_planet(value.planet.clone(), db).await?;
-                    let member =
-                        util::get_planet_member(user_id.clone(), id.to_string(), db).await?;
-                    let roles = util::get_member_roles(member.clone(), db).await?;
+            .map_err(|_| errors::create_forbidden_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-                    // users always need to be allowed to view their own members or else the client
-                    // will be unable to determine permissions
-                    if user_id != Some(value.user.clone()) {
-                        util::check_permission(
-                            "planet.member.view".to_string(),
-                            planet,
-                            member,
-                            roles,
-                        )?;
-                    }
+        let planet = util::get_planet(queried_member.planet.clone(), db).await?;
+        let member = util::get_planet_member(user_id.clone(), id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
 
-                    Ok(value)
-                }
-                None => Err(errors::create_not_found_error()),
-            },
-            Err(error) => {
-                error!("{error}");
-                Err(errors::create_internal_server_error(
-                    None,
-                    "RETRIEVAL_ERROR",
-                ))
-            }
+        // users always need to be allowed to view their own members or else the client
+        // will be unable to determine permissions
+        if user_id != Some(queried_member.user.clone()) {
+            util::check_permission("planet.member.view".to_string(), planet, member, roles)?;
         }
+
+        Ok(queried_member)
     }
 }
