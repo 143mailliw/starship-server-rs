@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 use crate::entities::planet;
 use crate::entities::planet_member;
 use crate::entities::planet_role;
