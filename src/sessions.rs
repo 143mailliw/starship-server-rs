@@ -33,62 +33,51 @@ impl Session {
     ) -> Session {
         let headers = request.headers();
 
-        let data = match headers.get(header::AUTHORIZATION) {
-            Some(auth) => {
-                let auth_string = match auth.to_str() {
-                    Ok(value) => value,
-                    Err(_error) => "",
-                };
+        let data = if let Some(auth) = headers.get(header::AUTHORIZATION) {
+            let auth_string = auth.to_str().unwrap_or("");
 
-                if auth_string.starts_with("Bearer ") {
-                    let secret = env::var("SECRET").unwrap();
-                    let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes()).unwrap();
-                    let jwt_token_data: JWTLoginToken =
-                        match auth_string.replace("Bearer ", "").verify_with_key(&key) {
-                            Ok(token) => token,
-                            Err(_error) => JWTLoginToken {
-                                token: "".to_string(),
-                                user_id: "".to_string(),
-                            },
-                        };
+            if auth_string.starts_with("Bearer ") {
+                let secret = env::var("SECRET").unwrap();
+                let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes()).unwrap();
+                let jwt_token_data: JWTLoginToken = auth_string
+                    .replace("Bearer ", "")
+                    .verify_with_key(&key)
+                    .unwrap_or(JWTLoginToken {
+                        token: String::new(),
+                        user_id: String::new(),
+                    });
 
-                    if jwt_token_data.token == *"" {
-                        (None, None, false)
-                    } else {
-                        let data = Token::find_by_id(jwt_token_data.token)
-                            .find_also_related(User)
-                            .one(&db)
-                            .await;
-
-                        match data {
-                            Ok(value) => match value {
-                                Some(values) => match values.1 {
-                                    Some(found_user) => (
-                                        Some(values.0.clone()),
-                                        Some(found_user),
-                                        values.0.verified,
-                                    ),
-                                    None => (None, None, false),
-                                },
-                                None => (None, None, false),
-                            },
-                            Err(_error) => (None, None, false),
-                        }
-                    }
-                } else {
+                if jwt_token_data.token.is_empty() {
                     (None, None, false)
+                } else {
+                    let data = Token::find_by_id(jwt_token_data.token)
+                        .find_also_related(User)
+                        .one(&db)
+                        .await
+                        .ok()
+                        .flatten();
+
+                    if let Some(data) = data {
+                        (
+                            data.1.as_ref().map(|_| data.0.clone()),
+                            data.1,
+                            data.0.verified,
+                        )
+                    } else {
+                        (None, None, false)
+                    }
                 }
+            } else {
+                (None, None, false)
             }
-            None => (None, None, false),
+        } else {
+            (None, None, false)
         };
 
-        let user_agent = match headers.get(header::USER_AGENT) {
-            Some(user_agent) => match user_agent.to_str() {
-                Ok(value) => Some(value.to_string()),
-                Err(_error) => None,
-            },
-            None => None,
-        };
+        let user_agent = headers
+            .get(header::USER_AGENT)
+            .map(|v| v.to_str().map(|v| v.to_string()).ok())
+            .flatten();
 
         Session {
             token: data.0,
