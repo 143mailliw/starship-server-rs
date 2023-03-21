@@ -38,10 +38,10 @@ impl Default for SysInfo {
             supported_components: vec![],
             client_flags: vec![],
             paths: SysInfoPaths {
-                emoji_url: "".to_string(),
-                pfp_url: "".to_string(),
-                banner_url: "".to_string(),
-                graphql_endpoint: "".to_string(),
+                emoji_url: String::new(),
+                pfp_url: String::new(),
+                banner_url: String::new(),
+                graphql_endpoint: String::new(),
             },
         }
     }

@@ -76,8 +76,7 @@ impl Session {
 
         let user_agent = headers
             .get(header::USER_AGENT)
-            .map(|v| v.to_str().map(|v| v.to_string()).ok())
-            .flatten();
+            .and_then(|v| v.to_str().map(std::string::ToString::to_string).ok());
 
         Session {
             token: data.0,

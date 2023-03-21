@@ -90,10 +90,10 @@ impl Model {
             .map_err(|_| errors::create_internal_server_error(None, "FIND_PLANETS_ERROR"))?
             .iter()
             .filter_map(|value| {
-                if !value.1.is_empty() {
-                    Some(value.1[0].clone())
-                } else {
+                if value.1.is_empty() {
                     None
+                } else {
+                    Some(value.1[0].clone())
                 }
             })
             .collect())
@@ -105,10 +105,10 @@ impl Model {
     }
 
     #[graphql(complexity = 0)]
-    async fn used_bytes(&self, ctx: &Context<'_>) -> Result<f64, Error> {
+    async fn used_bytes(&self, ctx: &Context<'_>) -> Result<i64, Error> {
         self.user_id_is_same(ctx, "usedBytes")?;
 
-        Ok(self.bytes_used as f64)
+        Ok(self.bytes_used)
     }
 
     #[graphql(complexity = 0)]

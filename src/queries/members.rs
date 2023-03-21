@@ -3,7 +3,6 @@ use crate::errors;
 use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
-use log::error;
 use sea_orm::{DatabaseConnection, EntityTrait};
 
 #[derive(Default, Description)]

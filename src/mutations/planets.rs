@@ -6,9 +6,7 @@ use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use log::error;
 use nanoid::nanoid;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
-};
+use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 
 #[derive(Default, Description)]
 pub struct PlanetMutation;
@@ -66,7 +64,7 @@ impl PlanetMutation {
                 constants::VIEWER_PERMISSIONS
                     .iter()
                     .chain(constants::MEMBER_PERMISSIONS.iter())
-                    .map(|perm| perm.to_string())
+                    .map(std::string::ToString::to_string)
                     .collect(),
             ),
             planet: ActiveValue::Set(result.last_insert_id.clone()),

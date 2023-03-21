@@ -1,10 +1,9 @@
 use crate::entities::{planet, planet_member, planet_role};
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
-use crate::permissions::{constants, util};
+use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
-use log::error;
 use nanoid::nanoid;
 use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait,
@@ -43,7 +42,9 @@ impl MemberMutation {
                 "MISSING_DEFAULT_ROLE_ERROR",
             ))?;
 
-        if !planet.private {
+        if planet.private {
+            Err(errors::create_not_found_error())
+        } else {
             if planet_member::Entity::find()
                 .filter(
                     planet_member::Column::User
@@ -82,8 +83,6 @@ impl MemberMutation {
                 .await
                 .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))?
                 .ok_or(errors::create_internal_server_error(None, "FIND_ERROR"))?)
-        } else {
-            Err(errors::create_not_found_error())
         }
     }
 

@@ -12,7 +12,7 @@ use actix_cors::Cors;
 use actix_web::{guard, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
-use db::set_up_db;
+use db::set_up;
 use log::info;
 use sea_orm::DatabaseConnection;
 use std::env;
@@ -56,9 +56,9 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
     info!("Connecting to database");
-    let db = match set_up_db().await {
+    let db = match set_up().await {
         Ok(db) => db,
-        Err(err) => panic!("fatal: {} ", err),
+        Err(err) => panic!("fatal: {err} "),
     };
 
     info!("Creating schema");

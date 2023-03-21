@@ -31,7 +31,7 @@ pub fn has_permission(
         let mut role_vec = roles;
         role_vec.sort_by_key(|r| r.position);
 
-        for role in role_vec.iter() {
+        for role in &role_vec {
             if role.planet != planet.id {
                 return false;
             }

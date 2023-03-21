@@ -4,7 +4,6 @@ use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
-use log::error;
 use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryOrder};
 
 #[derive(Default, Description)]

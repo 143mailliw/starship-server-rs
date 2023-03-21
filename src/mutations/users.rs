@@ -40,7 +40,7 @@ impl UserMutation {
         email: String,
         password: String,
         username: String,
-        recaptcha: String,
+        _recaptcha: String,
     ) -> Result<user::Model, Error> {
         // TODO: add RECAPTCHA support
         // TODO: verify email
@@ -80,7 +80,7 @@ impl UserMutation {
             ));
         };
 
-        if !EmailAddress::is_valid(&email.to_owned()) {
+        if !EmailAddress::is_valid(&email) {
             return Err(errors::create_user_input_error(
                 "Invalid email address.",
                 "INVALID_EMAIL_ADDRESS",
@@ -247,7 +247,7 @@ impl UserMutation {
 
         let mut blocked = session.user.as_ref().unwrap().blocked.clone();
         if blocked.contains(&user.id) {
-            blocked.retain(|searched_user| **searched_user != user.id)
+            blocked.retain(|searched_user| **searched_user != user.id);
         } else {
             blocked.push(user.id);
         };
@@ -330,7 +330,7 @@ impl UserMutation {
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))?;
 
         Ok(TOTPBuilder::new()
-            .hex_key(&secret.to_owned())
+            .hex_key(&secret)
             .finalize()
             .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
             .key_uri_format("Starship", &session.user.as_ref().unwrap().username)
@@ -368,19 +368,23 @@ impl UserMutation {
         if is_valid {
             let mut rng = StdRng::from_entropy();
             let numbers = vec![
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
-                rng.gen_range(0..1000000000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
+                rng.gen_range(0..1_000_000_000),
             ];
 
             let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
-            active_user.tfa_backup =
-                ActiveValue::Set(numbers.iter().map(|code| code.to_string()).collect());
+            active_user.tfa_backup = ActiveValue::Set(
+                numbers
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect(),
+            );
             active_user.tfa_enabled = ActiveValue::Set(true);
 
             active_user
