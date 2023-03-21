@@ -38,19 +38,14 @@ impl Model {
     async fn owner(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match user::Entity::find_by_id(self.owner.clone()).one(db).await {
-            Ok(value) => match value {
-                Some(user) => Ok(user),
-                None => Err(errors::create_internal_server_error(
-                    None,
-                    "OWNER_MISSING_ERROR",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
+        user::Entity::find_by_id(self.owner.clone())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_OWNER_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
                 None,
-                "FIND_OWNER_ERROR",
-            )),
-        }
+                "OWNER_MISSING_ERROR",
+            ))
     }
 
     #[graphql(complexity = 0)]
@@ -67,13 +62,10 @@ impl Model {
     async fn components(&self, ctx: &Context<'_>) -> Result<Vec<planet_component::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(planet_component::Entity).all(db).await {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_COMPONENTS_ERROR",
-            )),
-        }
+        self.find_related(planet_component::Entity)
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_COMPONENTS_ERROR"))
     }
 
     #[graphql(complexity = 5)]
@@ -84,16 +76,12 @@ impl Model {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match &self.home {
-            Some(id) => match planet_component::Entity::find_by_id(id.clone())
+            Some(id) => planet_component::Entity::find_by_id(id.clone())
                 .one(db)
                 .await
-            {
-                Ok(value) => Ok(value),
-                Err(_error) => Err(errors::create_internal_server_error(
-                    None,
-                    "FIND_HOME_COMPONENT_ERROR",
-                )),
-            },
+                .map_err(|_| {
+                    errors::create_internal_server_error(None, "FIND_HOME_COMPONENT_ERROR")
+                }),
             None => Ok(None),
         }
     }
@@ -122,31 +110,22 @@ impl Model {
     ) -> Result<Vec<planet_member::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self
-            .find_related(planet_member::Entity)
+        self.find_related(planet_member::Entity)
             .order_by_desc(planet_member::Column::Created)
             .paginate(db, size)
             .fetch_page(page)
             .await
-        {
-            Ok(values) => Ok(values),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_MEMBERS_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_MEMBERS_ERROR"))
     }
 
     #[graphql(complexity = "5")]
     async fn roles(&self, ctx: &Context<'_>) -> Result<Vec<planet_role::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
-        match self.find_related(planet_role::Entity).all(db).await {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_ROLES_ERROR",
-            )),
-        }
+
+        self.find_related(planet_role::Entity)
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_ROLES_ERROR"))
     }
 
     #[graphql(complexity = 0)]
@@ -161,17 +140,11 @@ impl Model {
         // TODO: potentially lock this behind a permission
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match user::Entity::find()
+        user::Entity::find()
             .filter(user::Column::Id.is_in(self.banned.clone()))
             .all(db)
             .await
-        {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_BANNED_ERROR",
-            )),
-        }
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_BANNED_ERROR"))
     }
 
     #[graphql(complexity = 0)]
@@ -188,13 +161,10 @@ impl Model {
     async fn custom_emojis(&self, ctx: &Context<'_>) -> Result<Vec<custom_emoji::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(custom_emoji::Entity).all(db).await {
-            Ok(value) => Ok(value),
-            Err(_error) => Err(errors::create_internal_server_error(
-                None,
-                "FIND_EMOJIS_ERROR",
-            )),
-        }
+        self.find_related(custom_emoji::Entity)
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_EMOJIS_ERROR"))
     }
 
     // TODO: unread

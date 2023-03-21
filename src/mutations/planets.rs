@@ -4,7 +4,6 @@ use crate::guards::session::{SessionGuard, SessionType};
 use crate::permissions::{constants, util};
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
-use log::error;
 use nanoid::nanoid;
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 
@@ -45,16 +44,10 @@ impl PlanetMutation {
             ..Default::default()
         };
 
-        let result = match planet::Entity::insert(planet.clone()).exec(db).await {
-            Ok(value) => value,
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "PLANET_INSERTION_ERROR",
-                ));
-            }
-        };
+        let result = planet::Entity::insert(planet.clone())
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "PLANET_INSERTION_ERROR"))?;
 
         let role = planet_role::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
@@ -72,16 +65,10 @@ impl PlanetMutation {
             default: ActiveValue::Set(true),
         };
 
-        let role_result = match planet_role::Entity::insert(role).exec(db).await {
-            Ok(value) => value,
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "ROLE_INSERTION_ERROR",
-                ));
-            }
-        };
+        let role_result = planet_role::Entity::insert(role)
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLE_INSERTION_ERROR"))?;
 
         let member = planet_member::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
@@ -92,16 +79,10 @@ impl PlanetMutation {
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
         };
 
-        match planet_member::Entity::insert(member).exec(db).await {
-            Ok(_value) => (),
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "MEMBER_INSERTION_ERROR",
-                ));
-            }
-        }
+        planet_member::Entity::insert(member)
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_INSERTION_ERROR"))?;
 
         // TODO: make this create a page instead
         let component = planet_component::ActiveModel {
@@ -114,26 +95,17 @@ impl PlanetMutation {
             ..Default::default() // i don't know what's up with this but we have to have it
         };
 
-        let component_result = match planet_component::Entity::insert(component).exec(db).await {
-            Ok(value) => value,
-            Err(error) => {
-                error!("{}", error);
-                return Err(errors::create_internal_server_error(
-                    None,
-                    "COMPONENT_INSERTION_ERROR",
-                ));
-            }
-        };
+        let component_result = planet_component::Entity::insert(component)
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "COMPONENT_INSERTION_ERROR"))?;
 
         planet.home = ActiveValue::Set(Some(component_result.last_insert_id));
 
-        match planet.update(db).await {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        planet
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Renames a planet.
@@ -155,13 +127,10 @@ impl PlanetMutation {
         let mut active_planet: planet::ActiveModel = planet.into();
         active_planet.name = ActiveValue::Set(name);
 
-        match active_planet.update(db).await {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        active_planet
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Sets a planet's description.
@@ -183,12 +152,9 @@ impl PlanetMutation {
         let mut active_planet: planet::ActiveModel = planet.into();
         active_planet.description = ActiveValue::Set(Some(description));
 
-        match active_planet.update(db).await {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                error!("{}", error);
-                Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-            }
-        }
+        active_planet
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 }
