@@ -21,19 +21,14 @@ impl Model {
     async fn owner(&self, ctx: &Context<'_>) -> Result<user::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(user::Entity).one(db).await {
-            Ok(value) => match value {
-                Some(user) => Ok(user),
-                None => Err(errors::create_internal_server_error(
-                    None,
-                    "OWNER_MISSING_ERROR",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
+        self.find_related(user::Entity)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_OWNER_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
                 None,
-                "FIND_OWNER_ERROR",
-            )),
-        }
+                "OWNER_MISSING_ERROR",
+            ))
     }
 
     #[graphql(complexity = 5)]
@@ -41,19 +36,16 @@ impl Model {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
         match self.planet.clone() {
-            Some(_id) => match self.find_related(planet::Entity).one(db).await {
-                Ok(value) => match value {
-                    Some(planet) => Ok(Some(planet)),
-                    None => Err(errors::create_internal_server_error(
-                        None,
-                        "PLANET_MISSING_ERROR",
-                    )),
-                },
-                Err(_error) => Err(errors::create_internal_server_error(
+            Some(_id) => self
+                .find_related(planet::Entity)
+                .one(db)
+                .await
+                .map_err(|_| errors::create_internal_server_error(None, "FIND_PLANET_ERROR"))?
+                .ok_or(errors::create_internal_server_error(
                     None,
-                    "FIND_OWNER_ERROR",
-                )),
-            },
+                    "PLANET_MISSING_ERROR",
+                ))
+                .map(Some),
             None => Ok(None),
         }
     }

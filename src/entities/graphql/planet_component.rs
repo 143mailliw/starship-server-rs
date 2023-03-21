@@ -41,18 +41,13 @@ impl Model {
     async fn planet(&self, ctx: &Context<'_>) -> Result<planet::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        match self.find_related(planet::Entity).one(db).await {
-            Ok(value) => match value {
-                Some(planet) => Ok(planet),
-                None => Err(errors::create_internal_server_error(
-                    None,
-                    "PLANET_MISSING_ERROR",
-                )),
-            },
-            Err(_error) => Err(errors::create_internal_server_error(
+        self.find_related(planet::Entity)
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "FIND_PLANET_ERROR"))?
+            .ok_or(errors::create_internal_server_error(
                 None,
-                "FIND_PLANET_ERROR",
-            )),
-        }
+                "PLANET_MISSING_ERROR",
+            ))
     }
 }

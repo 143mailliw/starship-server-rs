@@ -20,34 +20,23 @@ impl ComponentMutation {
         let session = ctx.data::<Session>().unwrap();
         let user_id = session.user.as_ref().map(|user| user.id.clone());
 
-        match planet_component::Entity::find_by_id(id.to_string())
+        let component = planet_component::Entity::find_by_id(id.to_string())
             .one(db)
             .await
-        {
-            Ok(value) => match value {
-                Some(component) => {
-                    let planet = util::get_planet(component.clone().planet, db).await?;
-                    let member =
-                        util::get_planet_member(user_id, component.clone().planet, db).await?;
-                    let roles = util::get_member_roles(member.clone(), db).await?;
-                    util::check_permission("planet.component.rename", &planet, member, roles)?;
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
 
-                    let mut active_component: planet_component::ActiveModel = component.into();
-                    active_component.name = ActiveValue::Set(name);
+        let planet = util::get_planet(component.clone().planet, db).await?;
+        let member = util::get_planet_member(user_id, component.clone().planet, db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.component.rename", &planet, member, roles)?;
 
-                    match active_component.update(db).await {
-                        Ok(value) => Ok(value),
-                        Err(_err) => {
-                            Err(errors::create_internal_server_error(None, "UPDATE_ERROR"))
-                        }
-                    }
-                }
-                None => Err(errors::create_not_found_error()),
-            },
-            Err(_err) => Err(errors::create_internal_server_error(
-                None,
-                "RETRIEVAL_ERROR",
-            )),
-        }
+        let mut active_component: planet_component::ActiveModel = component.into();
+        active_component.name = ActiveValue::Set(name);
+
+        active_component
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 }
