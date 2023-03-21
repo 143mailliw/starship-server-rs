@@ -58,8 +58,8 @@ pub async fn get_member_roles(
 /// Checks for a permission and returns an error if that permission is not held by the user. This
 /// function exists to ensure permission behavior is consistent across the API.
 pub fn check_permission(
-    permission: String,
-    planet: planet::Model,
+    permission: &str,
+    planet: &planet::Model,
     member: Option<planet_member::Model>,
     roles: Option<Vec<planet_role::Model>>,
 ) -> Result<(), Error> {

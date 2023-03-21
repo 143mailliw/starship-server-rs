@@ -34,7 +34,7 @@ impl MemberQuery {
         // users always need to be allowed to view their own members or else the client
         // will be unable to determine permissions
         if user_id != Some(queried_member.user.clone()) {
-            util::check_permission("planet.member.view".to_string(), planet, member, roles)?;
+            util::check_permission("planet.member.view", &planet, member, roles)?;
         }
 
         Ok(queried_member)

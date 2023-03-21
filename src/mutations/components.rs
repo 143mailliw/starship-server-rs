@@ -30,12 +30,7 @@ impl ComponentMutation {
                     let member =
                         util::get_planet_member(user_id, component.clone().planet, db).await?;
                     let roles = util::get_member_roles(member.clone(), db).await?;
-                    util::check_permission(
-                        "planet.component.rename".to_string(),
-                        planet.clone(),
-                        member,
-                        roles,
-                    )?;
+                    util::check_permission("planet.component.rename", &planet, member, roles)?;
 
                     let mut active_component: planet_component::ActiveModel = component.into();
                     active_component.name = ActiveValue::Set(name);

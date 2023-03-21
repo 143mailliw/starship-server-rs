@@ -5,8 +5,8 @@ use crate::entities::planet_role;
 use std::collections::HashMap;
 
 pub fn has_permission(
-    permission: String,
-    planet: planet::Model,
+    permission: &str,
+    planet: &planet::Model,
     member: Option<planet_member::Model>,
     roles: Option<Vec<planet_role::Model>>,
 ) -> bool {

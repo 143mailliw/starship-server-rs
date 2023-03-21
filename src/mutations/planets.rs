@@ -150,12 +150,7 @@ impl PlanetMutation {
         let planet = util::get_planet(id.to_string(), db).await?;
         let member = util::get_planet_member(user_id, id.to_string(), db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
-        util::check_permission(
-            "planet.change_name".to_string(),
-            planet.clone(),
-            member,
-            roles,
-        )?;
+        util::check_permission("planet.change_name", &planet, member, roles)?;
 
         let mut active_planet: planet::ActiveModel = planet.into();
         active_planet.name = ActiveValue::Set(name);
@@ -183,12 +178,7 @@ impl PlanetMutation {
         let planet = util::get_planet(id.to_string(), db).await?;
         let member = util::get_planet_member(user_id, id.to_string(), db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
-        util::check_permission(
-            "planet.change_name".to_string(),
-            planet.clone(),
-            member,
-            roles,
-        )?;
+        util::check_permission("planet.change_name", &planet, member, roles)?;
 
         let mut active_planet: planet::ActiveModel = planet.into();
         active_planet.description = ActiveValue::Set(Some(description));

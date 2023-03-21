@@ -156,8 +156,8 @@ impl MemberMutation {
 
         let roles = util::get_member_roles(requesting_member.clone(), db).await?;
         util::check_permission(
-            "planet.member.edit_permissions".to_string(),
-            planet.clone(),
+            "planet.member.edit_permissions",
+            &planet,
             requesting_member,
             roles,
         )?;

@@ -23,12 +23,7 @@ impl PlanetQuery {
                     let user_id = session.user.as_ref().map(|user| user.id.clone());
                     let member = util::get_planet_member(user_id, id.to_string(), db).await?;
                     let roles = util::get_member_roles(member.clone(), db).await?;
-                    util::check_permission(
-                        "planet.view".to_string(),
-                        value.clone(),
-                        member,
-                        roles,
-                    )?;
+                    util::check_permission("planet.view", &value, member, roles)?;
                     Ok(value)
                 }
                 None => Err(errors::create_not_found_error()),
