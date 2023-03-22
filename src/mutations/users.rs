@@ -475,8 +475,6 @@ impl UserMutation {
 
         let user = session.user.clone().unwrap();
 
-        verify_token(db, &user, token).await?;
-
         let result = bcrypt::verify(old_password, &user.password)
             .map_err(|_| errors::create_internal_server_error(None, "VERIFICATION_ERROR"))?;
 
@@ -486,6 +484,8 @@ impl UserMutation {
                 "INCORRECT_PASSWORD",
             ));
         }
+
+        verify_token(db, &user, token).await?;
 
         let hash = hash(new_password, 4)
             .map_err(|_| errors::create_internal_server_error(None, "HASH_ERROR"))?;
