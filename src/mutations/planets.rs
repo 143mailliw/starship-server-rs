@@ -157,4 +157,31 @@ impl PlanetMutation {
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
+
+    /// Toggles whether or not a planet is private.
+    async fn toggle_private(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        token: Option<u32>,
+    ) -> Result<planet::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let planet = util::get_planet(id.to_string(), db).await?;
+        let member = util::get_planet_member(user_id, id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.change_publicity", &planet, member, roles)?;
+
+        util::verify_token(db, session.user.as_ref().unwrap(), token).await?;
+
+        let mut active_planet: planet::ActiveModel = planet.into();
+        active_planet.private = ActiveValue::Set(!active_planet.private.unwrap());
+
+        active_planet
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
 }
