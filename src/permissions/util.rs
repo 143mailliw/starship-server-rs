@@ -105,34 +105,40 @@ pub fn update_permissions(mut permission_vec: Vec<String>, permission: String) -
 pub async fn verify_token(
     db: &DatabaseConnection,
     user: &user::Model,
-    token: u32,
+    token: Option<u32>,
 ) -> Result<bool, Error> {
     if user.tfa_enabled {
-        let is_valid = TOTPBuilder::new()
-            .hex_key(user.tfa_secret.as_ref().unwrap())
-            .finalize()
-            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
-            .is_valid(&token.to_string());
+        if let Some(token) = token {
+            let is_valid = TOTPBuilder::new()
+                .hex_key(user.tfa_secret.as_ref().unwrap())
+                .finalize()
+                .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+                .is_valid(&token.to_string());
 
-        if is_valid || user.tfa_backup.contains(&token.to_string()) {
-            if user.tfa_backup.contains(&token.to_string()) {
-                let mut remaining_codes = user.tfa_backup.clone();
-                remaining_codes.retain(|searched_code| searched_code != &token.to_string());
+            if is_valid || user.tfa_backup.contains(&token.to_string()) {
+                if user.tfa_backup.contains(&token.to_string()) {
+                    let mut remaining_codes = user.tfa_backup.clone();
+                    remaining_codes.retain(|searched_code| searched_code != &token.to_string());
 
-                let mut active_user: user::ActiveModel = user.clone().into();
-                active_user.tfa_backup = ActiveValue::Set(remaining_codes);
+                    let mut active_user: user::ActiveModel = user.clone().into();
+                    active_user.tfa_backup = ActiveValue::Set(remaining_codes);
 
-                active_user
-                    .update(db)
-                    .await
-                    .map_err(|_| errors::create_internal_server_error(None, "UPDATE_USER_ERROR"))?;
+                    active_user.update(db).await.map_err(|_| {
+                        errors::create_internal_server_error(None, "UPDATE_USER_ERROR")
+                    })?;
+                }
+
+                Ok(true)
+            } else {
+                Err(errors::create_user_input_error(
+                    "Incorrect TFA token or backup code.",
+                    "INCORRECT_CODE",
+                ))
             }
-
-            Ok(true)
         } else {
             Err(errors::create_user_input_error(
-                "Incorrect TFA or backup code.",
-                "INCORRECT_CODE",
+                "No TFA token or backup code was provided.",
+                "NO_CODE",
             ))
         }
     } else {

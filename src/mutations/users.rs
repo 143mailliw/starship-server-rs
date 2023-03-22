@@ -460,7 +460,7 @@ impl UserMutation {
             return Ok(true);
         }
 
-        verify_token(db, &user, token).await?;
+        verify_token(db, &user, Some(token)).await?;
 
         let mut active_token: token::ActiveModel = auth_token.clone().into();
         active_token.verified = ActiveValue::Set(true);
