@@ -417,26 +417,15 @@ impl UserMutation {
             ));
         };
 
-        let is_valid = TOTPBuilder::new()
-            .hex_key(&user.tfa_secret.unwrap())
-            .finalize()
-            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
-            .is_valid(&token.to_string());
+        verify_token(db, &user, Some(token)).await?;
 
-        if is_valid || user.tfa_backup.contains(&token.to_string()) {
-            let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
-            active_user.tfa_enabled = ActiveValue::Set(false);
+        let mut active_user: user::ActiveModel = session.user.clone().unwrap().into();
+        active_user.tfa_enabled = ActiveValue::Set(false);
 
-            active_user
-                .update(db)
-                .await
-                .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
-        } else {
-            Err(errors::create_user_input_error(
-                "Incorrect TFA or backup code.",
-                "INCORRECT_CODE",
-            ))
-        }
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 
     /// Verifies the authenticity of the current token, provided in the Authorization header.
@@ -469,6 +458,45 @@ impl UserMutation {
             .update(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_TOKEN_ERROR"))
+            .map(|_| true)
+    }
+
+    /// Changes the password for the currently logged in user.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 200)]
+    async fn change_password(
+        &self,
+        ctx: &Context<'_>,
+        old_password: String,
+        new_password: String,
+        token: Option<u32>,
+    ) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+
+        let user = session.user.clone().unwrap();
+
+        verify_token(db, &user, token).await?;
+
+        let result = bcrypt::verify(old_password, &user.password)
+            .map_err(|_| errors::create_internal_server_error(None, "VERIFICATION_ERROR"))?;
+
+        if !result {
+            return Err(errors::create_forbidden_error(
+                Some("Incorrect old password."),
+                "INCORRECT_PASSWORD",
+            ));
+        }
+
+        let hash = hash(new_password, 4)
+            .map_err(|_| errors::create_internal_server_error(None, "HASH_ERROR"))?;
+
+        let mut active_user: user::ActiveModel = user.into();
+        active_user.password = ActiveValue::Set(hash);
+
+        active_user
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
             .map(|_| true)
     }
 }
