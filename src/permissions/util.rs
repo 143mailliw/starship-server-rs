@@ -1,8 +1,11 @@
 use super::checks;
-use crate::entities::{planet, planet_member, planet_role};
+use crate::entities::{planet, planet_member, planet_role, user};
 use crate::errors;
 use async_graphql::Error;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use libreauth::oath::TOTPBuilder;
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 
 /// Gets a planet. If an error occurs or the planet is not found, an error ready for presentation to
 /// the client is returned.
@@ -95,4 +98,44 @@ pub fn update_permissions(mut permission_vec: Vec<String>, permission: String) -
     }
 
     permission_vec
+}
+
+/// Verifies a two factor authentication token. If a token is required and the token provided is
+/// invalid, an error will be returned.
+pub async fn verify_token(
+    db: &DatabaseConnection,
+    user: &user::Model,
+    token: u32,
+) -> Result<bool, Error> {
+    if user.tfa_enabled {
+        let is_valid = TOTPBuilder::new()
+            .hex_key(user.tfa_secret.as_ref().unwrap())
+            .finalize()
+            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
+            .is_valid(&token.to_string());
+
+        if is_valid || user.tfa_backup.contains(&token.to_string()) {
+            if user.tfa_backup.contains(&token.to_string()) {
+                let mut remaining_codes = user.tfa_backup.clone();
+                remaining_codes.retain(|searched_code| searched_code != &token.to_string());
+
+                let mut active_user: user::ActiveModel = user.clone().into();
+                active_user.tfa_backup = ActiveValue::Set(remaining_codes);
+
+                active_user
+                    .update(db)
+                    .await
+                    .map_err(|_| errors::create_internal_server_error(None, "UPDATE_USER_ERROR"))?;
+            }
+
+            Ok(true)
+        } else {
+            Err(errors::create_user_input_error(
+                "Incorrect TFA or backup code.",
+                "INCORRECT_CODE",
+            ))
+        }
+    } else {
+        Ok(true)
+    }
 }

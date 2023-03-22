@@ -4,6 +4,7 @@ use crate::entities::token;
 use crate::entities::user;
 use crate::errors;
 use crate::guards::session::{SessionGuard, SessionType};
+use crate::permissions::util::verify_token;
 use crate::sessions::{JWTLoginToken, Session};
 use async_graphql::{Context, Description, Error, Object, SimpleObject, ID};
 use bcrypt::hash;
@@ -459,39 +460,15 @@ impl UserMutation {
             return Ok(true);
         }
 
-        let is_valid = TOTPBuilder::new()
-            .hex_key(user.tfa_secret.as_ref().unwrap())
-            .finalize()
-            .map_err(|_| errors::create_internal_server_error(None, "TOTP_BUILD_ERROR"))?
-            .is_valid(&token.to_string());
+        verify_token(db, &user, token).await?;
 
-        if is_valid || user.tfa_backup.contains(&token.to_string()) {
-            if user.tfa_backup.contains(&token.to_string()) {
-                let mut remaining_codes = user.tfa_backup.clone();
-                remaining_codes.retain(|searched_code| searched_code != &token.to_string());
+        let mut active_token: token::ActiveModel = auth_token.clone().into();
+        active_token.verified = ActiveValue::Set(true);
 
-                let mut active_user: user::ActiveModel = user.into();
-                active_user.tfa_backup = ActiveValue::Set(remaining_codes);
-
-                active_user
-                    .update(db)
-                    .await
-                    .map_err(|_| errors::create_internal_server_error(None, "UPDATE_USER_ERROR"))?;
-            }
-
-            let mut active_token: token::ActiveModel = auth_token.clone().into();
-            active_token.verified = ActiveValue::Set(true);
-
-            active_token
-                .update(db)
-                .await
-                .map_err(|_| errors::create_internal_server_error(None, "UPDATE_TOKEN_ERROR"))
-                .map(|_| true)
-        } else {
-            Err(errors::create_user_input_error(
-                "Incorrect TFA or backup code.",
-                "INCORRECT_CODE",
-            ))
-        }
+        active_token
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_TOKEN_ERROR"))
+            .map(|_| true)
     }
 }
