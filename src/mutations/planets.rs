@@ -5,7 +5,9 @@ use crate::permissions::{constants, util};
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use nanoid::nanoid;
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 
 #[derive(Default, Description)]
 pub struct PlanetMutation;
@@ -183,5 +185,61 @@ impl PlanetMutation {
             .update(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
+
+    /// Deletes a planet and all of it's associated data immediately. This action is unrecoverable.
+    async fn delete_planet(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        token: Option<u32>,
+    ) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let planet = util::get_planet(id.to_string(), db).await?;
+        let member = util::get_planet_member(user_id, id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.change_publicity", &planet, member, roles)?;
+
+        util::verify_token(db, session.user.as_ref().unwrap(), token).await?;
+
+        // clear out circular references
+        let mut active_planet: planet::ActiveModel = planet.clone().into();
+
+        active_planet.home = ActiveValue::Set(None);
+
+        active_planet
+            .clone()
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))?;
+
+        // TODO: remove all component data
+
+        planet_member::Entity::delete_many()
+            .filter(planet_member::Column::Planet.eq(planet.id.clone()))
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "DELETE_MEMBERS_ERROR"))?;
+
+        planet_role::Entity::delete_many()
+            .filter(planet_role::Column::Planet.eq(planet.id.clone()))
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "DELETE_ROLES_ERROR"))?;
+
+        planet_component::Entity::delete_many()
+            .filter(planet_component::Column::Planet.eq(planet.id.clone()))
+            .exec(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "DELETE_COMPONENTS_ERROR"))?;
+
+        active_planet
+            .delete(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "DELETE_PLANET_ERROR"))
+            .map(|_| true)
     }
 }
