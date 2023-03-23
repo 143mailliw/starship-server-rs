@@ -66,4 +66,5 @@ pub enum PlanetMember {
     Permssions,
     Permissions,
     Created,
+    Banned,
 }

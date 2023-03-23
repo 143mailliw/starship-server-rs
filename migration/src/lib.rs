@@ -1,3 +1,5 @@
+#![allow(clippy::implicit_clone)]
+
 pub use sea_orm_migration::prelude::*;
 
 mod m20221115_000001_create_users;
@@ -17,6 +19,8 @@ mod m20230111_135136_rename_role_ids;
 mod m20230111_135142_rename_component_ids;
 mod m20230111_141433_rename_member_permissions;
 mod m20230213_172601_add_component_order;
+mod m20230323_001036_delete_planet_banned;
+mod m20230323_001050_add_member_banned;
 
 pub struct Migrator;
 
@@ -41,6 +45,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20230111_135142_rename_component_ids::Migration),
             Box::new(m20230111_141433_rename_member_permissions::Migration),
             Box::new(m20230213_172601_add_component_order::Migration),
+            Box::new(m20230323_001036_delete_planet_banned::Migration),
+            Box::new(m20230323_001050_add_member_banned::Migration),
         ]
     }
 }

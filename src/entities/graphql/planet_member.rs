@@ -67,4 +67,9 @@ impl Model {
     async fn created_at(&self) -> NaiveDateTime {
         self.created
     }
+
+    #[graphql(complexity = 0)]
+    async fn banned(&self) -> bool {
+        self.banned
+    }
 }

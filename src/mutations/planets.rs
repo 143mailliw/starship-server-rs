@@ -42,7 +42,6 @@ impl PlanetMutation {
             owner: ActiveValue::Set(user.id.clone()),
             private: ActiveValue::Set(private),
             member_count: ActiveValue::Set(1),
-            banned: ActiveValue::Set(vec![]),
             ..Default::default()
         };
 
@@ -79,6 +78,7 @@ impl PlanetMutation {
             roles: ActiveValue::Set(vec![role_result.last_insert_id]),
             permissions: ActiveValue::Set(vec!["+owner".to_string()]),
             created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
+            banned: ActiveValue::Set(false),
         };
 
         planet_member::Entity::insert(member)

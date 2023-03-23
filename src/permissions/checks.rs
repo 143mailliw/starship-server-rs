@@ -27,18 +27,42 @@ pub fn has_permission(
         return false;
     }
 
-    if let Some(roles) = roles {
-        let mut role_vec = roles;
-        role_vec.sort_by_key(|r| r.position);
+    if let Some(member) = member {
+        if !member.banned {
+            if let Some(roles) = roles {
+                let mut role_vec = roles;
+                role_vec.sort_by_key(|r| r.position);
 
-        for role in &role_vec {
-            if role.planet != planet.id {
+                for role in &role_vec {
+                    if role.planet != planet.id {
+                        return false;
+                    }
+
+                    for permission in &role.permissions {
+                        if permission == "+administrator" {
+                            administrator = true;
+                        }
+
+                        let mut permission_chars = permission.chars();
+                        permission_chars.next();
+
+                        calculated_permissions
+                            .insert(permission_chars.collect(), permission.starts_with('+'));
+                    }
+                }
+            }
+
+            if member.planet != planet.id {
                 return false;
             }
 
-            for permission in &role.permissions {
+            for permission in member.permissions {
                 if permission == "+administrator" {
                     administrator = true;
+                }
+
+                if permission == "+owner" {
+                    owner = true;
                 }
 
                 let mut permission_chars = permission.chars();
@@ -47,27 +71,6 @@ pub fn has_permission(
                 calculated_permissions
                     .insert(permission_chars.collect(), permission.starts_with('+'));
             }
-        }
-    }
-
-    if let Some(member) = member {
-        if member.planet != planet.id {
-            return false;
-        }
-
-        for permission in member.permissions {
-            if permission == "+administrator" {
-                administrator = true;
-            }
-
-            if permission == "+owner" {
-                owner = true;
-            }
-
-            let mut permission_chars = permission.chars();
-            permission_chars.next();
-
-            calculated_permissions.insert(permission_chars.collect(), permission.starts_with('+'));
         }
     }
 

@@ -71,6 +71,7 @@ impl MemberMutation {
                 roles: ActiveValue::Set(vec![role.id]),
                 permissions: ActiveValue::Set(vec![]),
                 created: ActiveValue::Set(chrono::offset::Utc::now().naive_utc()),
+                banned: ActiveValue::Set(false),
             };
 
             let insertion = planet_member::Entity::insert(member)

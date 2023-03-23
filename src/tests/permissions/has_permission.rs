@@ -170,7 +170,6 @@ fn create_planet(private: bool) -> planet::Model {
         partnered: false,
         featured_description: "irrelevant".to_string(),
         created: chrono::offset::Utc::now().naive_utc(),
-        banned: vec!["irrelevant".to_string()],
         css: "irrelevant".to_string(),
         description: Some("irrelevant".to_string()),
         home: Some("irrelevant".to_string()),
@@ -186,6 +185,7 @@ fn create_member(permissions: Vec<String>) -> planet_member::Model {
         user: "irrelevant".to_string(),
         roles: vec!["irrelevant".to_string()],
         created: chrono::offset::Utc::now().naive_utc(),
+        banned: false,
     }
 }
 

@@ -8,10 +8,7 @@ use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter,
-    QueryOrder,
-};
+use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait, QueryOrder};
 
 #[Object(
     name = "Planet",
@@ -134,18 +131,6 @@ impl Model {
     }
 
     // TODO: invites
-
-    #[graphql(complexity = 5)]
-    async fn banned(&self, ctx: &Context<'_>) -> Result<Vec<user::Model>, Error> {
-        // TODO: potentially lock this behind a permission
-        let db = ctx.data::<DatabaseConnection>().unwrap();
-
-        user::Entity::find()
-            .filter(user::Column::Id.is_in(self.banned.clone()))
-            .all(db)
-            .await
-            .map_err(|_| errors::create_internal_server_error(None, "FIND_BANNED_ERROR"))
-    }
 
     #[graphql(complexity = 0)]
     async fn css(&self) -> &String {
