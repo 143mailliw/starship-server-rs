@@ -58,6 +58,8 @@ pub const ADMINISTRATOR_PERMISSIONS: &[&str] = &[
     "+planet.roles.reorder",           // change the order of roles
     "+planet.roles.add_member",        // add new members to roles
     "+planet.member.edit_permissions", // edit a member's permissions
+    "+planet.member.ban",              // ban a member
+    "+planet.member.kick",             // kick a member
     "+planet.emojis.create",           // create emojis
     "+planet.emojis.delete",           // delete emojis
     "+planet.change_css",              // change the planet's css

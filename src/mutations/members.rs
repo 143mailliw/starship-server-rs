@@ -182,4 +182,47 @@ impl MemberMutation {
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
+
+    /// Kicks a member from a planet.
+    async fn kick_member(&self, ctx: &Context<'_>, id: ID) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let id = id.to_string();
+
+        let kick_member = planet_member::Entity::find_by_id(id.clone())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(kick_member.planet.clone(), db).await?;
+        let member =
+            util::get_planet_member(user_id.clone(), kick_member.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+
+        util::check_permission("planet.member.kick", &planet, member, roles)?;
+
+        if id == user_id.unwrap() {
+            return Err(errors::create_user_input_error(
+                "You cannot kick yourself.",
+                "SELF",
+            ));
+        }
+
+        if id == planet.owner {
+            return Err(errors::create_user_input_error(
+                "You cannot kick the owner of the planet.",
+                "PLANET_OWNER",
+            ));
+        }
+
+        kick_member
+            .delete(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_DELETION_ERROR"))?;
+
+        Ok(true)
+    }
 }
