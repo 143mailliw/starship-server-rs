@@ -97,7 +97,10 @@ impl MemberMutation {
             .one(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "PLANET_RETRIEVAL_ERROR"))?
-            .ok_or(errors::create_not_found_error())?;
+            .ok_or(errors::create_user_input_error(
+                "You aren't a member of that planet.",
+                "NOT_MEMBER",
+            ))?;
 
         let user_id = user_id.as_ref().unwrap().clone();
 
