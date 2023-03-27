@@ -125,6 +125,13 @@ impl MemberMutation {
                 "NOT_MEMBER",
             ))?;
 
+        if member.banned {
+            return Err(errors::create_user_input_error(
+                "You cannot leave a planet you are banned from",
+                "BANNED",
+            ));
+        }
+
         member
             .delete(db)
             .await
@@ -204,17 +211,24 @@ impl MemberMutation {
 
         util::check_permission("planet.member.kick", &planet, member, roles)?;
 
-        if id == user_id.unwrap() {
+        if kick_member.user == user_id.unwrap() {
             return Err(errors::create_user_input_error(
                 "You cannot kick yourself.",
                 "SELF",
             ));
         }
 
-        if id == planet.owner {
+        if kick_member.user == planet.owner {
             return Err(errors::create_user_input_error(
                 "You cannot kick the owner of the planet.",
                 "PLANET_OWNER",
+            ));
+        }
+
+        if kick_member.banned {
+            return Err(errors::create_user_input_error(
+                "You can not kick a banned member.",
+                "BANNED",
             ));
         }
 
@@ -224,5 +238,51 @@ impl MemberMutation {
             .map_err(|_| errors::create_internal_server_error(None, "MEMBER_DELETION_ERROR"))?;
 
         Ok(true)
+    }
+
+    /// Toggles whether or not a member is banned.
+    async fn ban_member(&self, ctx: &Context<'_>, id: ID) -> Result<planet_member::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let id = id.to_string();
+
+        let ban_member = planet_member::Entity::find_by_id(id.clone())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "MEMBER_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(ban_member.planet.clone(), db).await?;
+        let member =
+            util::get_planet_member(user_id.clone(), ban_member.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+
+        util::check_permission("planet.member.kick", &planet, member, roles)?;
+
+        if ban_member.user == user_id.unwrap() {
+            return Err(errors::create_user_input_error(
+                "You cannot ban yourself.",
+                "SELF",
+            ));
+        }
+
+        if ban_member.user == planet.owner {
+            return Err(errors::create_user_input_error(
+                "You cannot ban the owner of the planet.",
+                "PLANET_OWNER",
+            ));
+        }
+
+        let banned = !ban_member.banned;
+
+        let mut active_member: planet_member::ActiveModel = ban_member.clone().into();
+        active_member.banned = ActiveValue::Set(banned);
+
+        active_member
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 }
