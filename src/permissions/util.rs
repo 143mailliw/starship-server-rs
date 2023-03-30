@@ -1,6 +1,7 @@
 use super::checks;
 use crate::entities::{planet, planet_member, planet_role, user};
 use crate::errors;
+use crate::permissions::constants;
 use async_graphql::Error;
 use libreauth::oath::TOTPBuilder;
 use sea_orm::{
@@ -73,31 +74,46 @@ pub fn check_permission(
     }
 }
 
-/// Modifies a permission vector based on an input permission string's prefix.
+/// Modifies a permission vector using the prefixes from a vector of strings.
 ///
 /// Prefixes:
 /// '+' grants the permission.
 /// '*' (or any other unspecified character) falls back to the previous permission set.
 /// '-' explicitly denies the permission.
-pub fn update_permissions(mut permission_vec: Vec<String>, permission: String) -> Vec<String> {
-    // remove the permission from the array
-    let mut permission_chars = permission.chars();
-    let permission_prefix = permission_chars.next();
-    let base_permission: String = permission_chars.collect();
+pub fn update_permissions(
+    mut destination_vec: Vec<String>,
+    permissions: Vec<String>,
+) -> Result<Vec<String>, Error> {
+    for permission in permissions {
+        // remove the permission from the array
+        let mut permission_chars = permission.chars();
+        let permission_prefix = permission_chars.next();
+        let base_permission: String = permission_chars.collect();
 
-    permission_vec.retain(|p| {
-        let mut p_chars = p.chars();
-        p_chars.next();
-        let base_p: String = p_chars.collect();
+        destination_vec.retain(|p| {
+            let mut p_chars = p.chars();
+            p_chars.next();
+            let base_p: String = p_chars.collect();
 
-        base_p != base_permission
-    });
+            base_p != base_permission
+        });
 
-    if permission_prefix == Some('-') || permission_prefix == Some('+') {
-        permission_vec.push(permission);
+        if constants::MEMBER_PERMISSIONS
+            .iter()
+            .any(|&s| s == permission)
+        {
+            return Err(errors::create_user_input_error(
+                &format!("You cannot change the '{permission}' permission."),
+                "SPECIAL_PERMISSION",
+            ));
+        }
+
+        if permission_prefix == Some('-') || permission_prefix == Some('+') {
+            destination_vec.push(permission);
+        }
     }
 
-    permission_vec
+    Ok(destination_vec)
 }
 
 /// Verifies a two factor authentication token. If a token is required and the token provided is

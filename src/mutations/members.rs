@@ -140,16 +140,16 @@ impl MemberMutation {
         Ok(true)
     }
 
-    /// Sets a permission for the specified planet member.
+    /// Updates permissions for the specified planet member.
     ///
     /// + grants the permission
     /// * falls back to the previous permission set (for this function, the highest priority role)
     /// - explicitly denies the permission
-    async fn set_member_permission(
+    async fn update_member_permissions(
         &self,
         ctx: &Context<'_>,
         id: ID,
-        permission: String,
+        permissions: Vec<String>,
     ) -> Result<planet_member::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
@@ -173,16 +173,9 @@ impl MemberMutation {
             roles,
         )?;
 
-        if permission.ends_with("owner") {
-            return Err(errors::create_user_input_error(
-                "You cannot grant or remove the 'owner' permission.",
-                "SPECIAL_PERMISSION",
-            ));
-        }
-
         let mut active_member: planet_member::ActiveModel = member.clone().into();
         active_member.permissions =
-            ActiveValue::Set(util::update_permissions(member.permissions, permission));
+            ActiveValue::Set(util::update_permissions(member.permissions, permissions)?);
 
         active_member
             .update(db)
