@@ -111,6 +111,7 @@ impl PlanetMutation {
     }
 
     /// Renames a planet.
+    #[graphql(complexity = 10)]
     async fn rename_planet(
         &self,
         ctx: &Context<'_>,
@@ -136,6 +137,7 @@ impl PlanetMutation {
     }
 
     /// Sets a planet's description.
+    #[graphql(complexity = 10)]
     async fn set_planet_description(
         &self,
         ctx: &Context<'_>,
@@ -161,6 +163,7 @@ impl PlanetMutation {
     }
 
     /// Toggles whether or not a planet is private.
+    #[graphql(complexity = 50)]
     async fn toggle_private(
         &self,
         ctx: &Context<'_>,
@@ -188,6 +191,7 @@ impl PlanetMutation {
     }
 
     /// Deletes a planet and all of it's associated data immediately. This action is unrecoverable.
+    #[graphql(complexity = 200)]
     async fn delete_planet(
         &self,
         ctx: &Context<'_>,

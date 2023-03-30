@@ -88,6 +88,7 @@ impl MemberMutation {
     }
 
     /// Leaves a planet the current user is a member of.
+    #[graphql(guard = "SessionGuard::new(SessionType::User)", complexity = 200)]
     async fn leave_planet(&self, ctx: &Context<'_>, id: ID) -> Result<bool, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
@@ -145,6 +146,7 @@ impl MemberMutation {
     /// + grants the permission
     /// * falls back to the previous permission set (for this function, the highest priority role)
     /// - explicitly denies the permission
+    #[graphql(complexity = 50)]
     async fn update_member_permissions(
         &self,
         ctx: &Context<'_>,
@@ -184,6 +186,7 @@ impl MemberMutation {
     }
 
     /// Kicks a member from a planet.
+    #[graphql(complexity = 50)]
     async fn kick_member(&self, ctx: &Context<'_>, id: ID) -> Result<bool, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();
@@ -234,6 +237,7 @@ impl MemberMutation {
     }
 
     /// Toggles whether or not a member is banned.
+    #[graphql(complexity = 50)]
     async fn ban_member(&self, ctx: &Context<'_>, id: ID) -> Result<planet_member::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
         let session = ctx.data::<Session>().unwrap();

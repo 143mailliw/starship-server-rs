@@ -10,7 +10,7 @@ pub struct MemberQuery;
 
 #[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl MemberQuery {
-    /// Finds a planet from it's ID.
+    /// Finds a planet member from their ID.
     #[graphql(complexity = 5)]
     async fn planet_member(
         &self,

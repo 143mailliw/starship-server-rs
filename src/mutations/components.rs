@@ -10,6 +10,8 @@ pub struct ComponentMutation;
 
 #[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl ComponentMutation {
+    /// Renames a component.
+    #[graphql(complexity = 10)]
     async fn rename_component(
         &self,
         ctx: &Context<'_>,
