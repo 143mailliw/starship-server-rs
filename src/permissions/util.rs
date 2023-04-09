@@ -74,6 +74,21 @@ pub fn check_permission(
     }
 }
 
+/// Checks to see whether or not the user's lowest positioned role is lower than the origin's lowest
+/// position role, to be used in determining whether or not a role can be modified. This function
+/// exists to ensure permission behavior is consistent across the API.
+pub fn low_enough(
+    user_roles: Option<Vec<planet_role::Model>>,
+    origin_roles: Vec<planet_role::Model>,
+    member: Option<planet_member::Model>,
+) -> Result<(), Error> {
+    if checks::low_enough(user_roles, origin_roles, member) {
+        Ok(())
+    } else {
+        Err(errors::create_not_found_error())
+    }
+}
+
 /// Modifies a permission vector using the prefixes from a vector of strings.
 ///
 /// Prefixes:

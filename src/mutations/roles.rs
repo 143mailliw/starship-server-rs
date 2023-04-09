@@ -63,7 +63,7 @@ impl RoleMutation {
     async fn update_role(
         &self,
         ctx: &Context<'_>,
-        role_id: ID,
+        id: ID,
         name: String,
         color: String,
     ) -> Result<planet_role::Model, Error> {
@@ -71,7 +71,7 @@ impl RoleMutation {
         let session = ctx.data::<Session>().unwrap();
         let user_id = session.user.as_ref().map(|user| user.id.clone());
 
-        let role = planet_role::Entity::find_by_id(role_id.to_string())
+        let role = planet_role::Entity::find_by_id(id.to_string())
             .one(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?
@@ -80,7 +80,13 @@ impl RoleMutation {
         let planet = util::get_planet(role.planet.clone(), db).await?;
         let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
-        util::check_permission("planet.roles.create", &planet, member, roles)?;
+        util::check_permission(
+            "planet.roles.create",
+            &planet,
+            member.clone(),
+            roles.clone(),
+        )?;
+        util::low_enough(roles, vec![role.clone()], member)?;
 
         if color.len() != 7 && color.len() != 9 {
             return Err(errors::create_user_input_error(
