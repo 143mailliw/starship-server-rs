@@ -1,6 +1,7 @@
 mod components;
 mod members;
 mod planets;
+mod roles;
 mod users;
 
 use async_graphql::MergedObject;
@@ -11,4 +12,5 @@ pub struct Mutation(
     planets::PlanetMutation,
     components::ComponentMutation,
     members::MemberMutation,
+    roles::RoleMutation,
 );
