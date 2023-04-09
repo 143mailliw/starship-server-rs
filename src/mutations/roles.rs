@@ -4,7 +4,9 @@ use crate::permissions::util;
 use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use nanoid::nanoid;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, QueryOrder, TryIntoModel};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, QueryOrder, TryIntoModel,
+};
 
 #[derive(Default, Description)]
 pub struct RoleMutation;
@@ -54,5 +56,46 @@ impl RoleMutation {
         new_role
             .try_into_model()
             .map_err(|_| errors::create_internal_server_error(None, "CONVERSION_ERROR"))
+    }
+
+    /// Renames and changes the color of a role.
+    #[graphql(complexity = 50)]
+    async fn update_role(
+        &self,
+        ctx: &Context<'_>,
+        role_id: ID,
+        name: String,
+        color: String,
+    ) -> Result<planet_role::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let role = planet_role::Entity::find_by_id(role_id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(role.planet.clone(), db).await?;
+        let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.roles.create", &planet, member, roles)?;
+
+        if color.len() != 7 && color.len() != 9 {
+            return Err(errors::create_user_input_error(
+                "Invalid color code.",
+                "INVALID_COLOR",
+            ));
+        }
+
+        let mut active_role: planet_role::ActiveModel = role.into();
+        active_role.name = ActiveValue::Set(name);
+        active_role.color = ActiveValue::Set(color);
+
+        active_role
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
 }
