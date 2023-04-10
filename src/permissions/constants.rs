@@ -51,9 +51,8 @@ pub const ADMINISTRATOR_PERMISSIONS: &[&str] = &[
     "+planet.component.move",          // move components
     "+planet.component.set_home",      // change the home component
     "+planet.roles.create",            // create roles
-    "+planet.roles.rename",            // rename roles
-    "+planet.roles.change_color",      // change the color of roles
-    "+planet.roles.edit",              // change the permissions of roles
+    "+planet.roles.edit",              // rename roles
+    "+planet.roles.edit_permissions",  // change the permissions of roles
     "+planet.roles.delete",            // delete roles
     "+planet.roles.reorder",           // change the order of roles
     "+planet.roles.add_member",        // add new members to roles

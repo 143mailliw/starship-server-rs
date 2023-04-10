@@ -80,12 +80,7 @@ impl RoleMutation {
         let planet = util::get_planet(role.planet.clone(), db).await?;
         let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
-        util::check_permission(
-            "planet.roles.create",
-            &planet,
-            member.clone(),
-            roles.clone(),
-        )?;
+        util::check_permission("planet.roles.edit", &planet, member.clone(), roles.clone())?;
         util::low_enough(roles, vec![role.clone()], member)?;
 
         if color.len() != 7 && color.len() != 9 {
@@ -98,6 +93,49 @@ impl RoleMutation {
         let mut active_role: planet_role::ActiveModel = role.into();
         active_role.name = ActiveValue::Set(name);
         active_role.color = ActiveValue::Set(color);
+
+        active_role
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
+
+    /// Updates permissions for the specified planet role.
+    ///
+    /// + grants the permission
+    /// * falls back to the previous permission set (for this function, the highest priority role)
+    /// - explicitly denies the permission
+    #[graphql(complexity = 50)]
+    async fn update_role_permissions(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+        permissions: Vec<String>,
+    ) -> Result<planet_role::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let role = planet_role::Entity::find_by_id(id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(role.planet.clone(), db).await?;
+        let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission(
+            "planet.roles.edit_permissions",
+            &planet,
+            member.clone(),
+            roles.clone(),
+        )?;
+        util::low_enough(roles, vec![role.clone()], member)?;
+
+        let mut active_role: planet_role::ActiveModel = role.clone().into();
+        active_role.permissions =
+            ActiveValue::Set(util::update_permissions(role.permissions, permissions)?);
 
         active_role
             .update(db)
