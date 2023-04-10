@@ -31,7 +31,7 @@ pub fn has_permission(
         if !member.banned {
             if let Some(roles) = roles {
                 let mut role_vec = roles;
-                role_vec.sort_by_key(|r| i32::MAX - r.position);
+                role_vec.sort_by_key(|r| r.position);
 
                 for role in &role_vec {
                     if role.planet != planet.id {

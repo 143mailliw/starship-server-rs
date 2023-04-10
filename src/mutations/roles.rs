@@ -31,12 +31,12 @@ impl RoleMutation {
         util::check_permission("planet.roles.create", &planet, member, roles)?;
 
         let position = planet_role::Entity::find()
-            .order_by_desc(planet_role::Column::Position)
+            .order_by_asc(planet_role::Column::Position)
             .one(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "ORDER_RETRIEVAL_ERROR"))?
             .map_or(0, |role| role.position)
-            + 1;
+            - 1;
 
         let new_role = planet_role::ActiveModel {
             id: ActiveValue::Set(nanoid!(16)),
