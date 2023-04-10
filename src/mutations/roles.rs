@@ -81,7 +81,7 @@ impl RoleMutation {
         let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
         util::check_permission("planet.roles.edit", &planet, member.clone(), roles.clone())?;
-        util::low_enough(roles, vec![role.clone()], member)?;
+        util::high_enough(roles, vec![role.clone()], member)?;
 
         if color.len() != 7 && color.len() != 9 {
             return Err(errors::create_user_input_error(
@@ -131,7 +131,7 @@ impl RoleMutation {
             member.clone(),
             roles.clone(),
         )?;
-        util::low_enough(roles, vec![role.clone()], member)?;
+        util::high_enough(roles, vec![role.clone()], member)?;
 
         let mut active_role: planet_role::ActiveModel = role.clone().into();
         active_role.permissions =

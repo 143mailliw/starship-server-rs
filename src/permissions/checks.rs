@@ -99,7 +99,7 @@ pub fn has_permission(
         .any(|p| *p.0 == permission && *p.1)
 }
 
-pub fn low_enough(
+pub fn high_enough(
     user_roles: Option<Vec<planet_role::Model>>,
     mut origin_roles: Vec<planet_role::Model>,
     member: Option<planet_member::Model>,
