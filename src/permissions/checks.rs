@@ -111,13 +111,13 @@ pub fn high_enough(
     let user_lowest = user_roles
         .and_then(|mut v| {
             v.sort_by_key(|role| role.position);
-            v.first().map(|role| role.position)
+            v.last().map(|role| role.position)
         })
         .unwrap_or(i32::MAX);
 
     origin_roles.sort_by_key(|role| role.position);
 
-    let origin_lowest = origin_roles.first().map_or(0, |role| role.position);
+    let origin_lowest = origin_roles.last().map_or(0, |role| role.position);
 
     user_lowest >= origin_lowest
 }
