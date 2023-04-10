@@ -27,21 +27,21 @@ These environment variables can be set in a .env file, or provided as part of th
 Once these are set, the server can be run using `cargo run`.
 
 ## Features
-| Feature        | Status       | Notes                                                                           |
-|----------------|--------------|---------------------------------------------------------------------------------|
-| Users          | 70% complete | No PFPs, banners, forgot password, register function (insertUser) is incomplete |
-| Tokens         | 30% complete | Basic backend only (just enough to allow for logging in)                        |
-| Planets        | 60% complete | Basic implementation only                                                       |
-| Permissions    | 40% complete | Permission check flow complete, but role & member management missing            |
-| Components     | 50% complete | Missing ordering, folders, deletion, and creation                               |
-| Pages          | 0% complete  |                                                                                 |
-| Files          | 0% complete  |                                                                                 |
-| Forums         | 0% complete  |                                                                                 |
-| Chats          | 0% complete  |                                                                                 |
-| Notifications  | 0% complete  |                                                                                 |
-| Custom Emojis  | 10% complete | Only GQL resolvers are implemented                                              |
-| Administration | 0% complete  |                                                                                 |
-| Attachments    | 0% complete  |                                                                                 |
+| Feature        | Status        | Notes                                                                           |
+|----------------|---------------|---------------------------------------------------------------------------------|
+| Users          | 70% complete  | No PFPs, banners, forgot password, register function (insertUser) is incomplete |
+| Tokens         | 30% complete  | Basic backend only (just enough to allow for logging in)                        |
+| Planets        | 80% complete  | Missing invites. See also: permissions, components, administration.             |
+| Permissions    | 60% complete  | Missing role add/remove member, delete, reorder, GQL member list resolver       |
+| Components     | 50% complete  | Missing ordering, folders, deletion, and creation                               |
+| Pages          | 0% complete   |                                                                                 |
+| Files          | 0% complete   |                                                                                 |
+| Forums         | 0% complete   |                                                                                 |
+| Chats          | 0% complete   |                                                                                 |
+| Notifications  | 0% complete   |                                                                                 |
+| Custom Emojis  | 10% complete  | Only GQL resolvers are implemented                                              |
+| Administration | 0% complete   |                                                                                 |
+| Attachments    | 0% complete   |                                                                                 |
 
 ## Contributing
 While I welcome contributions to parts of the code base that are already started, if you plan to start working on a major feature that hasn't been started yet, please contact me first, so that we can ensure that the data is represented in a way that is compatible with the already existing data from the older versions of the server.

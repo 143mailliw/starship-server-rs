@@ -43,19 +43,20 @@ pub const ADMINISTRATOR_PERMISSIONS: &[&str] = &[
     "+administrator.read_all",  // overrides per-component read rules
     "+administrator.write_all", // overrides per-component write rules
     // planet permissions
-    "+planet.change_name",             // change the planet name
-    "+planet.change_description",      // change the planet description
-    "+planet.component.create",        // create new components
-    "+planet.component.rename",        // rename components
-    "+planet.component.delete",        // delete components
-    "+planet.component.move",          // move components
-    "+planet.component.set_home",      // change the home component
-    "+planet.roles.create",            // create roles
-    "+planet.roles.edit",              // rename roles
-    "+planet.roles.edit_permissions",  // change the permissions of roles
-    "+planet.roles.delete",            // delete roles
-    "+planet.roles.reorder",           // change the order of roles
-    "+planet.roles.add_member",        // add new members to roles
+    "+planet.change_name",            // change the planet name
+    "+planet.change_description",     // change the planet description
+    "+planet.component.create",       // create new components
+    "+planet.component.rename",       // rename components
+    "+planet.component.delete",       // delete components
+    "+planet.component.move",         // move components
+    "+planet.component.set_home",     // change the home component
+    "+planet.roles.create",           // create roles
+    "+planet.roles.edit",             // rename roles
+    "+planet.roles.edit_permissions", // change the permissions of roles
+    "+planet.roles.delete",           // delete roles
+    "+planet.roles.reorder",          // change the order of roles
+    "+planet.roles.add_member",       // add new members to roles
+    "+planet.roles.remove_member",
     "+planet.member.edit_permissions", // edit a member's permissions
     "+planet.member.ban",              // ban a member
     "+planet.member.kick",             // kick a member
