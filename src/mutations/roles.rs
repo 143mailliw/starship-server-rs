@@ -5,7 +5,8 @@ use crate::sessions::Session;
 use async_graphql::{Context, Description, Error, Object, ID};
 use nanoid::nanoid;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, QueryOrder, TryIntoModel,
+    ActiveModelTrait, ActiveValue, ConnectionTrait, DatabaseBackend, DatabaseConnection,
+    EntityTrait, QueryOrder, Statement, TryIntoModel,
 };
 
 #[derive(Default, Description)]
@@ -141,5 +142,46 @@ impl RoleMutation {
             .update(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
+
+    /// Deletes a role.
+    #[graphql(complexity = 500)]
+    async fn delete_role(&self, ctx: &Context<'_>, id: ID) -> Result<bool, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let role = planet_role::Entity::find_by_id(id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLE_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(role.planet.clone(), db).await?;
+        let member = util::get_planet_member(user_id, role.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission(
+            "planet.roles.delete",
+            &planet,
+            member.clone(),
+            roles.clone(),
+        )?;
+        util::high_enough(roles, vec![role.clone()], member)?;
+
+        db.query_one(Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            r#"SELECT ARRAY_REMOVE(roles, $1) FROM planet_member;"#,
+            [role.id.clone().into()],
+        ))
+        .await
+        .map_err(|_| errors::create_internal_server_error(None, "REMOVE_ARRAY_ERROR"))?;
+
+        let active_role: planet_role::ActiveModel = role.into();
+
+        active_role
+            .delete(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "DELETE_ROLE_ERROR"))
+            .map(|_| true)
     }
 }
