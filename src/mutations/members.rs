@@ -282,4 +282,60 @@ impl MemberMutation {
             .await
             .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
     }
+
+    /// Adds a role to the planet member.
+    #[graphql(complexity = 50)]
+    async fn add_role_member(
+        &self,
+        ctx: &Context<'_>,
+        member_id: ID,
+        role_id: ID,
+    ) -> Result<planet_member::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let target_role = planet_role::Entity::find_by_id(role_id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "TARGET_ROLE_RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(target_role.planet.clone(), db).await?;
+        let member =
+            util::get_planet_member(user_id.clone(), target_role.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.member.kick", &planet, member.clone(), roles.clone())?;
+        util::high_enough(roles, vec![target_role.clone()], member)?;
+
+        let target_member = planet_member::Entity::find_by_id(member_id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| {
+                errors::create_internal_server_error(None, "TARGET_MEMBER_RETRIEVAL_ERROR")
+            })?
+            .ok_or(errors::create_not_found_error())?;
+
+        if target_member.planet != target_role.planet {
+            return Err(errors::create_not_found_error());
+        }
+
+        if target_member.roles.contains(&target_role.id) {
+            return Err(errors::create_user_input_error(
+                "This user already has that role.",
+                "ALREADY_HAS_ROLE",
+            ));
+        }
+
+        let mut new_roles = target_member.roles.clone();
+        new_roles.push(target_role.id);
+
+        let mut active_member: planet_member::ActiveModel = target_member.clone().into();
+        active_member.roles = ActiveValue::Set(new_roles);
+
+        active_member
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
 }
