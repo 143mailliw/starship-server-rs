@@ -85,7 +85,7 @@ impl ComponentMutation {
         let planet = util::get_planet(component.clone().planet, db).await?;
         let member = util::get_planet_member(user_id, component.clone().planet, db).await?;
         let roles = util::get_member_roles(member.clone(), db).await?;
-        util::check_permission("planet.component.rename", &planet, member, roles)?;
+        util::check_permission("planet.component.delete", &planet, member, roles)?;
 
         util::verify_token(db, session.user.as_ref().unwrap(), token).await?;
         if planet.home == Some(component.id.clone()) {
