@@ -33,7 +33,7 @@ Once these are set, the server can be run using `cargo run`.
 | Tokens         | 30% complete  | Basic backend only (just enough to allow for logging in)                        |
 | Planets        | 80% complete  | Missing invites. See also: permissions, components, administration.             |
 | Permissions    | 100% complete | Functionally complete as of 2023-04-12, needs additional testing                |
-| Components     | 50% complete  | Missing ordering, folders, deletion, and creation                               |
+| Components     | 50% complete  | Missing ordering, folders, deletion, and GQL query                              |
 | Pages          | 0% complete   |                                                                                 |
 | Files          | 0% complete   |                                                                                 |
 | Forums         | 0% complete   |                                                                                 |
