@@ -12,8 +12,8 @@ pub struct Model {
     pub name: String,
     pub planet: String,
     pub created: DateTime,
-    pub order: i32,
-    pub order_time: i64,
+    pub position: i32,
+    pub parent_id: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -26,6 +26,14 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Planet,
+    #[sea_orm(
+        belongs_to = "Entity",
+        from = "Column::ParentId",
+        to = "Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    SelfRef,
 }
 
 impl Related<super::planet::Entity> for Entity {

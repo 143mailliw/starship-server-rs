@@ -21,6 +21,8 @@ mod m20230111_141433_rename_member_permissions;
 mod m20230213_172601_add_component_order;
 mod m20230323_001036_delete_planet_banned;
 mod m20230323_001050_add_member_banned;
+mod m20230413_201700_delete_component_order;
+mod m20230413_201830_add_component_position;
 
 pub struct Migrator;
 
@@ -47,6 +49,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20230213_172601_add_component_order::Migration),
             Box::new(m20230323_001036_delete_planet_banned::Migration),
             Box::new(m20230323_001050_add_member_banned::Migration),
+            Box::new(m20230413_201700_delete_component_order::Migration),
+            Box::new(m20230413_201830_add_component_position::Migration),
         ]
     }
 }

@@ -61,4 +61,6 @@ pub enum PlanetComponent {
     Created,
     Order,
     OrderTime,
+    Position,
+    ParentId,
 }
