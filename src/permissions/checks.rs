@@ -108,16 +108,16 @@ pub fn high_enough(
         return true;
     }
 
-    let user_lowest = user_roles
+    let user_highest = user_roles
         .and_then(|mut v| {
             v.sort_by_key(|role| role.position);
             v.last().map(|role| role.position)
         })
-        .unwrap_or(i32::MAX);
+        .unwrap_or(i32::MIN);
 
     origin_roles.sort_by_key(|role| role.position);
 
-    let origin_lowest = origin_roles.last().map_or(0, |role| role.position);
+    let origin_highest = origin_roles.last().map_or(i32::MIN, |role| role.position);
 
-    user_lowest >= origin_lowest
+    user_highest > origin_highest
 }

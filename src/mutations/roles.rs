@@ -2,12 +2,19 @@ use crate::entities::planet_role;
 use crate::errors;
 use crate::permissions::util;
 use crate::sessions::Session;
-use async_graphql::{Context, Description, Error, Object, ID};
+use async_graphql::{Context, Description, Error, InputObject, Object, ID};
 use nanoid::nanoid;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue, ConnectionTrait, DatabaseBackend, DatabaseConnection,
-    EntityTrait, QueryOrder, Statement, TryIntoModel,
+    ActiveModelTrait, ActiveValue, ColumnTrait, ConnectionTrait, DatabaseBackend,
+    DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Statement, TransactionTrait,
+    TryIntoModel,
 };
+
+#[derive(InputObject, Debug, Clone)]
+pub struct RoleOrderEntry {
+    role: String,
+    position: i32,
+}
 
 #[derive(Default, Description)]
 pub struct RoleMutation;
@@ -183,5 +190,121 @@ impl RoleMutation {
             .await
             .map_err(|_| errors::create_internal_server_error(None, "DELETE_ROLE_ERROR"))
             .map(|_| true)
+    }
+
+    /// Changes the order of roles.
+    #[graphql(complexity = 200)]
+    async fn reorder_roles(
+        &self,
+        ctx: &Context<'_>,
+        planet_id: ID,
+        mut positions: Vec<RoleOrderEntry>,
+    ) -> Result<Vec<planet_role::Model>, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        if positions.is_empty() {
+            return Err(errors::create_user_input_error(
+                "No roles were moved.",
+                "NO_ORDER_CHANGES",
+            ));
+        }
+
+        // get all of the roles for the planet and filter down to the ones we need
+        let target_roles = planet_role::Entity::find()
+            .filter(planet_role::Column::Planet.eq(planet_id.to_string()))
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLES_RETRIEVAL_ERROR"))?;
+
+        let filtered_roles: Vec<planet_role::Model> = target_roles
+            .iter()
+            .filter(|r| positions.iter().any(|p| p.role == r.id))
+            .cloned()
+            .collect();
+
+        if filtered_roles.len() != positions.len() {
+            return Err(errors::create_not_found_error());
+        }
+
+        // ensure we even have permission to do this
+        let planet = util::get_planet(planet_id.to_string(), db).await?;
+        let member = util::get_planet_member(user_id, planet_id.to_string(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission(
+            "planet.roles.delete",
+            &planet,
+            member.clone(),
+            roles.clone(),
+        )?;
+        util::high_enough(roles.clone(), target_roles.clone(), member)?;
+
+        // check that we're not moving to a position higher than our member's highest role
+        positions.sort_by_key(|change| change.position);
+        let highest_position = positions.last().map_or(i32::MIN, |change| change.position);
+
+        let mut member_roles = roles.ok_or(errors::create_not_found_error())?;
+        member_roles.sort_by_key(|role| role.position);
+        let highest_held_position = member_roles.last().map_or(i32::MIN, |role| role.position);
+
+        if highest_position >= highest_held_position {
+            return Err(errors::create_forbidden_error(
+                Some("You can't move a role that high."),
+                "POSITION_TOO_HIGH",
+            ));
+        }
+
+        // check for duplicate positions
+        let mut dupe_check_vec: Vec<RoleOrderEntry> = target_roles
+            .iter()
+            .map(|r| RoleOrderEntry {
+                role: r.id.clone(),
+                position: r.position,
+            })
+            .filter(|r| !positions.iter().any(|p| p.role == r.role))
+            .chain(positions.iter().cloned())
+            .collect();
+
+        dupe_check_vec.sort_by_key(|r| r.position);
+        dupe_check_vec.dedup_by_key(|r| r.position);
+
+        if dupe_check_vec.len() != target_roles.len() {
+            return Err(errors::create_user_input_error(
+                "Two roles cannot occupy the same position.",
+                "DUPLICATE_POSITION",
+            ));
+        }
+
+        // store the updated roles
+        let txn = db.begin().await?;
+
+        for role in filtered_roles {
+            let mut active_role: planet_role::ActiveModel = role.clone().into();
+            active_role.position = ActiveValue::Set(
+                positions
+                    .iter()
+                    .find(|p| p.role == role.id)
+                    .unwrap()
+                    .position,
+            );
+            active_role.update(&txn).await?;
+        }
+
+        txn.commit().await?;
+
+        // return the updated roles
+        planet_role::Entity::find()
+            .filter(
+                planet_role::Column::Id.is_in(
+                    positions
+                        .iter()
+                        .map(|p| p.role.clone())
+                        .collect::<Vec<String>>(),
+                ),
+            )
+            .all(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "ROLES_RETRIEVAL_ERROR"))
     }
 }
