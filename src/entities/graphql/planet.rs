@@ -8,7 +8,10 @@ use crate::errors;
 use async_graphql::types::ID;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDateTime;
-use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait, QueryOrder};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter,
+    QueryOrder,
+};
 
 #[Object(
     name = "Planet",
@@ -59,7 +62,8 @@ impl Model {
     async fn components(&self, ctx: &Context<'_>) -> Result<Vec<planet_component::Model>, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();
 
-        self.find_related(planet_component::Entity)
+        planet_component::Entity::find()
+            .filter(planet_component::Column::Planet.eq(self.id.clone()))
             .all(db)
             .await
             .map_err(|_| errors::create_internal_server_error(None, "FIND_COMPONENTS_ERROR"))
