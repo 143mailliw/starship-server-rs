@@ -1,5 +1,6 @@
 mod members;
 mod planets;
+mod roles;
 mod sysinfo;
 mod users;
 
@@ -11,4 +12,5 @@ pub struct Query(
     sysinfo::SysInfoQuery,
     planets::PlanetQuery,
     members::MemberQuery,
+    roles::RoleQuery,
 );
