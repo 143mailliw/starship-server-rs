@@ -10,7 +10,7 @@ pub struct RoleQuery;
 
 #[Object(rename_fields = "camelCase", rename_args = "camelCase")]
 impl RoleQuery {
-    /// Finds a role from their ID.
+    /// Finds a role from it's ID.
     #[graphql(complexity = 5)]
     async fn role(&self, ctx: &Context<'_>, id: ID) -> Result<planet_role::Model, Error> {
         let db = ctx.data::<DatabaseConnection>().unwrap();

@@ -1,5 +1,6 @@
 #![allow(clippy::unused_async)]
 
+mod components;
 mod db;
 mod entities;
 mod errors;
