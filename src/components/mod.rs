@@ -1,3 +1,1 @@
-mod component;
-mod dummy;
-mod index;
+pub mod index;
