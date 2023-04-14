@@ -14,7 +14,7 @@ pub struct ComponentMutation;
 impl ComponentMutation {
     /// Creates a component.
     #[graphql(complexity = 50)]
-    async fn create_component(
+    async fn insert_component(
         &self,
         ctx: &Context<'_>,
         planet_id: ID,
