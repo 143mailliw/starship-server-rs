@@ -246,4 +246,38 @@ impl PlanetMutation {
             .map_err(|_| errors::create_internal_server_error(None, "DELETE_PLANET_ERROR"))
             .map(|_| true)
     }
+
+    /// Changes the home component of a planet.
+    #[graphql(complexity = 50)]
+    async fn set_home_component(&self, ctx: &Context<'_>, id: ID) -> Result<planet::Model, Error> {
+        let db = ctx.data::<DatabaseConnection>().unwrap();
+        let session = ctx.data::<Session>().unwrap();
+        let user_id = session.user.as_ref().map(|user| user.id.clone());
+
+        let component = planet_component::Entity::find_by_id(id.to_string())
+            .one(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "RETRIEVAL_ERROR"))?
+            .ok_or(errors::create_not_found_error())?;
+
+        let planet = util::get_planet(component.planet.clone(), db).await?;
+        let member = util::get_planet_member(user_id.clone(), component.planet.clone(), db).await?;
+        let roles = util::get_member_roles(member.clone(), db).await?;
+        util::check_permission("planet.component.set_home", &planet, member, roles)?;
+
+        if component.parent_id.is_some() {
+            return Err(errors::create_user_input_error(
+                "Home planet cannot have a parent.",
+                "HAS_PARENT",
+            ));
+        }
+
+        let mut active_planet: planet::ActiveModel = planet.into();
+        active_planet.home = ActiveValue::Set(Some(component.id));
+
+        active_planet
+            .update(db)
+            .await
+            .map_err(|_| errors::create_internal_server_error(None, "UPDATE_ERROR"))
+    }
 }
