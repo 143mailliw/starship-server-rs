@@ -1,30 +1,10 @@
-[package]
-name = "starship-server-rs"
-version = "0.1.0"
+[workspace]
+resolver = "2"
+members = [
+    "starship-server",
+    "toolbox-types"
+]
+
+[workspace.package]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-actix-cors = "0.6.4"
-actix-web = "4.2.1"
-async-graphql = { version = "5.0.5", features = ["tracing", "chrono"] }
-async-graphql-actix-web = "5.0.5"
-bcrypt = "0.13.0"
-chrono = { version = "0.4.23", default-features = false, features = ["clock", "std"] }
-dotenv = "0.15.0"
-email_address = "0.2.4"
-env_logger = "0.9.3"
-hmac = "0.12.1"
-jwt = "0.16.0"
-log = "0.4.17"
-nanoid = "0.4.0"
-regex = "1.7.0"
-sea-orm = { version = "0.10.3", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "postgres-array"] }
-serde = { version = "1.0.147", features = ["derive"] }
-sha2 = "0.10.6"
-tokio = "1.21.2"
-uuid = "1.2.2"
-libreauth = { version = "0.15.0", features = ["oath-uri"] }
-rand = "0.8.5"
-async-trait = "0.1.68"
+version = "0.1.0"
