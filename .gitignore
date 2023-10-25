@@ -1,5 +1,5 @@
-/target
-.env
-/migration/target
+*/target
+*/.env
+*/migration/target
 .DS_Store
 .nova
