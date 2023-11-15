@@ -2982,6 +2982,10 @@ dependencies = [
 [[package]]
 name = "toolbox-types"
 version = "0.1.0"
+dependencies = [
+ "nanoid",
+ "paste",
+]
 
 [[package]]
 name = "tracing"
