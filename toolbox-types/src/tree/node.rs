@@ -56,7 +56,7 @@ pub trait Node {
     /// specified node as a child of the current node would result in a loop.
     fn add_child(
         &mut self,
-        node: Weak<RefCell<ValidNode>>,
+        node: Rc<RefCell<ValidNode>>,
         index: Option<usize>,
     ) -> Result<(), TreeError> {
         Err(TreeError::ChildrenUnsupported)
