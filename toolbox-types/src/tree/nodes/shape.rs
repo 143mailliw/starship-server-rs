@@ -2,17 +2,16 @@ use nanoid::nanoid;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use crate::errors::EventError;
+use crate::errors::{EventError, TreeError};
 use crate::events::EventVariants;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
-    StyleString, ThemedColor, Transform,
+    Border, Color, Corners, Graphic, Margin, Scale, ThemedColor, Transform,
 };
 use crate::tree::node::Observer;
 use crate::tree::{Node, NodeFeature, ValidNode};
 
-static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
+static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
         top: Scale::Pixels(0.0),
         bottom: Scale::Pixels(0.0),
@@ -27,22 +26,17 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
     }),
     layout: StyleOption::Unsupported,
     transform: StyleOption::Some(Transform {
-        size_x: Scale::Auto,
-        size_y: Scale::Auto,
+        size_x: Scale::Pixels(100.0),
+        size_y: Scale::Pixels(100.0),
         pos_x: Scale::Pixels(0.0),
         pos_y: Scale::Pixels(0.0),
         degrees: 0.0,
     }),
-    font: StyleOption::Some(Font {
-        name: StyleString::Static("Inter"),
-        weight: FontWeight::Normal,
-        size: Scale::Points(11.0),
-        color: Color::Themed {
-            color: ThemedColor::LightWhite,
-            alpha: 255,
-        },
-    }),
-    background: StyleOption::Some(Graphic::None),
+    font: StyleOption::Unsupported,
+    background: StyleOption::Some(Graphic::Color(Color::Themed {
+        color: ThemedColor::LightBlack,
+        alpha: 255,
+    })),
     border: StyleOption::Some(Border {
         left: None,
         right: None,
@@ -56,23 +50,23 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
             locked: true,
         },
     }),
-    text_direction: StyleOption::Some(CardinalDirection::Left),
+    text_direction: StyleOption::Unsupported,
 };
 
-pub struct TextNode {
+pub struct ShapeNode {
     id: String,
     name: String,
     styles: StyleLayers,
     observers: Vec<Observer>,
     parent: Option<Weak<RefCell<ValidNode>>>,
     this_node: Weak<RefCell<ValidNode>>,
-    pub text: String,
+    children: Vec<Rc<RefCell<ValidNode>>>,
 }
 
-impl Node for TextNode {
+impl Node for ShapeNode {
     fn new() -> Rc<RefCell<ValidNode>> {
         Rc::new_cyclic(|this| {
-            let mut node = TextNode {
+            let mut node = ShapeNode {
                 id: nanoid!(),
                 name: "Text".to_string(),
                 styles: StyleLayers {
@@ -94,10 +88,10 @@ impl Node for TextNode {
                 observers: vec![],
                 parent: None,
                 this_node: this.clone(),
-                text: String::new(),
+                children: vec![],
             };
 
-            RefCell::new(ValidNode::Text(node))
+            RefCell::new(ValidNode::Shape(node))
         })
     }
 
@@ -112,6 +106,7 @@ impl Node for TextNode {
             NodeFeature::Events,
             NodeFeature::Properties,
             NodeFeature::Metadata,
+            NodeFeature::Children,
         ]
     }
 
@@ -134,12 +129,50 @@ impl Node for TextNode {
         self.commit_changes(NodeFeature::Metadata);
     }
 
+    // Children
+    fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
+        Some(self.children.iter().map(Rc::clone).collect())
+    }
+
+    fn add_child(
+        &mut self,
+        node: Weak<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<(), TreeError> {
+        if let Some(candidate_node) = node.upgrade() {
+            let mut curr_node: Option<Rc<RefCell<ValidNode>>> = self.this_node.upgrade();
+
+            while let Some(node) = curr_node.clone() {
+                if node.borrow().id() == candidate_node.borrow().id() {
+                    return Err(TreeError::Loop);
+                }
+
+                let node_opt = node.borrow().parent();
+                curr_node = node_opt.and_then(|v| v.upgrade());
+            }
+
+            candidate_node
+                .borrow_mut()
+                .set_parent(self.this_node.clone());
+            self.children
+                .insert(index.unwrap_or(self.children.len()), candidate_node);
+            Ok(())
+        } else {
+            Err(TreeError::DoesNotExist)
+        }
+    }
+
+    fn remove_child(&mut self, id: String) {
+        self.children.retain(|v| v.borrow().id() != &id);
+    }
+
     // Events
     fn get_events(&self) -> Vec<EventVariants> {
         vec![
             EventVariants::Clicked,
             EventVariants::RightClicked,
             EventVariants::Hovered,
+            EventVariants::Scrolled,
         ]
     }
 
@@ -149,7 +182,7 @@ impl Node for TextNode {
 
     // Styles
     fn get_default_styles(&self) -> &'static Stylesheet {
-        &TEXTNODE_AUTO_STYLES
+        &SHAPENODE_AUTO_STYLES
     }
 
     fn styles(&mut self) -> &mut StyleLayers {

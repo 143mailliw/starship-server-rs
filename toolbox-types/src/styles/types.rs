@@ -96,10 +96,7 @@ pub enum FlexDirection {
 }
 
 pub enum Layout {
-    Absolute {
-        x: Scale,
-        y: Scale,
-    },
+    None,
     Flex {
         direction: FlexDirection,
     },
@@ -139,6 +136,8 @@ pub struct Font {
 pub struct Transform {
     pub size_x: Scale,
     pub size_y: Scale,
+    pub pos_x: Scale,
+    pub pos_y: Scale,
     pub degrees: f64,
 }
 

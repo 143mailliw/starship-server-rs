@@ -3,7 +3,7 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use super::nodes::TextNode;
+use super::nodes::{ShapeNode, TextNode};
 use crate::{
     errors::{EventError, TreeError},
     events::{Event, EventVariants},
@@ -11,27 +11,42 @@ use crate::{
 };
 
 pub trait Node {
+    /// Creates a new instance of this Node.
+    #[must_use]
+    fn new() -> Rc<RefCell<ValidNode>>;
+
     // Getters
 
     /// Returns the Node's ID.
+    #[must_use]
     fn id(&self) -> &String;
 
     /// Returns a the NodeFeatures supported by the Node. This indicates what functions are valid
     /// for this node. For example, some nodes may not support children.
+    #[must_use]
     fn features(&self) -> Vec<NodeFeature>;
 
     /// Returns the Node's name.
+    #[must_use]
     fn name(&self) -> &String;
+
+    /// Returns a weak reference to the parent Node, if it exists.
+    #[must_use]
+    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>>;
 
     // Setters
 
     /// Sets the Node's name.
     fn set_name(&mut self, name: String);
 
+    /// Sets the Node's parent.
+    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>);
+
     // Children
 
     /// Returns the children of the Node.
-    fn get_children(&mut self) -> Option<&Vec<Rc<RefCell<ValidNode>>>> {
+    #[must_use]
+    fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
         None
     }
 
@@ -40,21 +55,20 @@ pub trait Node {
     /// # Errors
     /// This function will return an error if the Node does not support children or if adding the
     /// specified node as a child of the current node would result in a loop.
-    fn add_child(&mut self, node: ValidNode) -> Result<(), TreeError> {
+    fn add_child(
+        &mut self,
+        node: Weak<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<(), TreeError> {
         Err(TreeError::ChildrenUnsupported)
     }
 
-    /// Removes a child from the node based on it's ID. Returns the removed Node as a ValidNode.
-    ///
-    /// # Errors
-    /// This function will return an error if the Node does not support children or if the specified
-    /// ID does not belong to any child node.
-    fn remove_child(&mut self, id: String) -> Result<ValidNode, TreeError> {
-        Err(TreeError::ChildrenUnsupported)
-    }
+    /// Removes a child from the node based on it's ID.
+    fn remove_child(&mut self, id: String) {}
     // Events
 
     /// Returns the Events supported by the Node.
+    #[must_use]
     fn get_events(&self) -> Vec<EventVariants>;
 
     /// Sends an Event to this Node.
@@ -88,6 +102,32 @@ pub trait Node {
 
 pub enum ValidNode {
     Text(TextNode),
+    Shape(ShapeNode),
+}
+
+impl ValidNode {
+    #[must_use]
+    pub fn id(&self) -> &String {
+        match self {
+            ValidNode::Text(v) => v.id(),
+            ValidNode::Shape(v) => v.id(),
+        }
+    }
+
+    #[must_use]
+    pub fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
+        match self {
+            ValidNode::Text(v) => v.parent(),
+            ValidNode::Shape(v) => v.parent(),
+        }
+    }
+
+    pub fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
+        match self {
+            ValidNode::Text(v) => v.set_parent(parent),
+            ValidNode::Shape(v) => v.set_parent(parent),
+        }
+    }
 }
 
 #[derive(PartialEq)]
