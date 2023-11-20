@@ -63,10 +63,11 @@ pub struct ShapeNode {
     children: Vec<Rc<RefCell<ValidNode>>>,
 }
 
-impl Node for ShapeNode {
-    fn new() -> Rc<RefCell<ValidNode>> {
+impl ShapeNode {
+    #[must_use]
+    pub fn create() -> Rc<RefCell<ValidNode>> {
         Rc::new_cyclic(|this| {
-            let mut node = ShapeNode {
+            let node = ShapeNode {
                 id: nanoid!(),
                 name: "Text".to_string(),
                 styles: StyleLayers {
@@ -91,10 +92,12 @@ impl Node for ShapeNode {
                 children: vec![],
             };
 
-            RefCell::new(ValidNode::Shape(node))
+            RefCell::new(node.into())
         })
     }
+}
 
+impl Node for ShapeNode {
     // Getters
     fn id(&self) -> &String {
         &self.id

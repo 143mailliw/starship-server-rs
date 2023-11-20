@@ -3,6 +3,8 @@ use std::{
     rc::{Rc, Weak},
 };
 
+use enum_dispatch::enum_dispatch;
+
 use super::nodes::{ShapeNode, TextNode};
 use crate::{
     errors::{EventError, TreeError},
@@ -10,11 +12,8 @@ use crate::{
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
+#[enum_dispatch(ValidNode)]
 pub trait Node {
-    /// Creates a new instance of this Node.
-    #[must_use]
-    fn new() -> Rc<RefCell<ValidNode>>;
-
     // Getters
 
     /// Returns the Node's ID.
@@ -100,34 +99,10 @@ pub trait Node {
     fn commit_changes(&self, feature: NodeFeature);
 }
 
+#[enum_dispatch]
 pub enum ValidNode {
-    Text(TextNode),
-    Shape(ShapeNode),
-}
-
-impl ValidNode {
-    #[must_use]
-    pub fn id(&self) -> &String {
-        match self {
-            ValidNode::Text(v) => v.id(),
-            ValidNode::Shape(v) => v.id(),
-        }
-    }
-
-    #[must_use]
-    pub fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
-        match self {
-            ValidNode::Text(v) => v.parent(),
-            ValidNode::Shape(v) => v.parent(),
-        }
-    }
-
-    pub fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
-        match self {
-            ValidNode::Text(v) => v.set_parent(parent),
-            ValidNode::Shape(v) => v.set_parent(parent),
-        }
-    }
+    TextNode,
+    ShapeNode,
 }
 
 #[derive(PartialEq)]

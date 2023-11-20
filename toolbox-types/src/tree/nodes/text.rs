@@ -65,42 +65,41 @@ pub struct TextNode {
     styles: StyleLayers,
     observers: Vec<Observer>,
     parent: Option<Weak<RefCell<ValidNode>>>,
-    this_node: Weak<RefCell<ValidNode>>,
     pub text: String,
 }
 
-impl Node for TextNode {
-    fn new() -> Rc<RefCell<ValidNode>> {
-        Rc::new_cyclic(|this| {
-            let mut node = TextNode {
-                id: nanoid!(),
-                name: "Text".to_string(),
-                styles: StyleLayers {
-                    base: Stylesheet {
-                        margin: StyleOption::Default,
-                        padding: StyleOption::Default,
-                        layout: StyleOption::Unsupported,
-                        transform: StyleOption::Default,
-                        font: StyleOption::Default,
-                        background: StyleOption::Default,
-                        border: StyleOption::Unsupported,
-                        text_direction: StyleOption::Default,
-                    },
-                    hover: StyleOption::Default,
-                    active: StyleOption::Default,
-                    focused: StyleOption::Unsupported,
-                    checked: StyleOption::Unsupported,
+impl TextNode {
+    #[must_use]
+    pub fn create() -> Rc<RefCell<ValidNode>> {
+        let node = TextNode {
+            id: nanoid!(),
+            name: "Text".to_string(),
+            styles: StyleLayers {
+                base: Stylesheet {
+                    margin: StyleOption::Default,
+                    padding: StyleOption::Default,
+                    layout: StyleOption::Unsupported,
+                    transform: StyleOption::Default,
+                    font: StyleOption::Default,
+                    background: StyleOption::Default,
+                    border: StyleOption::Unsupported,
+                    text_direction: StyleOption::Default,
                 },
-                observers: vec![],
-                parent: None,
-                this_node: this.clone(),
-                text: String::new(),
-            };
+                hover: StyleOption::Default,
+                active: StyleOption::Default,
+                focused: StyleOption::Unsupported,
+                checked: StyleOption::Unsupported,
+            },
+            observers: vec![],
+            parent: None,
+            text: String::new(),
+        };
 
-            RefCell::new(ValidNode::Text(node))
-        })
+        Rc::new(RefCell::new(node.into()))
     }
+}
 
+impl Node for TextNode {
     // Getters
     fn id(&self) -> &String {
         &self.id
