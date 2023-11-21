@@ -4,7 +4,7 @@ use crate::tree::nodes::{ShapeNode, TextNode};
 use crate::tree::Node;
 
 #[test]
-fn shape_text() {
+fn add_child() {
     let parent_node = ShapeNode::create();
     let child_node = TextNode::create();
 
