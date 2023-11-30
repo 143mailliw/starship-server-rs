@@ -6,7 +6,7 @@ use crate::errors::{EventError, TreeError};
 use crate::events::EventVariants;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, Color, Corners, Graphic, Margin, Scale, ThemedColor, Transform,
+    Border, Color, Corners, FlexDirection, Graphic, Layout, Margin, Scale, ThemedColor, Transform,
 };
 use crate::tree::node::Observer;
 use crate::tree::{Node, NodeFeature, ValidNode};
@@ -24,7 +24,9 @@ static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
         left: Scale::Pixels(0.0),
         right: Scale::Pixels(0.0),
     }),
-    layout: StyleOption::Unsupported,
+    layout: StyleOption::Some(Layout::Flex {
+        direction: FlexDirection::ColumnDown,
+    }),
     transform: StyleOption::Some(Transform {
         size_x: Scale::Pixels(100.0),
         size_y: Scale::Pixels(100.0),
@@ -74,7 +76,7 @@ impl ShapeNode {
                     base: Stylesheet {
                         margin: StyleOption::Default,
                         padding: StyleOption::Default,
-                        layout: StyleOption::Unsupported,
+                        layout: StyleOption::Default,
                         transform: StyleOption::Default,
                         font: StyleOption::Default,
                         background: StyleOption::Default,
