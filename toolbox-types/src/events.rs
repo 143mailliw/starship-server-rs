@@ -9,3 +9,13 @@ redef_units!(
         Scrolled { view_x: u64, view_y: u64 },
     }
 );
+
+pub enum Type {
+    Integer,
+    Float,
+    String,
+    Boolean,
+    Date,
+    UntypedTable,
+    UserType { type_id: String },
+}
