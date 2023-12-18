@@ -9,6 +9,7 @@ use super::nodes::{ShapeNode, TextNode};
 use crate::{
     errors::{EventError, TreeError},
     events::{Event, EventVariants},
+    observers::Observer,
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
@@ -90,7 +91,11 @@ pub trait Node {
 
     /// Registers a Observer on this node for one or more Features. Returns a reference to the
     /// created watcher.
-    fn register(&mut self, feature: NodeFeature, func: &Rc<RefCell<dyn FnMut()>>) -> &Observer;
+    fn register(
+        &mut self,
+        feature: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &Observer<NodeFeature>;
 
     /// Removes a registered Observer from this node.
     fn unregister(&mut self, id: String);
@@ -112,19 +117,4 @@ pub enum NodeFeature {
     Events,
     Properties,
     Metadata,
-}
-
-pub struct Observer {
-    pub id: String,
-    pub func: Weak<RefCell<dyn FnMut()>>,
-    pub feature: NodeFeature,
-}
-
-impl Observer {
-    pub fn call(&self) {
-        if let Some(cell) = self.func.upgrade() {
-            let mut func = cell.borrow_mut();
-            func();
-        }
-    }
 }

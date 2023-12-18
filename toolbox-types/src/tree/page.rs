@@ -4,9 +4,10 @@ use std::rc::{Rc, Weak};
 
 use crate::errors::{EventError, TreeError};
 use crate::events::{EventVariants, Type};
+use crate::observers::Observer;
+use crate::project::Project;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{FlexDirection, Layout, Margin, Scale};
-use crate::tree::node::Observer;
 use crate::tree::{Node, NodeFeature, ValidNode};
 
 static PAGE_AUTO_STYLES: Stylesheet = Stylesheet {
@@ -41,16 +42,17 @@ pub struct Page {
     id: String,
     name: String,
     styles: StyleLayers,
-    observers: Vec<Observer>,
+    observers: Vec<Observer<NodeFeature>>,
     this_node: Weak<RefCell<Page>>,
     children: Vec<Rc<RefCell<ValidNode>>>,
+    project: Weak<RefCell<Project>>,
     pub title: Title,
     pub route: Vec<Route>,
 }
 
 impl Page {
     #[must_use]
-    pub fn create(name: String) -> Rc<RefCell<Page>> {
+    pub fn create(name: String, project: Weak<RefCell<Project>>) -> Rc<RefCell<Page>> {
         Rc::new_cyclic(|this| {
             let node = Page {
                 id: nanoid!(),
@@ -74,6 +76,7 @@ impl Page {
                 observers: vec![],
                 this_node: this.clone(),
                 children: vec![],
+                project,
                 title: Title::Basic {
                     content: name.clone(),
                 },
@@ -84,6 +87,14 @@ impl Page {
 
             RefCell::new(node)
         })
+    }
+
+    pub fn project(&self) -> Option<Rc<RefCell<Project>>> {
+        self.project.upgrade()
+    }
+
+    pub fn set_project(&mut self, project: Weak<RefCell<Project>>) {
+        self.project = project;
     }
 }
 
@@ -168,11 +179,15 @@ impl Node for Page {
     }
 
     // Tracking
-    fn register(&mut self, feature: NodeFeature, func: &Rc<RefCell<dyn FnMut()>>) -> &Observer {
+    fn register(
+        &mut self,
+        feature: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &Observer<NodeFeature> {
         let watcher = Observer {
             id: nanoid!(),
             func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
-            feature,
+            item: feature,
         };
 
         self.observers.push(watcher);
@@ -186,7 +201,7 @@ impl Node for Page {
 
     fn commit_changes(&self, feature: NodeFeature) {
         for observer in &self.observers {
-            if observer.feature == feature {
+            if observer.item == feature {
                 observer.call();
             }
         }

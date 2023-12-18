@@ -4,12 +4,12 @@ use std::rc::{Rc, Weak};
 
 use crate::errors::EventError;
 use crate::events::EventVariants;
+use crate::observers::Observer;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
     StyleString, ThemedColor, Transform,
 };
-use crate::tree::node::Observer;
 use crate::tree::{Node, NodeFeature, ValidNode};
 
 static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
@@ -63,7 +63,7 @@ pub struct TextNode {
     id: String,
     name: String,
     styles: StyleLayers,
-    observers: Vec<Observer>,
+    observers: Vec<Observer<NodeFeature>>,
     parent: Option<Weak<RefCell<ValidNode>>>,
     pub text: String,
 }
@@ -156,11 +156,15 @@ impl Node for TextNode {
     }
 
     // Tracking
-    fn register(&mut self, feature: NodeFeature, func: &Rc<RefCell<dyn FnMut()>>) -> &Observer {
+    fn register(
+        &mut self,
+        feature: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &Observer<NodeFeature> {
         let watcher = Observer {
             id: nanoid!(),
             func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
-            feature,
+            item: feature,
         };
 
         self.observers.push(watcher);
@@ -174,7 +178,7 @@ impl Node for TextNode {
 
     fn commit_changes(&self, feature: NodeFeature) {
         for observer in &self.observers {
-            if observer.feature == feature {
+            if observer.item == feature {
                 observer.call();
             }
         }

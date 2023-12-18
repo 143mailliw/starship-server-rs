@@ -4,11 +4,11 @@ use std::rc::{Rc, Weak};
 
 use crate::errors::{EventError, TreeError};
 use crate::events::EventVariants;
+use crate::observers::Observer;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, Color, Corners, FlexDirection, Graphic, Layout, Margin, Scale, ThemedColor, Transform,
 };
-use crate::tree::node::Observer;
 use crate::tree::{Node, NodeFeature, ValidNode};
 
 static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
@@ -59,7 +59,7 @@ pub struct ShapeNode {
     id: String,
     name: String,
     styles: StyleLayers,
-    observers: Vec<Observer>,
+    observers: Vec<Observer<NodeFeature>>,
     parent: Option<Weak<RefCell<ValidNode>>>,
     this_node: Weak<RefCell<ValidNode>>,
     children: Vec<Rc<RefCell<ValidNode>>>,
@@ -204,11 +204,15 @@ impl Node for ShapeNode {
     }
 
     // Tracking
-    fn register(&mut self, feature: NodeFeature, func: &Rc<RefCell<dyn FnMut()>>) -> &Observer {
+    fn register(
+        &mut self,
+        feature: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &Observer<NodeFeature> {
         let watcher = Observer {
             id: nanoid!(),
             func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
-            feature,
+            item: feature,
         };
 
         self.observers.push(watcher);
@@ -222,7 +226,7 @@ impl Node for ShapeNode {
 
     fn commit_changes(&self, feature: NodeFeature) {
         for observer in &self.observers {
-            if observer.feature == feature {
+            if observer.item == feature {
                 observer.call();
             }
         }
