@@ -4,7 +4,7 @@ use std::rc::{Rc, Weak};
 
 use crate::errors::EventError;
 use crate::events::EventVariants;
-use crate::observers::Observer;
+use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
@@ -99,6 +99,36 @@ impl TextNode {
     }
 }
 
+impl Observable<NodeFeature> for TextNode {
+    fn register(
+        &mut self,
+        item: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &Observer<NodeFeature> {
+        let watcher = Observer {
+            id: nanoid!(),
+            func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
+            item,
+        };
+
+        self.observers.push(watcher);
+
+        self.observers.last().unwrap()
+    }
+
+    fn unregister(&mut self, id: &str) {
+        self.observers.retain(|v| v.id != id);
+    }
+
+    fn commit_changes(&self, item: NodeFeature) {
+        for observer in &self.observers {
+            if observer.item == item {
+                observer.call();
+            }
+        }
+    }
+}
+
 impl Node for TextNode {
     // Getters
     fn id(&self) -> &String {
@@ -153,34 +183,5 @@ impl Node for TextNode {
 
     fn styles(&mut self) -> &mut StyleLayers {
         &mut self.styles
-    }
-
-    // Tracking
-    fn register(
-        &mut self,
-        feature: NodeFeature,
-        func: &Rc<RefCell<dyn FnMut()>>,
-    ) -> &Observer<NodeFeature> {
-        let watcher = Observer {
-            id: nanoid!(),
-            func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
-            item: feature,
-        };
-
-        self.observers.push(watcher);
-
-        self.observers.last().unwrap()
-    }
-
-    fn unregister(&mut self, id: String) {
-        self.observers.retain(|v| v.id != id);
-    }
-
-    fn commit_changes(&self, feature: NodeFeature) {
-        for observer in &self.observers {
-            if observer.item == feature {
-                observer.call();
-            }
-        }
     }
 }

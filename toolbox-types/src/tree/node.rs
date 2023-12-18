@@ -1,3 +1,4 @@
+#![allow(clippy::module_name_repetitions)]
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
@@ -9,12 +10,12 @@ use super::nodes::{ShapeNode, TextNode};
 use crate::{
     errors::{EventError, TreeError},
     events::{Event, EventVariants},
-    observers::Observer,
+    observers::Observable,
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
 #[enum_dispatch(ValidNode)]
-pub trait Node {
+pub trait Node: Observable<NodeFeature> {
     // Getters
 
     /// Returns the Node's ID.
@@ -86,28 +87,40 @@ pub trait Node {
     /// Returns a mutable reference to the Node's current styles. Updates to styles must be
     /// committed with `commit_changes`, otherwise the updates will not be broadcast to Watchers.
     fn styles(&mut self) -> &mut StyleLayers;
-
-    // Tracking
-
-    /// Registers a Observer on this node for one or more Features. Returns a reference to the
-    /// created watcher.
-    fn register(
-        &mut self,
-        feature: NodeFeature,
-        func: &Rc<RefCell<dyn FnMut()>>,
-    ) -> &Observer<NodeFeature>;
-
-    /// Removes a registered Observer from this node.
-    fn unregister(&mut self, id: String);
-
-    /// Informs all Observers associated with this Feature that an update has been performed.
-    fn commit_changes(&self, feature: NodeFeature);
 }
 
 #[enum_dispatch]
 pub enum ValidNode {
     TextNode,
     ShapeNode,
+}
+
+// this kinda sucks but enum_dispatch does not support generic traits on non-generic enums
+impl Observable<NodeFeature> for ValidNode {
+    fn register(
+        &mut self,
+        item: NodeFeature,
+        func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &crate::observers::Observer<NodeFeature> {
+        match self {
+            ValidNode::TextNode(v) => v.register(item, func),
+            ValidNode::ShapeNode(v) => v.register(item, func),
+        }
+    }
+
+    fn unregister(&mut self, id: &str) {
+        match self {
+            ValidNode::TextNode(v) => v.unregister(id),
+            ValidNode::ShapeNode(v) => v.unregister(id),
+        }
+    }
+
+    fn commit_changes(&self, item: NodeFeature) {
+        match self {
+            ValidNode::TextNode(v) => v.commit_changes(item),
+            ValidNode::ShapeNode(v) => v.commit_changes(item),
+        }
+    }
 }
 
 #[derive(PartialEq)]

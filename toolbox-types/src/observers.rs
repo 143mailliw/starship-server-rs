@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Weak;
+use std::rc::{Rc, Weak};
 
 pub struct Observer<T> {
     pub id: String,
@@ -14,4 +14,15 @@ impl<T> Observer<T> {
             func();
         }
     }
+}
+
+pub trait Observable<T> {
+    /// Registers a Observer on this Observable with the given item.
+    fn register(&mut self, item: T, func: &Rc<RefCell<dyn FnMut()>>) -> &Observer<T>;
+
+    /// Removes a registered Observer from this Observable.
+    fn unregister(&mut self, id: &str);
+
+    /// Informs all Observers associated with this Observable that an update has been performed.
+    fn commit_changes(&self, item: T);
 }

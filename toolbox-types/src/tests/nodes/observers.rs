@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc::channel;
 
+use crate::observers::Observable;
 use crate::tree::nodes::ShapeNode;
 use crate::tree::{Node, NodeFeature};
 
@@ -40,7 +41,7 @@ fn remove_observer() {
         .id
         .clone();
 
-    borrowed_node.unregister(observer);
+    borrowed_node.unregister(&observer);
     borrowed_node.commit_changes(NodeFeature::Metadata);
 
     rx.try_recv().expect_err("channel not empty");
