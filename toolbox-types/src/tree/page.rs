@@ -152,6 +152,10 @@ impl Node for Page {
         None
     }
 
+    fn page(&self) -> Option<Weak<RefCell<Page>>> {
+        Some(self.this_node.clone())
+    }
+
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
@@ -160,6 +164,10 @@ impl Node for Page {
 
     fn set_parent(&mut self, _parent: Weak<RefCell<ValidNode>>) {
         panic!("tried to call set_parent on Page");
+    }
+
+    fn set_page(&mut self, _page: Option<Weak<RefCell<Page>>>) {
+        panic!("tried to call set_page on Page");
     }
 
     // Children
@@ -173,13 +181,11 @@ impl Node for Page {
         index: Option<usize>,
     ) -> Result<(), TreeError> {
         let cloned = node.clone();
-        let candidate_node = cloned
+        let mut candidate_node = cloned
             .try_borrow_mut()
             .map_err(|_| TreeError::ChildBorrowed)?;
 
-        if &self.id == candidate_node.id() {
-            return Err(TreeError::SelfParent);
-        }
+        candidate_node.set_page(Some(self.this_node.clone()));
 
         self.children
             .insert(index.unwrap_or(self.children.len()), node);

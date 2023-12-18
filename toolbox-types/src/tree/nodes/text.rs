@@ -10,6 +10,7 @@ use crate::styles::types::{
     Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
     StyleString, ThemedColor, Transform,
 };
+use crate::tree::page::Page;
 use crate::tree::{Node, NodeFeature, ValidNode};
 
 static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
@@ -65,6 +66,7 @@ pub struct TextNode {
     styles: StyleLayers,
     observers: Vec<Observer<NodeFeature>>,
     parent: Option<Weak<RefCell<ValidNode>>>,
+    page: Option<Weak<RefCell<Page>>>,
     pub text: String,
 }
 
@@ -92,6 +94,7 @@ impl TextNode {
             },
             observers: vec![],
             parent: None,
+            page: None,
             text: String::new(),
         };
 
@@ -152,6 +155,10 @@ impl Node for TextNode {
         self.parent.clone()
     }
 
+    fn page(&self) -> Option<Weak<RefCell<Page>>> {
+        self.page.clone()
+    }
+
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
@@ -160,6 +167,11 @@ impl Node for TextNode {
 
     fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
         self.parent = Some(parent);
+        self.commit_changes(NodeFeature::Metadata);
+    }
+
+    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
+        self.page = page;
         self.commit_changes(NodeFeature::Metadata);
     }
 

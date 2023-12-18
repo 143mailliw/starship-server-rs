@@ -6,7 +6,10 @@ use std::{
 
 use enum_dispatch::enum_dispatch;
 
-use super::nodes::{ShapeNode, TextNode};
+use super::{
+    nodes::{ShapeNode, TextNode},
+    page::Page,
+};
 use crate::{
     errors::{EventError, TreeError},
     events::{Event, EventVariants},
@@ -35,6 +38,10 @@ pub trait Node: Observable<NodeFeature> {
     #[must_use]
     fn parent(&self) -> Option<Weak<RefCell<ValidNode>>>;
 
+    /// Returns a weak reference to the page the Node is a member of. Returns None if this Node is
+    /// not associated with any pages.
+    fn page(&self) -> Option<Weak<RefCell<Page>>>;
+
     // Setters
 
     /// Sets the Node's name.
@@ -42,6 +49,9 @@ pub trait Node: Observable<NodeFeature> {
 
     /// Sets the Node's parent.
     fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>);
+
+    /// Sets the Node's page.
+    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>);
 
     // Children
 
