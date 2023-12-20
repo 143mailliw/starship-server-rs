@@ -23,7 +23,7 @@ pub struct Project {
 
 impl Project {
     #[must_use]
-    pub fn create(&self, name: String, project_type: Type) -> Rc<RefCell<Project>> {
+    pub fn create(name: String, project_type: Type) -> Rc<RefCell<Project>> {
         Rc::new_cyclic(|this| {
             let project = Project {
                 name,

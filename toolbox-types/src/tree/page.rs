@@ -8,7 +8,7 @@ use crate::observers::{Observable, Observer};
 use crate::project::Project;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{FlexDirection, Layout, Margin, Scale};
-use crate::tree::{Node, NodeFeature, ValidNode};
+use crate::tree::{ContainerNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 static PAGE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Unsupported,
@@ -128,7 +128,7 @@ impl Observable<NodeFeature> for Page {
     }
 }
 
-impl Node for Page {
+impl NodeBase for Page {
     // Getters
     fn id(&self) -> &String {
         &self.id
@@ -148,28 +148,11 @@ impl Node for Page {
         &self.name
     }
 
-    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
-        None
-    }
-
-    fn page(&self) -> Option<Weak<RefCell<Page>>> {
-        Some(self.this_node.clone())
-    }
-
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
         self.commit_changes(NodeFeature::Metadata);
     }
-
-    fn set_parent(&mut self, _parent: Weak<RefCell<ValidNode>>) {
-        panic!("tried to call set_parent on Page");
-    }
-
-    fn set_page(&mut self, _page: Option<Weak<RefCell<Page>>>) {
-        panic!("tried to call set_page on Page");
-    }
-
     // Children
     fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
         Some(self.children.iter().map(Rc::clone).collect())
@@ -214,3 +197,5 @@ impl Node for Page {
         &mut self.styles
     }
 }
+
+impl ContainerNode for Page {}

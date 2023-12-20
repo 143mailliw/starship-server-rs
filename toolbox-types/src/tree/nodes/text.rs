@@ -11,7 +11,7 @@ use crate::styles::types::{
     StyleString, ThemedColor, Transform,
 };
 use crate::tree::page::Page;
-use crate::tree::{Node, NodeFeature, ValidNode};
+use crate::tree::{NodeBase, NodeFeature, RegularNode, ValidNode};
 
 static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
@@ -132,7 +132,7 @@ impl Observable<NodeFeature> for TextNode {
     }
 }
 
-impl Node for TextNode {
+impl NodeBase for TextNode {
     // Getters
     fn id(&self) -> &String {
         &self.id
@@ -151,27 +151,9 @@ impl Node for TextNode {
         &self.name
     }
 
-    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
-        self.parent.clone()
-    }
-
-    fn page(&self) -> Option<Weak<RefCell<Page>>> {
-        self.page.clone()
-    }
-
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
-        self.commit_changes(NodeFeature::Metadata);
-    }
-
-    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
-        self.parent = Some(parent);
-        self.commit_changes(NodeFeature::Metadata);
-    }
-
-    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
-        self.page = page;
         self.commit_changes(NodeFeature::Metadata);
     }
 
@@ -195,5 +177,27 @@ impl Node for TextNode {
 
     fn styles(&mut self) -> &mut StyleLayers {
         &mut self.styles
+    }
+}
+
+impl RegularNode for TextNode {
+    // Getters
+    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
+        self.parent.clone()
+    }
+
+    fn page(&self) -> Option<Weak<RefCell<Page>>> {
+        self.page.clone()
+    }
+
+    // Setters
+    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
+        self.parent = Some(parent);
+        self.commit_changes(NodeFeature::Metadata);
+    }
+
+    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
+        self.page = page;
+        self.commit_changes(NodeFeature::Metadata);
     }
 }

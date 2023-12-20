@@ -17,8 +17,27 @@ use crate::{
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
-#[enum_dispatch(ValidNode)]
-pub trait Node: Observable<NodeFeature> {
+pub trait ContainerNode: Observable<NodeFeature> + NodeBase {}
+
+#[enum_dispatch]
+pub trait RegularNode: Observable<NodeFeature> + NodeBase {
+    /// Returns a weak reference to the parent Node, if it exists.
+    #[must_use]
+    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>>;
+
+    /// Returns a weak reference to the page the Node is a member of. Returns None if this Node is
+    /// not associated with any pages.
+    fn page(&self) -> Option<Weak<RefCell<Page>>>;
+
+    /// Sets the Node's parent.
+    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>);
+
+    /// Sets the Node's page.
+    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>);
+}
+
+#[enum_dispatch]
+pub trait NodeBase {
     // Getters
 
     /// Returns the Node's ID.
@@ -34,24 +53,10 @@ pub trait Node: Observable<NodeFeature> {
     #[must_use]
     fn name(&self) -> &String;
 
-    /// Returns a weak reference to the parent Node, if it exists.
-    #[must_use]
-    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>>;
-
-    /// Returns a weak reference to the page the Node is a member of. Returns None if this Node is
-    /// not associated with any pages.
-    fn page(&self) -> Option<Weak<RefCell<Page>>>;
-
     // Setters
 
     /// Sets the Node's name.
     fn set_name(&mut self, name: String);
-
-    /// Sets the Node's parent.
-    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>);
-
-    /// Sets the Node's page.
-    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>);
 
     // Children
 
@@ -99,7 +104,7 @@ pub trait Node: Observable<NodeFeature> {
     fn styles(&mut self) -> &mut StyleLayers;
 }
 
-#[enum_dispatch]
+#[enum_dispatch(NodeBase, RegularNode)]
 pub enum ValidNode {
     TextNode,
     ShapeNode,
