@@ -10,7 +10,7 @@ use crate::styles::types::{
     Border, Color, Corners, FlexDirection, Graphic, Layout, Margin, Scale, ThemedColor, Transform,
 };
 use crate::tree::page::Page;
-use crate::tree::{NodeBase, NodeFeature, RegularNode, ValidNode};
+use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
@@ -67,9 +67,8 @@ pub struct ShapeNode {
     children: Vec<Rc<RefCell<ValidNode>>>,
 }
 
-impl ShapeNode {
-    #[must_use]
-    pub fn create() -> Rc<RefCell<ValidNode>> {
+impl CreatableNode for ShapeNode {
+    fn create() -> Rc<RefCell<ValidNode>> {
         Rc::new_cyclic(|this| {
             let node = ShapeNode {
                 id: nanoid!(),

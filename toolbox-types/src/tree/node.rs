@@ -19,6 +19,13 @@ use crate::{
 
 pub trait ContainerNode: Observable<NodeFeature> + NodeBase {}
 
+pub trait CreatableNode: RegularNode {
+    /// Creates a new instance of the implementing `RegularNode` and returns it as a wrapped
+    /// `ValidNode`.
+    #[must_use]
+    fn create() -> Rc<RefCell<ValidNode>>;
+}
+
 #[enum_dispatch]
 pub trait RegularNode: Observable<NodeFeature> + NodeBase {
     /// Returns a weak reference to the parent Node, if it exists.

@@ -11,7 +11,7 @@ use crate::styles::types::{
     StyleString, ThemedColor, Transform,
 };
 use crate::tree::page::Page;
-use crate::tree::{NodeBase, NodeFeature, RegularNode, ValidNode};
+use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
@@ -70,9 +70,8 @@ pub struct TextNode {
     pub text: String,
 }
 
-impl TextNode {
-    #[must_use]
-    pub fn create() -> Rc<RefCell<ValidNode>> {
+impl CreatableNode for TextNode {
+    fn create() -> Rc<RefCell<ValidNode>> {
         let node = TextNode {
             id: nanoid!(),
             name: "Text".to_string(),
