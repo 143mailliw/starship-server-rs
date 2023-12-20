@@ -12,6 +12,8 @@ use crate::styles::types::{
 use crate::tree::page::Page;
 use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
+use super::util::add_child;
+
 static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
         top: Scale::Pixels(0.0),
@@ -167,38 +169,15 @@ impl NodeBase for ShapeNode {
         node: Rc<RefCell<ValidNode>>,
         index: Option<usize>,
     ) -> Result<(), TreeError> {
-        let cloned = node.clone();
-        let mut candidate_node = cloned
-            .try_borrow_mut()
-            .map_err(|_| TreeError::ChildBorrowed)?;
-
-        if &self.id == candidate_node.id() {
-            return Err(TreeError::SelfParent);
-        }
-
-        if let Some(parent) = self.parent.clone() {
-            let mut curr_cell: Option<Rc<RefCell<ValidNode>>> = parent.upgrade();
-
-            while let Some(curr_node) = curr_cell.clone() {
-                let borrowed = curr_node
-                    .try_borrow()
-                    .map_err(|_| TreeError::ParentBorrowed)?;
-
-                if borrowed.id() == candidate_node.id() {
-                    return Err(TreeError::Loop);
-                }
-
-                let node_opt = borrowed.parent();
-                curr_cell = node_opt.and_then(|v| v.upgrade());
-            }
-        }
-
-        candidate_node.set_parent(self.this_node.clone());
-        candidate_node.set_page(self.page.clone());
-
-        self.children
-            .insert(index.unwrap_or(self.children.len()), node);
-        Ok(())
+        add_child(
+            node,
+            index,
+            &self.id,
+            &self.this_node,
+            &mut self.children,
+            &self.parent,
+            &self.page,
+        )
     }
 
     fn remove_child(&mut self, id: String) {
