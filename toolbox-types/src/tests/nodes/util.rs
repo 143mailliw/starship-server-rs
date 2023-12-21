@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::sync::mpsc::Receiver;
 use std::{cell::RefCell, sync::mpsc::channel};
 
-use crate::observers::{Observable, Observer};
+use crate::observers::Observable;
 use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 pub(super) fn add_child<Parent, Child>() -> (Rc<RefCell<ValidNode>>, Rc<RefCell<ValidNode>>)
@@ -69,7 +69,7 @@ where
     assert_eq!(children.len(), 0, "child not removed from children");
 }
 
-pub(super) fn add_observer<T>() -> (Rc<RefCell<ValidNode>>, String, Receiver<String>)
+pub(super) fn add_observer_util<T>() -> (Rc<RefCell<ValidNode>>, String, Receiver<String>)
 where
     T: CreatableNode,
 {
@@ -94,11 +94,11 @@ where
     (node, observer_id, rx)
 }
 
-pub(super) fn remove_observer<T>()
+pub(super) fn remove_observer_util<T>()
 where
     T: CreatableNode,
 {
-    let (node, id, rx) = add_observer::<T>();
+    let (node, id, rx) = add_observer_util::<T>();
     let mut borrowed_node = node.borrow_mut();
 
     borrowed_node.unregister(&id);
