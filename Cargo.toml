@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "migration",
     "starship-server",
-    "toolbox-types"
+    "toolbox_types",
+    "playground"
 ]
 
 [workspace.package]
