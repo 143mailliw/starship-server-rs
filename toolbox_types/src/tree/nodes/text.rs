@@ -150,10 +150,29 @@ impl NodeBase for TextNode {
         &self.name
     }
 
+    fn get_property(&mut self, name: &str) -> Result<Type, PropertyError> {
+        match name {
+            "text" => Ok(Type::String(self.text)),
+            _ => Err(PropertyError::NotFound),
+        }
+    }
+
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
         self.commit_changes(NodeFeature::Metadata);
+    }
+
+    fn set_property(&mut self, name: &str) -> Result<(), PropertyError> {
+        match name {
+            "text" => match Type {
+                String(v) => {
+                    self.text = v;
+                    Ok(())
+                }
+            },
+            _ => Err(PropertyError::NotFound),
+        }
     }
 
     // Events

@@ -7,3 +7,4 @@ version.workspace = true
 
 [dependencies]
 leptos = { version = "0.5.4", features = ["csr", "nightly"] }
+toolbox_types = { path = "../toolbox_types" }

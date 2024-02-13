@@ -3,12 +3,13 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 use crate::errors::{EventError, TreeError};
-use crate::events::EventVariants;
+use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, Color, Corners, FlexDirection, Graphic, Layout, Margin, Scale, ThemedColor, Transform,
 };
+use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
 use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 

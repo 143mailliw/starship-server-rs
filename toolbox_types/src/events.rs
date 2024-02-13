@@ -11,11 +11,55 @@ redef_units!(
 );
 
 pub enum Type {
-    Integer,
-    Float,
-    String,
-    Boolean,
-    Date,
+    Integer(i64),
+    Float(f64),
+    String(String),
+    Boolean(bool),
+    Date(i64),
     UntypedTable,
     UserType { type_id: String },
+}
+
+impl TryInto<i64> for Type {
+    type Error;
+
+    fn try_into(self) -> Result<i64, Self::Error> {
+        match self {
+            Integer(v) => v,
+            _ => Self::Error,
+        }
+    }
+}
+
+impl TryInto<f64> for Type {
+    type Error;
+
+    fn try_into(self) -> Result<f64, Self::Error> {
+        match self {
+            Float(v) => v,
+            _ => Self::Error,
+        }
+    }
+}
+
+impl TryInto<String> for Type {
+    type Error;
+
+    fn try_into(self) -> Result<String, Self::Error> {
+        match self {
+            String(v) => v,
+            _ => Self::Error,
+        }
+    }
+}
+
+impl TryInto<bool> for Type {
+    type Error;
+
+    fn try_into(self) -> Result<bool, Self::Error> {
+        match self {
+            String(v) => v,
+            _ => Self::Error,
+        }
+    }
 }

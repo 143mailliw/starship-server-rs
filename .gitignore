@@ -4,3 +4,5 @@
 */migration/target
 .DS_Store
 .nova
+*/dist
+rustc-ice-*

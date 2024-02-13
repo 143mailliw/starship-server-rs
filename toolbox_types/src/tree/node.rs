@@ -12,7 +12,7 @@ use super::{
 };
 use crate::{
     errors::{EventError, TreeError},
-    events::{Event, EventVariants},
+    events::{Event, EventVariants, Type},
     observers::Observable,
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
@@ -60,11 +60,20 @@ pub trait NodeBase {
     #[must_use]
     fn name(&self) -> &String;
 
+    /// Sets a Node's properties.
+    fn get_property(&mut self, name: &str) -> Result<Type, PropertyError> {
+        Err(PropertyError::NotFound)
+    }
+
     // Setters
 
     /// Sets the Node's name.
     fn set_name(&mut self, name: String);
 
+    /// Sets a Node's properties.
+    fn set_property(&mut self, name: &st, value: Type) -> Result<(), PropertyError> {
+        Err(PropertyError::NotFound)
+    }
     // Children
 
     /// Returns the children of the Node.
@@ -145,11 +154,16 @@ impl Observable<NodeFeature> for ValidNode {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum NodeFeature {
     Styles,
     Children,
     Events,
     Properties,
     Metadata,
+}
+
+pub enum PropertyError {
+    NotFound,
+    InvalidType,
 }
