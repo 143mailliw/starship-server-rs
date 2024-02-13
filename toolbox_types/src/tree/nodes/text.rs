@@ -1,3 +1,4 @@
+use log::info;
 use nanoid::nanoid;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
@@ -108,6 +109,7 @@ impl Observable<NodeFeature> for TextNode {
         item: NodeFeature,
         func: &Rc<RefCell<dyn FnMut()>>,
     ) -> &Observer<NodeFeature> {
+        info!("registering observer for feature {:#?}", item);
         let watcher = Observer {
             id: nanoid!(),
             func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
@@ -124,7 +126,9 @@ impl Observable<NodeFeature> for TextNode {
     }
 
     fn commit_changes(&self, item: NodeFeature) {
+        info!("informing observers for feature {:#?}", item);
         for observer in &self.observers {
+            info!("informing {}", observer.id);
             if observer.item == item {
                 observer.call();
             }
@@ -161,14 +165,16 @@ impl NodeBase for TextNode {
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
-        self.commit_changes(NodeFeature::Metadata);
     }
 
-    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError> {
+    fn set_property(&mut self, name: &str, value: Type, notify: bool) -> Result<(), PropertyError> {
         match name {
             "text" => match value {
                 Type::String(v) => {
                     self.text = v;
+                    if notify {
+                        self.commit_changes(NodeFeature::Properties);
+                    }
                     Ok(())
                 }
                 _ => Err(PropertyError::InvalidType),

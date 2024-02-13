@@ -69,7 +69,7 @@ pub trait NodeBase {
     fn set_name(&mut self, name: String);
 
     /// Sets a Node's properties.
-    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError>;
+    fn set_property(&mut self, name: &str, value: Type, notify: bool) -> Result<(), PropertyError>;
 
     // Children
 
@@ -151,7 +151,7 @@ impl Observable<NodeFeature> for ValidNode {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum NodeFeature {
     Styles,
     Children,
@@ -164,4 +164,5 @@ pub enum NodeFeature {
 pub enum PropertyError {
     NotFound,
     InvalidType,
+    BorrowError,
 }

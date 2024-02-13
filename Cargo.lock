@@ -1101,6 +1101,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "console_log"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e7871d2947441b0fdd8e2bd1ce2a2f75304f896582c0d572162d48290683c48"
+dependencies = [
+ "log",
+ "web-sys",
+]
+
+[[package]]
 name = "const_format"
 version = "0.2.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2858,7 +2868,9 @@ checksum = "2900ede94e305130c13ddd391e0ab7cbaeb783945ae07a279c268cb05109c6cb"
 name = "playground"
 version = "0.1.0"
 dependencies = [
+ "console_log",
  "leptos",
+ "log",
  "toolbox_types",
 ]
 
@@ -4214,6 +4226,7 @@ name = "toolbox_types"
 version = "0.1.0"
 dependencies = [
  "enum_dispatch",
+ "log",
  "nanoid",
  "paste",
 ]

@@ -1,4 +1,5 @@
 mod node;
+pub mod node_rc;
 pub mod nodes;
 pub mod page;
 

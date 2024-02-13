@@ -1,8 +1,11 @@
 pub mod hooks;
+use log::{error, info, Level};
 use std::cell::{Ref, RefCell};
 use std::rc::Rc;
 
 use leptos::*;
+use toolbox_types::events::Type;
+use toolbox_types::observers::Observable;
 use toolbox_types::project;
 use toolbox_types::tree::nodes;
 use toolbox_types::tree::{page, CreatableNode, NodeBase, NodeFeature, ValidNode};
@@ -10,6 +13,8 @@ use toolbox_types::tree::{page, CreatableNode, NodeBase, NodeFeature, ValidNode}
 use crate::hooks::node_signal::create_node_signal;
 
 fn main() {
+    console_log::init_with_level(Level::Info);
+
     let project = project::Project::create("test".to_string(), project::Type::Component);
     let page = page::Page::create("test page".to_string(), Rc::downgrade(&project));
     let node = nodes::TextNode::create();
@@ -22,20 +27,23 @@ fn main() {
 
 #[component]
 fn App(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
-    let node_sig = create_node_signal(node, vec![NodeFeature::Properties]);
+    let (node_sig, trigger) = create_node_signal(node.clone(), vec![NodeFeature::Properties]);
 
     view! {
         <div>
             {move || {
+                trigger.track();
                 let node_raw = node_sig.get();
-                let node_ref = node_raw.borrow();
 
-                let text: String = node_ref.get_property("text").expect("no text").try_into_string().unwrap();
-                text
+                let text: String = node_raw.get_property("text").expect("no text").try_into_string().unwrap();
+                format!("text: {} ", text)
             }}
             <button
-                on:click=move |_| {
-                    // doesnt do anything
+                  on:click=move |_| {
+                    {
+                        let mut node_raw = node_sig.get();
+                        node_raw.set_property("text", Type::String(":)".to_string()), true);
+                    }
                 }
             >
                 "Set"

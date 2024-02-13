@@ -161,7 +161,7 @@ impl NodeBase for Page {
         self.commit_changes(NodeFeature::Metadata);
     }
 
-    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError> {
+    fn set_property(&mut self, name: &str, value: Type, notify: bool) -> Result<(), PropertyError> {
         Err(PropertyError::NotFound)
     }
 

@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
+use log::error;
+
 pub struct Observer<T> {
     pub id: String,
     pub func: Weak<RefCell<dyn FnMut()>>,
@@ -12,6 +14,11 @@ impl<T> Observer<T> {
         if let Some(cell) = self.func.upgrade() {
             let mut func = cell.borrow_mut();
             func();
+        } else {
+            error!(
+                "failed to call observer for {}, perhaps it has gone out of scope?",
+                self.id
+            )
         }
     }
 }
