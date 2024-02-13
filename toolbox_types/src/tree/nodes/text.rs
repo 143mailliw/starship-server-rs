@@ -3,13 +3,14 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 use crate::errors::EventError;
-use crate::events::EventVariants;
+use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
     StyleString, ThemedColor, Transform,
 };
+use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
 use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
@@ -150,9 +151,9 @@ impl NodeBase for TextNode {
         &self.name
     }
 
-    fn get_property(&mut self, name: &str) -> Result<Type, PropertyError> {
+    fn get_property(&self, name: &str) -> Result<Type, PropertyError> {
         match name {
-            "text" => Ok(Type::String(self.text)),
+            "text" => Ok(Type::String(self.text.clone())),
             _ => Err(PropertyError::NotFound),
         }
     }
@@ -163,13 +164,14 @@ impl NodeBase for TextNode {
         self.commit_changes(NodeFeature::Metadata);
     }
 
-    fn set_property(&mut self, name: &str) -> Result<(), PropertyError> {
+    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError> {
         match name {
-            "text" => match Type {
-                String(v) => {
+            "text" => match value {
+                Type::String(v) => {
                     self.text = v;
                     Ok(())
                 }
+                _ => Err(PropertyError::InvalidType),
             },
             _ => Err(PropertyError::NotFound),
         }

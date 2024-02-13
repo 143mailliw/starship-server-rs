@@ -154,10 +154,19 @@ impl NodeBase for ShapeNode {
         &self.name
     }
 
+    // TODO: default defining this function crashes rustc so don't do that for now, i guess
+    fn get_property(&self, name: &str) -> Result<Type, PropertyError> {
+        Err(PropertyError::NotFound)
+    }
+
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
         self.commit_changes(NodeFeature::Metadata);
+    }
+
+    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError> {
+        Err(PropertyError::NotFound)
     }
 
     // Children

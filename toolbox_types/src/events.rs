@@ -10,6 +10,7 @@ redef_units!(
     }
 );
 
+#[derive(Debug)]
 pub enum Type {
     Integer(i64),
     Float(f64),
@@ -20,46 +21,36 @@ pub enum Type {
     UserType { type_id: String },
 }
 
-impl TryInto<i64> for Type {
-    type Error;
-
-    fn try_into(self) -> Result<i64, Self::Error> {
-        match self {
-            Integer(v) => v,
-            _ => Self::Error,
+impl Type {
+    pub fn try_into_integer(self) -> Result<i64, Self> {
+        if let Self::Integer(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
         }
     }
-}
 
-impl TryInto<f64> for Type {
-    type Error;
-
-    fn try_into(self) -> Result<f64, Self::Error> {
-        match self {
-            Float(v) => v,
-            _ => Self::Error,
+    pub fn try_into_float(self) -> Result<f64, Self> {
+        if let Self::Float(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
         }
     }
-}
 
-impl TryInto<String> for Type {
-    type Error;
-
-    fn try_into(self) -> Result<String, Self::Error> {
-        match self {
-            String(v) => v,
-            _ => Self::Error,
+    pub fn try_into_string(self) -> Result<String, Self> {
+        if let Self::String(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
         }
     }
-}
 
-impl TryInto<bool> for Type {
-    type Error;
-
-    fn try_into(self) -> Result<bool, Self::Error> {
-        match self {
-            String(v) => v,
-            _ => Self::Error,
+    pub fn try_into_boolean(self) -> Result<bool, Self> {
+        if let Self::Boolean(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
         }
     }
 }

@@ -30,7 +30,7 @@ fn App(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 let node_raw = node_sig.get();
                 let node_ref = node_raw.borrow();
 
-                let text: String = node_ref.get_property("text").try_into().unwrap();
+                let text: String = node_ref.get_property("text").expect("no text").try_into_string().unwrap();
                 text
             }}
             <button

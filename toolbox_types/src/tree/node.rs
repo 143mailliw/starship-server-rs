@@ -61,9 +61,7 @@ pub trait NodeBase {
     fn name(&self) -> &String;
 
     /// Sets a Node's properties.
-    fn get_property(&mut self, name: &str) -> Result<Type, PropertyError> {
-        Err(PropertyError::NotFound)
-    }
+    fn get_property(&self, name: &str) -> Result<Type, PropertyError>;
 
     // Setters
 
@@ -71,9 +69,8 @@ pub trait NodeBase {
     fn set_name(&mut self, name: String);
 
     /// Sets a Node's properties.
-    fn set_property(&mut self, name: &st, value: Type) -> Result<(), PropertyError> {
-        Err(PropertyError::NotFound)
-    }
+    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError>;
+
     // Children
 
     /// Returns the children of the Node.
@@ -163,6 +160,7 @@ pub enum NodeFeature {
     Metadata,
 }
 
+#[derive(Debug)]
 pub enum PropertyError {
     NotFound,
     InvalidType,

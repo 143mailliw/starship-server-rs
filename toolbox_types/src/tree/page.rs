@@ -10,6 +10,8 @@ use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{FlexDirection, Layout, Margin, Scale};
 use crate::tree::{ContainerNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
+use super::node::PropertyError;
+
 static PAGE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Unsupported,
     padding: StyleOption::Some(Margin {
@@ -148,11 +150,21 @@ impl NodeBase for Page {
         &self.name
     }
 
+    // TODO: default defining this function crashes rustc so don't do that for now, i guess
+    fn get_property(&self, name: &str) -> Result<Type, PropertyError> {
+        Err(PropertyError::NotFound)
+    }
+
     // Setters
     fn set_name(&mut self, name: String) {
         self.name = name;
         self.commit_changes(NodeFeature::Metadata);
     }
+
+    fn set_property(&mut self, name: &str, value: Type) -> Result<(), PropertyError> {
+        Err(PropertyError::NotFound)
+    }
+
     // Children
     fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
         Some(self.children.iter().map(Rc::clone).collect())
