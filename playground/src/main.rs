@@ -1,16 +1,15 @@
 pub mod hooks;
-use log::{error, info, Level};
-use std::cell::{Ref, RefCell};
+use log::Level;
+use std::cell::RefCell;
 use std::rc::Rc;
 
-use leptos::*;
+use leptos::{component, mount_to_body, view, IntoView, SignalGet};
 use toolbox_types::events::Type;
-use toolbox_types::observers::Observable;
 use toolbox_types::project;
 use toolbox_types::tree::nodes;
 use toolbox_types::tree::{page, CreatableNode, NodeBase, NodeFeature, ValidNode};
 
-use crate::hooks::node_signal::create_node_signal;
+use crate::hooks::node_signal::create_node;
 
 fn main() {
     console_log::init_with_level(Level::Info);
@@ -27,7 +26,7 @@ fn main() {
 
 #[component]
 fn App(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
-    let (node_sig, trigger) = create_node_signal(node.clone(), vec![NodeFeature::Properties]);
+    let (node_sig, trigger) = create_node(node.clone(), vec![NodeFeature::Properties]);
 
     view! {
         <div>
@@ -36,7 +35,7 @@ fn App(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 let node_raw = node_sig.get();
 
                 let text: String = node_raw.get_property("text").expect("no text").try_into_string().unwrap();
-                format!("text: {} ", text)
+                format!("text: {text} ")
             }}
             <button
                   on:click=move |_| {

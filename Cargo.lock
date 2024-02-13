@@ -916,7 +916,6 @@ dependencies = [
  "bytecheck_derive",
  "ptr_meta",
  "simdutf8",
- "uuid",
 ]
 
 [[package]]
@@ -2273,7 +2272,6 @@ dependencies = [
  "js-sys",
  "paste",
  "pin-project",
- "rkyv",
  "rustc-hash",
  "self_cell",
  "serde",

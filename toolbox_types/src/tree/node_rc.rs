@@ -44,21 +44,22 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         let clone = self.clone();
         let mut node_ref = clone.borrow_mut();
 
-        let result = node_ref.set_name(name);
+        node_ref.set_name(name);
         drop(node_ref);
 
-        self.commit_changes(NodeFeature::Metadata);
+        let node = self.borrow();
+        node.commit_changes(NodeFeature::Metadata);
     }
 
     fn set_property(&mut self, name: &str, value: Type, notify: bool) -> Result<(), PropertyError> {
         let clone = self.clone();
         let mut node_ref = clone.borrow_mut();
 
-        let result = node_ref.set_property("text", Type::String(":)".to_string()), false);
+        let result = node_ref.set_property(name, value, false);
         drop(node_ref);
 
         if notify {
-            let mut node = self.borrow();
+            let node = self.borrow();
             node.commit_changes(NodeFeature::Properties);
         }
 
@@ -69,7 +70,7 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         todo!()
     }
 
-    fn send_event(&self, event: Event) -> Result<(), EventError> {
+    fn send_event(&self, _event: Event) -> Result<(), EventError> {
         todo!()
     }
 

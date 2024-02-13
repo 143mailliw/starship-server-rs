@@ -8,5 +8,5 @@ version.workspace = true
 [dependencies]
 console_log = "0.1.2"
 log = "0.4.20"
-leptos = { version = "0.5.4", features = ["csr", "nightly"] }
+leptos = { version = "0.5.4", features = ["csr"] }
 toolbox_types = { path = "../toolbox_types" }
