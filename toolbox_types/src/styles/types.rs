@@ -1,4 +1,13 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Locked {
+    None,
+    LeftRight,
+    UpDown,
+    Both,
+    All,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ThemedColor {
     LightWhite,
     White,
@@ -105,16 +114,9 @@ pub enum FlexDirection {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Layout {
     None,
-    Flex {
-        direction: FlexDirection,
-    },
-    GridCount {
-        row_scale: u64,
-    },
-    GridScale {
-        width: Option<Scale>,
-        height: Option<Scale>,
-    },
+    Flex { direction: FlexDirection },
+    GridCount { columns: u64 },
+    GridScale { width: Scale, height: Option<Scale> },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -123,6 +125,7 @@ pub struct Margin {
     pub bottom: Scale,
     pub left: Scale,
     pub right: Scale,
+    pub locked: Locked,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -130,6 +133,7 @@ pub enum FontWeight {
     ExtraLight,
     Light,
     Normal,
+    SemiBold,
     Bold,
     ExtraBold,
     Black,
@@ -183,6 +187,7 @@ pub struct Border {
     pub top: Option<BorderSide>,
     pub bottom: Option<BorderSide>,
     pub corners: Corners,
+    pub locked: Locked,
 }
 
 #[derive(Clone, Debug, PartialEq)]

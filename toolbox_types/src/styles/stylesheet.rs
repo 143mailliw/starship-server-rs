@@ -22,8 +22,27 @@ pub struct StyleLayers {
     pub checked: StyleOption<Stylesheet>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum StyleOption<T> {
     Some(T),
     Default,
     Unsupported,
+}
+
+impl<T> StyleOption<T> {
+    pub fn unwrap(self) -> T {
+        match self {
+            StyleOption::Some(value) => value,
+            StyleOption::Default => panic!("tried to unwrap a default value"),
+            StyleOption::Unsupported => unimplemented!(),
+        }
+    }
+
+    pub fn is_some(&self) -> bool {
+        match self {
+            StyleOption::Some(_) => true,
+            StyleOption::Default => false,
+            StyleOption::Unsupported => false,
+        }
+    }
 }

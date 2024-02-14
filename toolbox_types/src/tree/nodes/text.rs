@@ -8,7 +8,7 @@ use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Margin, Scale,
+    Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Locked, Margin, Scale,
     StyleString, ThemedColor, Transform,
 };
 use crate::tree::node::PropertyError;
@@ -21,12 +21,14 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
         bottom: Scale::Pixels(0.0),
         left: Scale::Pixels(0.0),
         right: Scale::Pixels(0.0),
+        locked: Locked::All,
     }),
     padding: StyleOption::Some(Margin {
         top: Scale::Pixels(0.0),
         bottom: Scale::Pixels(0.0),
         left: Scale::Pixels(0.0),
         right: Scale::Pixels(0.0),
+        locked: Locked::All,
     }),
     layout: StyleOption::Unsupported,
     transform: StyleOption::Some(Transform {
@@ -58,6 +60,7 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
             bottom_right: None,
             locked: true,
         },
+        locked: Locked::All,
     }),
     text_direction: StyleOption::Some(CardinalDirection::Left),
 };

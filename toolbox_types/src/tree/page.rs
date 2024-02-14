@@ -7,7 +7,7 @@ use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::project::Project;
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
-use crate::styles::types::{FlexDirection, Layout, Margin, Scale};
+use crate::styles::types::{FlexDirection, Layout, Locked, Margin, Scale};
 use crate::tree::{ContainerNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 use super::node::PropertyError;
@@ -19,6 +19,7 @@ static PAGE_AUTO_STYLES: Stylesheet = Stylesheet {
         bottom: Scale::Pixels(0.0),
         left: Scale::Pixels(0.0),
         right: Scale::Pixels(0.0),
+        locked: Locked::All,
     }),
     layout: StyleOption::Some(Layout::Flex {
         direction: FlexDirection::ColumnDown,
