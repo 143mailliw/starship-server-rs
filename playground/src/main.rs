@@ -1,9 +1,11 @@
 pub mod hooks;
+pub mod styling;
+
 use log::Level;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use leptos::{component, mount_to_body, view, IntoView, SignalGet};
+use leptos::{component, event_target_value, mount_to_body, view, IntoView, SignalGet};
 use toolbox_types::events::Type;
 use toolbox_types::project;
 use toolbox_types::tree::nodes;
@@ -37,16 +39,14 @@ fn App(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 let text: String = node_raw.get_property("text").expect("no text").try_into_string().unwrap();
                 format!("text: {text} ")
             }}
-            <button
-                  on:click=move |_| {
-                    {
-                        let mut node_raw = node_sig.get();
-                        node_raw.set_property("text", Type::String(":)".to_string()), true);
-                    }
+
+            <input
+                type="text"
+                on:input=move |ev| {
+                    let mut node_raw = node_sig.get();
+                    node_raw.set_property("text", Type::String(event_target_value(&ev)), true);
                 }
-            >
-                "Set"
-            </button>
+            />
         </div>
     }
 }
