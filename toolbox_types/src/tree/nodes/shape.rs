@@ -41,7 +41,7 @@ static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     font: StyleOption::Unsupported,
     background: StyleOption::Some(Graphic::Color(Color::Themed {
         color: ThemedColor::LightBlack,
-        alpha: 255,
+        alpha: 1.0,
     })),
     border: StyleOption::Some(Border {
         left: None,

@@ -42,7 +42,7 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
         size: Scale::Points(11.0),
         color: Color::Themed {
             color: ThemedColor::LightWhite,
-            alpha: 255,
+            alpha: 1.0,
         },
     }),
     background: StyleOption::Some(Graphic::None),

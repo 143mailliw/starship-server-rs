@@ -37,9 +37,9 @@ pub enum ThemedColor {
 }
 
 pub enum Color {
-    Themed { color: ThemedColor, alpha: u8 },
-    Rgba { r: u8, g: u8, b: u8, a: u8 },
-    Hsva { h: u8, s: u8, v: u8, a: u8 },
+    Themed { color: ThemedColor, alpha: f32 },
+    Rgba { r: u8, g: u8, b: u8, a: f32 },
+    Hsla { h: u16, s: u8, v: u8, a: f32 },
 }
 
 pub enum GradientType {
