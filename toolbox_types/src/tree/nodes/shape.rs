@@ -7,8 +7,8 @@ use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, Color, Corners, FlexDirection, Graphic, Layout, Locked, Margin, Scale, ThemedColor,
-    Transform,
+    Border, Color, Corners, Direction, FlexDirection, Graphic, Layout, Locked, Margin, Scale,
+    ThemedColor, Transform,
 };
 use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
@@ -39,6 +39,7 @@ static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
         size_y: Scale::Pixels(100.0),
         pos_x: Scale::Pixels(0.0),
         pos_y: Scale::Pixels(0.0),
+        anchor: Direction::TopLeft,
         degrees: 0.0,
     }),
     font: StyleOption::Unsupported,

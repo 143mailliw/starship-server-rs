@@ -54,7 +54,7 @@ pub enum Color {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GradientType {
-    Linear(Direction),
+    Linear(u16),
     Radial,
     Conic,
 }
@@ -68,7 +68,11 @@ pub struct Gradient {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Graphic {
     Color(Color),
-    Image(String),
+    Image {
+        url: StyleString,
+        size: Scale,
+        repeat: bool,
+    },
     Gradient(Gradient),
     None,
 }
@@ -154,6 +158,7 @@ pub struct Transform {
     pub size_y: Scale,
     pub pos_x: Scale,
     pub pos_y: Scale,
+    pub anchor: Direction,
     pub degrees: f64,
 }
 
@@ -194,6 +199,15 @@ pub struct Border {
 pub enum StyleString {
     Static(&'static str),
     Dynamic(String),
+}
+
+impl ToString for StyleString {
+    fn to_string(&self) -> String {
+        match self {
+            StyleString::Static(s) => s.to_string(),
+            StyleString::Dynamic(s) => s.clone(),
+        }
+    }
 }
 
 pub enum StyleVec {}

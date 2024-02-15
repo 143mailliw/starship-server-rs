@@ -85,6 +85,45 @@ impl ToCSS for types::Margin {
     }
 }
 
+impl ToCSS for types::Gradient {
+    fn to_css(&self) -> String {
+        match self.gradient_type {
+            types::GradientType::Linear(angle) => format!(
+                "linear-gradient({}deg, {}, {})",
+                angle,
+                self.from.to_css(),
+                self.to.to_css()
+            ),
+            types::GradientType::Radial => format!(
+                "radial-gradient({}, {})",
+                self.from.to_css(),
+                self.to.to_css()
+            ),
+            types::GradientType::Conic => format!(
+                "conic-gradient({}, {})",
+                self.from.to_css(),
+                self.to.to_css()
+            ),
+        }
+    }
+}
+
+impl ToCSS for types::Graphic {
+    fn to_css(&self) -> String {
+        match self {
+            Self::Image { url, size, repeat } => format!(
+                "background-image: url({}); background-size: {}; background-repeat: {};",
+                url.to_string(),
+                size.to_css(),
+                if *repeat { "repeat" } else { "no-repeat" }
+            ),
+            Self::Gradient(gradient) => format!("background: {};", gradient.to_css()),
+            Self::Color(color) => format!("background-color: {};", color.to_css()),
+            Self::None => "background: none;".to_string(),
+        }
+    }
+}
+
 //
 // Property-specific
 //
@@ -128,6 +167,100 @@ impl ToCSS for types::Layout {
     }
 }
 
+// this is not the CSS transform property, this is a layout transform that describes the
+// size and position of an element
+impl ToCSS for types::Transform {
+    fn to_css(&self) -> String {
+        let mut properties: Vec<String> = vec![];
+
+        properties.push(format!(
+            "width: {}, height: {};",
+            self.size_x.to_css(),
+            self.size_y.to_css()
+        ));
+
+        match self.anchor {
+            types::Direction::TopLeft => {
+                properties.push(format!(
+                    "top: {}; left: {};",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::Top => {
+                properties.push(format!(
+                    "top: {}; left: calc(50% + {}); transform: translateX(-50%);",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::TopRight => {
+                properties.push(format!(
+                    "top: {}; right: {};",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::Left => {
+                properties.push(format!(
+                    "top: calc(50% + {}); left: {}; transform: translateY(-50%);",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::Center => {
+                properties.push(format!(
+                    "top: calc(50% + {}); left: calc(50% + {}); transform: translate(-50%, -50%);",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::Right => {
+                properties.push(format!(
+                    "top: calc(50% + {}); right: {}; transform: translateY(-50%);",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::BottomLeft => {
+                properties.push(format!(
+                    "bottom: {}; left: {};",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::Bottom => {
+                properties.push(format!(
+                    "bottom: {}; left: calc(50% + {}); transform: translateX(-50%);",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+            types::Direction::BottomRight => {
+                properties.push(format!(
+                    "bottom: {}; right: {};",
+                    self.pos_y.to_css(),
+                    self.pos_x.to_css()
+                ));
+            }
+        }
+
+        properties.join(" ")
+    }
+}
+
+impl ToCSS for types::Font {
+    fn to_css(&self) -> String {
+        format!(
+            "font-family: {}; font-size: {}; font-weight: {}; color: {};",
+            self.name.to_string(),
+            self.size.to_css(),
+            self.weight.to_css(),
+            self.color.to_css()
+        )
+    }
+}
+
 //
 // Stylesheet
 //
@@ -145,6 +278,18 @@ impl ToCSS for Stylesheet {
         }
 
         if let StyleOption::Some(t) = &self.layout {
+            properties.push(t.to_css());
+        }
+
+        if let StyleOption::Some(t) = &self.transform {
+            properties.push(t.to_css());
+        }
+
+        if let StyleOption::Some(t) = &self.font {
+            properties.push(t.to_css());
+        }
+
+        if let StyleOption::Some(t) = &self.background {
             properties.push(t.to_css());
         }
 

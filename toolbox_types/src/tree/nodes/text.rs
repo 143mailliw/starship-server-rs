@@ -8,8 +8,8 @@ use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, CardinalDirection, Color, Corners, Font, FontWeight, Graphic, Locked, Margin, Scale,
-    StyleString, ThemedColor, Transform,
+    Border, CardinalDirection, Color, Corners, Direction, Font, FontWeight, Graphic, Locked,
+    Margin, Scale, StyleString, ThemedColor, Transform,
 };
 use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
@@ -36,6 +36,7 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
         size_y: Scale::Auto,
         pos_x: Scale::Pixels(0.0),
         pos_y: Scale::Pixels(0.0),
+        anchor: Direction::TopLeft,
         degrees: 0.0,
     }),
     font: StyleOption::Some(Font {
