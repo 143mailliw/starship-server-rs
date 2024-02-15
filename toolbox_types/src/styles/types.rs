@@ -174,7 +174,7 @@ pub struct Corners {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BorderStyle {
     Dotted,
-    Dashed(Scale),
+    Dashed,
     Straight,
 }
 
@@ -193,6 +193,13 @@ pub struct Border {
     pub bottom: Option<BorderSide>,
     pub corners: Corners,
     pub locked: Locked,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TextAlignment {
+    Left,
+    Right,
+    Center,
 }
 
 #[derive(Clone, Debug, PartialEq)]

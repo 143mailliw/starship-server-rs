@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use toolbox_types::styles::{
     color::light_color_from_themed,
     stylesheet::{StyleOption, Stylesheet},
@@ -261,6 +263,103 @@ impl ToCSS for types::Font {
     }
 }
 
+impl ToCSS for types::BorderSide {
+    fn to_css(&self) -> String {
+        format!(
+            "{} {} {}",
+            self.size.to_css(),
+            match self.style {
+                types::BorderStyle::Straight => "solid",
+                types::BorderStyle::Dashed => "dashed",
+                types::BorderStyle::Dotted => "dotted",
+            },
+            self.color.to_css()
+        )
+    }
+}
+
+impl ToCSS for types::Border {
+    fn to_css(&self) -> String {
+        match self.locked {
+            types::Locked::None => format!(
+                "border-left: {}; border-right: {}; border-top: {}; border-bottom: {};",
+                self.left
+                    .expect("Locked::None should result in all sides having values")
+                    .to_css(),
+                self.right
+                    .expect("Locked::None should result in all sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::None should result in all sides having values")
+                    .to_css(),
+                self.bottom
+                    .expect("Locked::None should result in all sides having values")
+                    .to_css(),
+            ),
+            types::Locked::LeftRight => format!(
+                "border-left: {}; border-right: {}; border-top: {}; border-bottom: {};",
+                self.left
+                    .expect("Locked::LeftRight should result in the left, top and bottom sides having values")
+                    .to_css(),
+                self.left
+                    .expect("Locked::LeftRight should result in the left, top and bottom sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::LeftRight should result in the left, top and bottom sides having values")
+                    .to_css(),
+                self.bottom
+                    .expect("Locked::LeftRight should result in the left, top and bottom sides having values")
+                    .to_css(),
+            ),
+            types::Locked::UpDown => format!(
+                "border-left: {}; border-right: {}; border-top: {}; border-bottom: {};",
+                self.left
+                    .expect("Locked::UpDown should result in the left, right and top sides having values")
+                    .to_css(),
+                self.right
+                    .expect("Locked::UpDown should result in the left, right and top sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::UpDown should result in the left, right and top sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::UpDown should result in the left, right and top sides having values")
+                    .to_css(),
+            ),
+            types::Locked::Both => format!(
+                "border-left: {}; border-right: {}; border-top: {}; border-bottom: {};",
+                self.left
+                    .expect("Locked::Both should result in the left and top sides having values")
+                    .to_css(),
+                self.left
+                    .expect("Locked::Both should result in the left and top sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::Both should result in the left and top sides having values")
+                    .to_css(),
+                self.top
+                    .expect("Locked::Both should result in the left and top sides having values")
+                    .to_css(),
+            ),
+            types::Locked::All => format!(
+                "border: {};",
+                self.top.expect("Locked::All stores its value in the top side").to_css()
+            ),
+        }
+    }
+}
+
+impl ToCSS for types::TextAlignment {
+    fn to_css(&self) -> String {
+        match self {
+            types::TextAlignment::Left => "text-align: left;",
+            types::TextAlignment::Center => "text-align: center;",
+            types::TextAlignment::Right => "text-align: right;",
+        }
+        .to_string()
+    }
+}
+
 //
 // Stylesheet
 //
@@ -290,6 +389,14 @@ impl ToCSS for Stylesheet {
         }
 
         if let StyleOption::Some(t) = &self.background {
+            properties.push(t.to_css());
+        }
+
+        if let StyleOption::Some(t) = &self.border {
+            properties.push(t.to_css());
+        }
+
+        if let StyleOption::Some(t) = &self.text_direction {
             properties.push(t.to_css());
         }
 

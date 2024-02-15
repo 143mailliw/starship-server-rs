@@ -9,7 +9,7 @@ use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
     Border, CardinalDirection, Color, Corners, Direction, Font, FontWeight, Graphic, Locked,
-    Margin, Scale, StyleString, ThemedColor, Transform,
+    Margin, Scale, StyleString, TextAlignment, ThemedColor, Transform,
 };
 use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
@@ -63,7 +63,7 @@ static TEXTNODE_AUTO_STYLES: Stylesheet = Stylesheet {
         },
         locked: Locked::All,
     }),
-    text_direction: StyleOption::Some(CardinalDirection::Left),
+    text_direction: StyleOption::Some(TextAlignment::Left),
 };
 
 pub struct TextNode {

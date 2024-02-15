@@ -1,4 +1,6 @@
-use super::types::{Border, CardinalDirection, Font, Graphic, Layout, Margin, Transform};
+use super::types::{
+    Border, CardinalDirection, Font, Graphic, Layout, Margin, TextAlignment, Transform,
+};
 
 pub struct Stylesheet {
     // layout
@@ -11,7 +13,7 @@ pub struct Stylesheet {
     pub font: StyleOption<Font>,
     pub background: StyleOption<Graphic>,
     pub border: StyleOption<Border>,
-    pub text_direction: StyleOption<CardinalDirection>,
+    pub text_direction: StyleOption<TextAlignment>,
 }
 
 pub struct StyleLayers {
