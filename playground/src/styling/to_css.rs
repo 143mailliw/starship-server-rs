@@ -6,7 +6,7 @@ use toolbox_types::styles::{
     types,
 };
 
-trait ToCSS {
+pub trait ToCSS {
     /// Transform this object into a CSS string that can be used for HTML rendering.
     fn to_css(&self) -> String;
 }
