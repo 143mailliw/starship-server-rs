@@ -1,4 +1,5 @@
 pub mod hooks;
+pub mod rendering;
 pub mod styling;
 
 use log::Level;

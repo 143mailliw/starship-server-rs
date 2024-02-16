@@ -2,6 +2,7 @@ use super::types::{
     Border, CardinalDirection, Font, Graphic, Layout, Margin, TextAlignment, Transform,
 };
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Stylesheet {
     // layout
     pub margin: StyleOption<Margin>,
@@ -16,6 +17,7 @@ pub struct Stylesheet {
     pub text_direction: StyleOption<TextAlignment>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct StyleLayers {
     pub base: Stylesheet,
     pub hover: StyleOption<Stylesheet>,
