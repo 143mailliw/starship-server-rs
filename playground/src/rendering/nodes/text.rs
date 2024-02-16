@@ -2,9 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use leptos::{view, IntoView, SignalGet};
+use log::info;
 use toolbox_types::tree::{NodeBase, NodeFeature, ValidNode};
 
-use crate::{hooks::node_signal::create_node, rendering::renderable::Renderable};
+use crate::{hooks::node_signal::create_node, rendering::renderable::Renderable, styling::make};
 
 pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let (node_sig, trigger) = create_node(
@@ -13,9 +14,12 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     );
 
     view!(
-        <span class={move || node_sig.get().id().clone()} on:load=move |_| trigger.track()>
+        <span /*class={move || node_sig.get().id().clone()}*/ on:load=move |_| trigger.track()>
             <style>
-                {move || node_sig.get().get_styles()}
+                {move || {
+                    let cell = node_sig.get();
+                    cell.get_styles()
+                }}
             </style>
             {move || {
                 let node_raw = node_sig.get();
@@ -25,6 +29,9 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     .expect("no text")
                     .try_into_string()
                     .unwrap();
+
+                drop(node_raw);
+
                 text
             }}
         </span>

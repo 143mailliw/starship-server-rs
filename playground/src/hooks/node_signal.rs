@@ -32,7 +32,7 @@ pub fn create_node(
         let cell = node_sig.get();
         let mut node = cell.borrow_mut();
 
-        if (!setup.get()) {
+        if !setup.get() {
             for feature in features.clone() {
                 info!("{:#?}", feature);
 
@@ -43,7 +43,11 @@ pub fn create_node(
 
         info!("count changed");
 
-        node.id().clone()
+        let id = node.id().clone();
+
+        drop(node);
+
+        id
     });
 
     (node_sig, trigger)
