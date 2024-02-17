@@ -280,7 +280,10 @@ impl ToCSS for types::BorderSide {
 
 impl ToCSS for types::Border {
     fn to_css(&self) -> String {
-        match self.locked {
+        let mut properties: Vec<String> = vec![];
+
+        properties.push(match self.locked {
+
             types::Locked::None => format!(
                 "border-left: {}; border-right: {}; border-top: {}; border-bottom: {};",
                 self.left
@@ -345,7 +348,29 @@ impl ToCSS for types::Border {
                 "border: {};",
                 self.top.expect("Locked::All stores its value in the top side").to_css()
             ),
-        }
+        });
+
+        properties.push(match self.corners.locked {
+            true => format!("border-radius: {};", self.corners.top_left.to_css()),
+            false => format!(
+                "border-radius: {} {} {} {};",
+                self.corners.top_left.to_css(),
+                self.corners
+                    .top_right
+                    .expect("Locked = false should result in all corners having values")
+                    .to_css(),
+                self.corners
+                    .bottom_right
+                    .expect("Locked = false should result in all corners having values")
+                    .to_css(),
+                self.corners
+                    .bottom_left
+                    .expect("Locked = false should result in all corners having values")
+                    .to_css()
+            ),
+        });
+
+        properties.join(" ")
     }
 }
 
