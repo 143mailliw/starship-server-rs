@@ -17,6 +17,34 @@ pub struct Stylesheet {
     pub text_direction: StyleOption<TextAlignment>,
 }
 
+impl Stylesheet {
+    pub fn new() -> Self {
+        Stylesheet {
+            margin: StyleOption::Default,
+            padding: StyleOption::Default,
+            layout: StyleOption::Default,
+            transform: StyleOption::Default,
+            font: StyleOption::Default,
+            background: StyleOption::Default,
+            border: StyleOption::Default,
+            text_direction: StyleOption::Default,
+        }
+    }
+
+    pub fn merge(self, default: Stylesheet) -> Stylesheet {
+        Stylesheet {
+            margin: self.margin.or(default.margin),
+            padding: self.padding.or(default.padding),
+            layout: self.layout.or(default.layout),
+            transform: self.transform.or(default.transform),
+            font: self.font.or(default.font),
+            background: self.background.or(default.background),
+            border: self.border.or(default.border),
+            text_direction: self.text_direction.or(default.text_direction),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyleLayers {
     pub base: Stylesheet,
@@ -47,6 +75,14 @@ impl<T> StyleOption<T> {
             StyleOption::Some(_) => true,
             StyleOption::Default => false,
             StyleOption::Unsupported => false,
+        }
+    }
+
+    pub fn or(self, other: Self) -> Self {
+        match self {
+            StyleOption::Some(_) => self,
+            StyleOption::Default => other,
+            StyleOption::Unsupported => StyleOption::Unsupported,
         }
     }
 }

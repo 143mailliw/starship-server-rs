@@ -57,7 +57,6 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
 
     view! {
         <div on:load=move |_| trigger.track()>
-            <div>test</div>
             <h1>{move || {
                 match &page_sig.get().borrow().title {
                     Title::Basic { content } => content.clone(),

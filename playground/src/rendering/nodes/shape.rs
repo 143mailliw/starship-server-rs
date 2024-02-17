@@ -6,6 +6,7 @@ use crate::{
     rendering::{nodes::render_children, renderable::Renderable},
 };
 use leptos::{view, IntoView, SignalGet};
+use log::info;
 use toolbox_types::tree::{NodeBase, NodeFeature, ValidNode};
 
 pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
@@ -19,14 +20,15 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     );
 
     view!(
-        <div class={move || node_sig.get().id().clone()} on:load={move |_| trigger.track()}>
+        <div id={move || node_sig.get().get_render_id()} on:load={move |_| trigger.track()}>
             // HACK: Style in body is invalid HTML but efficient
             // TODO: Move to head
             <style>
-                {move || node_sig.get().get_styles()}
+                {move || node_sig.get().get_css()}
             </style>
             {move || {
-                render_children(node_sig.get().get_children())
+                let children = node_sig.get().get_children();
+                render_children(children)
             }}
         </div>
     )

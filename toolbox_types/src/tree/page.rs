@@ -209,6 +209,17 @@ impl NodeBase for Page {
     fn styles(&mut self) -> &mut StyleLayers {
         &mut self.styles
     }
+
+    fn get_styles(&self) -> StyleLayers {
+        let base_styles = self.styles.clone();
+        StyleLayers {
+            base: base_styles.base.merge(PAGE_AUTO_STYLES.clone()),
+            hover: base_styles.hover,
+            active: base_styles.active,
+            focused: base_styles.focused,
+            checked: base_styles.checked,
+        }
+    }
 }
 
 impl ContainerNode for Page {}

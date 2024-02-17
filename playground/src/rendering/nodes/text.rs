@@ -14,11 +14,11 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     );
 
     view!(
-        <span /*class={move || node_sig.get().id().clone()}*/ on:load=move |_| trigger.track()>
+        <span id={move || node_sig.get().get_render_id()} on:load=move |_| trigger.track()>
             <style>
                 {move || {
                     let cell = node_sig.get();
-                    cell.get_styles()
+                    cell.get_css()
                 }}
             </style>
             {move || {

@@ -5,6 +5,10 @@ pub mod styling;
 use log::Level;
 use std::cell::RefCell;
 use std::rc::Rc;
+use toolbox_types::styles::stylesheet::StyleOption;
+use toolbox_types::styles::types::{
+    Border, BorderSide, BorderStyle, Color, Corners, Locked, Scale, ThemedColor,
+};
 
 use leptos::{component, mount_to_body, view, IntoView, SignalGet};
 use toolbox_types::events::Type;
@@ -20,12 +24,58 @@ fn main() {
     console_error_panic_hook::set_once();
 
     let project = project::Project::create("test".to_string(), project::Type::Component);
-    let page = Page::create("test page".to_string(), Rc::downgrade(&project));
-    let mut node = nodes::TextNode::create();
-    node.set_property("text", Type::String("bruh".to_string()), false);
+    let page = Page::create("Test Page".to_string(), Rc::downgrade(&project));
+
+    let shape = nodes::ShapeNode::create();
+
+    let mut text = nodes::TextNode::create();
+    match text.set_property(
+        "text",
+        Type::String("Hello from playground and toolbox_types".to_string()),
+        false,
+    ) {
+        Ok(_) => {}
+        Err(e) => {
+            log::error!("Error setting property: {:?}", e);
+        }
+    }
+
+    let mut shape_ref = shape.borrow_mut();
+    match shape_ref.add_child(text.clone(), None) {
+        Ok(_) => {}
+        Err(e) => {
+            log::error!("Error adding child: {:?}", e);
+        }
+    }
+
+    let styles = shape_ref.styles();
+    styles.base.border = StyleOption::Some(Border {
+        left: None,
+        right: None,
+        top: Some(BorderSide {
+            color: Color::Themed {
+                color: ThemedColor::DarkBlack,
+                alpha: 1.0,
+            },
+            size: Scale::Pixels(2.0),
+            style: BorderStyle::Straight,
+        }),
+        bottom: None,
+        corners: Corners {
+            top_left: Scale::Pixels(10.0),
+            top_right: None,
+            bottom_left: None,
+            bottom_right: None,
+            locked: true,
+        },
+        locked: Locked::All,
+    });
+
+    drop(styles);
+    drop(shape_ref);
 
     let mut page_ref = page.borrow_mut();
-    page_ref.add_child(node.clone(), None);
+    page_ref.add_child(shape.clone(), None);
 
     drop(page_ref);
 

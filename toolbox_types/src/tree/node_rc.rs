@@ -35,9 +35,7 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
             }
         };
 
-        let result = node_ref.get_property(name);
-        drop(node_ref);
-        result
+        node_ref.get_property(name)
     }
 
     fn set_name(&mut self, name: String) {
@@ -56,7 +54,6 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         let mut node_ref = clone.borrow_mut();
 
         let result = node_ref.set_property(name, value, false);
-        drop(node_ref);
 
         if notify {
             let node = self.borrow();
@@ -64,6 +61,11 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         }
 
         result
+    }
+
+    fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
+        let node_ref = self.borrow();
+        node_ref.get_children()
     }
 
     fn get_events(&self) -> Vec<EventVariants> {
@@ -80,5 +82,10 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
 
     fn styles(&mut self) -> &mut StyleLayers {
         panic!("styles requires long-life reference");
+    }
+
+    fn get_styles(&self) -> StyleLayers {
+        let node_ref = self.borrow();
+        node_ref.get_styles()
     }
 }

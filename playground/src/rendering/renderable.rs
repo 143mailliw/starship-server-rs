@@ -1,19 +1,29 @@
-use std::cell::RefCell;
 use std::rc::Rc;
+use std::{cell::RefCell, fmt::format};
 
+use log::info;
 use toolbox_types::tree::{NodeBase, ValidNode};
 
 use crate::styling::make::css;
 
 pub trait Renderable {
-    fn get_styles(&self) -> String;
+    fn get_render_id(&self) -> String;
+    fn get_css(&self) -> String;
 }
 
 impl Renderable for Rc<RefCell<ValidNode>> {
-    fn get_styles(&self) -> String {
-        let mut node_borrowed = self.borrow_mut();
-        let styles = node_borrowed.styles().clone();
+    fn get_render_id(&self) -> String {
+        let node_borrowed = self.borrow();
+        format!("elem-{}", node_borrowed.id())
+    }
 
-        css(&styles, node_borrowed.id())
+    fn get_css(&self) -> String {
+        let node_borrowed = self.borrow();
+        let styles = node_borrowed.get_styles();
+
+        let css_res = css(&styles, format!("elem-{}", node_borrowed.id()).as_str());
+        info!("{}", css_res);
+
+        css_res
     }
 }

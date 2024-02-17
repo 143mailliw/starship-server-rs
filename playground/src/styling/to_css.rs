@@ -19,7 +19,7 @@ impl ToCSS for types::Color {
     fn to_css(&self) -> String {
         match self {
             Self::Hsla { h, s, v, a } => format!("hsl({h}deg {s}% {v}% / {a}"),
-            Self::Rgba { r, g, b, a } => format!("rgb({r}, {g}, {b} / {a})"),
+            Self::Rgba { r, g, b, a } => format!("rgb({r} {g} {b} / {a})"),
             Self::Themed { color, alpha } => light_color_from_themed(types::Color::Themed {
                 color: *color,
                 alpha: *alpha,
@@ -176,7 +176,7 @@ impl ToCSS for types::Transform {
         let mut properties: Vec<String> = vec![];
 
         properties.push(format!(
-            "width: {}, height: {};",
+            "width: {}; height: {};",
             self.size_x.to_css(),
             self.size_y.to_css()
         ));

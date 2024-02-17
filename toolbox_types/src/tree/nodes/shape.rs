@@ -44,7 +44,7 @@ static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     }),
     font: StyleOption::Unsupported,
     background: StyleOption::Some(Graphic::Color(Color::Themed {
-        color: ThemedColor::LightBlack,
+        color: ThemedColor::DarkWhite,
         alpha: 1.0,
     })),
     border: StyleOption::Some(Border {
@@ -220,6 +220,17 @@ impl NodeBase for ShapeNode {
 
     fn styles(&mut self) -> &mut StyleLayers {
         &mut self.styles
+    }
+
+    fn get_styles(&self) -> StyleLayers {
+        let base_styles = self.styles.clone();
+        StyleLayers {
+            base: base_styles.base.merge(SHAPENODE_AUTO_STYLES.clone()),
+            hover: base_styles.hover,
+            active: base_styles.active,
+            focused: base_styles.focused,
+            checked: base_styles.checked,
+        }
     }
 }
 
