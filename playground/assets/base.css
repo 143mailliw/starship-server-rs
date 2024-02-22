@@ -5,9 +5,21 @@
     --light-light-black: rgb(51, 65, 85);
     --light-black: rgb(30, 41, 59);
     --light-dark-black: rgb(17, 24, 39);
+    --light-light-blue: rgb(96, 165, 250);
+    --light-blue: rgb(59, 130, 246);
+    --light-dark-blue: rgb(29, 78, 216);
+
+    --transition-time-small: 0.2s;
+
+    --border-radius-small: 0.25rem;
 }
 
 * {
     font-family: "Inter", sans-serif;
     font-size: 12pt;
+    color: var(--light-dark-black);
+}
+
+button {
+    cursor: pointer;
 }

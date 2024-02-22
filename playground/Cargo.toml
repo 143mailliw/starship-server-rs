@@ -12,6 +12,7 @@ leptos = { version = "0.5.4", features = ["csr"] }
 toolbox_types = { path = "../toolbox_types" }
 console_error_panic_hook = "0.1.7"
 stylers = { version = "1.0.0-alpha" }
+enum-iterator = "1.5.0"
 
 [build-dependencies]
 stylers = { version = "1.0.0-alpha" }

@@ -1,6 +1,12 @@
-pub mod hooks;
-pub mod rendering;
-pub mod styling;
+// component name convention is PascalCase
+// we violate that, too, constantly (because of render()), but i'd rather follow the convention
+// sometimes rather than never
+#![allow(non_snake_case)]
+
+mod editor;
+mod hooks;
+mod rendering;
+mod styling;
 
 use log::Level;
 use std::cell::RefCell;
@@ -17,11 +23,12 @@ use toolbox_types::tree::nodes;
 use toolbox_types::tree::page::Page;
 use toolbox_types::tree::{CreatableNode, NodeBase, NodeFeature};
 
+use crate::editor::sidebar::Sidebar;
 use crate::rendering::page::{create_page, render};
 
 fn main() {
-    console_log::init_with_level(Level::Info);
     console_error_panic_hook::set_once();
+    console_log::init_with_level(Level::Info).expect("error initializing log");
 
     let project = project::Project::create("test".to_string(), project::Type::Component);
     let page = Page::create("Test Page".to_string(), Rc::downgrade(&project));
@@ -71,7 +78,6 @@ fn main() {
         locked: Locked::All,
     });
 
-    drop(styles);
     drop(shape_ref);
 
     let mut page_ref = page.borrow_mut();
@@ -132,7 +138,8 @@ fn App(page: Rc<RefCell<Page>>) -> impl IntoView {
             <div id="toolbar">toolbar</div>
             <div id="editor">
                 <div id="sidebar">
-                    sidebar
+
+                    <Sidebar page=page_sig />
                 </div>
                 <div id="page" on:load=move |_| trigger.track()>
                     {move || render(page_sig.get().clone())}
