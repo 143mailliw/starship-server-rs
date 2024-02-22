@@ -6,6 +6,7 @@ use leptos::{
     Trigger,
 };
 use log::{error, info};
+use stylers::style;
 use toolbox_types::observers::Observable;
 use toolbox_types::tree::page::{Page, Title};
 use toolbox_types::tree::{NodeBase, NodeFeature};
@@ -53,11 +54,26 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
     let (page_sig, trigger) =
         create_page(page, vec![NodeFeature::Properties, NodeFeature::Children]);
 
-    info!("rendering page");
+    let class_name = style! {
+        #page {
+            width: 65vw;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: var(--light-light-white);
 
-    view! {
-        <div on:load=move |_| trigger.track()>
-            <h1>{move || {
+        }
+        #page-title {
+            font-size: 32pt;
+            font-weight: 800;
+            margin-top: 4rem;
+            margin-bottom: 1rem;
+            color: var(--light-dark-black);
+        }
+    };
+
+    view! { class = class_name,
+        <div id="page" on:load=move |_| trigger.track()>
+            <h1 id="page-title">{move || {
                 match &page_sig.get().borrow().title {
                     Title::Basic { content } => content.clone(),
                 }

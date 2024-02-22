@@ -1,0 +1,13 @@
+:root {
+    --light-light-white: rgb(249 250 251);
+    --light-white: rgb(241 245 249);
+    --light-dark-white: rgb(226, 232, 240);
+    --light-light-black: rgb(51, 65, 85);
+    --light-black: rgb(30, 41, 59);
+    --light-dark-black: rgb(17, 24, 39);
+}
+
+* {
+    font-family: "Inter", sans-serif;
+    font-size: 12pt;
+}

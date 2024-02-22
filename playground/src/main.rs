@@ -89,9 +89,55 @@ fn App(page: Rc<RefCell<Page>>) -> impl IntoView {
         vec![NodeFeature::Properties, NodeFeature::Children],
     );
 
-    view! {
-        <div on:load=move |_| trigger.track()>
-            {move || render(page_sig.get().clone())}
+    let class_name = stylers::style! {
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #editor {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        #toolbar {
+            height: 3rem;
+            background-color: var(--light-white);
+            border-bottom: 1px solid var(--light-dark-white);
+            flex-shrink: 0;
+        }
+
+        #sidebar {
+            width: 15rem;
+            background-color: var(--light-white);
+            border-right: 1px solid var(--light-dark-white);
+            flex-shrink: 0;
+            min-height: 100%;
+        }
+
+        #page {
+            flex-shrink: 1;
+            width: 100%;
+            height: 100%;
+            background-color: var(--light-light-white);
+            overflow: auto;
+        }
+    };
+
+    view! { class = class_name,
+        <div id="main-container">
+            <div id="toolbar">toolbar</div>
+            <div id="editor">
+                <div id="sidebar">
+                    sidebar
+                </div>
+                <div id="page" on:load=move |_| trigger.track()>
+                    {move || render(page_sig.get().clone())}
+                </div>
+            </div>
         </div>
     }
 }

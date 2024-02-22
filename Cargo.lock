@@ -1735,6 +1735,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 
 [[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
+
+[[package]]
 name = "gloo-net"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2312,6 +2318,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "levenshtein"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db13adb97ab515a3691f56e4dbab09283d0b86cb45abd991d8634a9d6f501760"
+
+[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2361,6 +2373,15 @@ name = "linux-raw-sys"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01cda141df6706de531b6c46c3a33ecca755538219bd484262fa09410c13539c"
+
+[[package]]
+name = "litrs"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
+dependencies = [
+ "proc-macro2",
+]
 
 [[package]]
 name = "local-channel"
@@ -2880,6 +2901,7 @@ dependencies = [
  "console_log",
  "leptos",
  "log",
+ "stylers",
  "toolbox_types",
 ]
 
@@ -3963,6 +3985,44 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "stylers"
+version = "1.0.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4deaebc9c7dec06c2da567e8691e822f81460c9e39209a5fabf83a149928a80"
+dependencies = [
+ "glob",
+ "proc-macro2",
+ "stylers_core",
+ "stylers_macro",
+ "syn 2.0.48",
+]
+
+[[package]]
+name = "stylers_core"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fd79a61aa2757b6df658d33847e54b432afa140cddf927d982c4c7b842029b8"
+dependencies = [
+ "levenshtein",
+ "proc-macro2",
+ "quote",
+ "rand",
+ "rand_chacha",
+]
+
+[[package]]
+name = "stylers_macro"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7ca4407a87334ba23a42802d4934d2ff736c3c542ec83c409b147d8111d20a0"
+dependencies = [
+ "litrs",
+ "proc-macro2",
+ "quote",
+ "stylers_core",
+]
 
 [[package]]
 name = "subtle"
