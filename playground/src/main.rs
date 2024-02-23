@@ -3,6 +3,7 @@
 // sometimes rather than never
 #![allow(non_snake_case)]
 
+mod context;
 mod editor;
 mod hooks;
 mod rendering;
@@ -16,13 +17,14 @@ use toolbox_types::styles::types::{
     Border, BorderSide, BorderStyle, Color, Corners, Locked, Scale, ThemedColor,
 };
 
-use leptos::{component, mount_to_body, view, IntoView, SignalGet};
+use leptos::{component, mount_to_body, provide_context, view, IntoView, ReadSignal, SignalGet};
 use toolbox_types::events::Type;
 use toolbox_types::project;
 use toolbox_types::tree::nodes;
 use toolbox_types::tree::page::Page;
 use toolbox_types::tree::{CreatableNode, NodeBase, NodeFeature};
 
+use crate::context::render;
 use crate::editor::sidebar::Sidebar;
 use crate::rendering::page::{create_page, render};
 
@@ -95,6 +97,9 @@ fn App(page: Rc<RefCell<Page>>) -> impl IntoView {
         vec![NodeFeature::Properties, NodeFeature::Children],
     );
 
+    provide_context(render::EditorContext::new(page.clone(), vec![page.clone()]));
+    provide_context(render::RenderingContext::Editor);
+
     let class_name = stylers::style! {
         #main-container {
             display: flex;
@@ -138,8 +143,7 @@ fn App(page: Rc<RefCell<Page>>) -> impl IntoView {
             <div id="toolbar">toolbar</div>
             <div id="editor">
                 <div id="sidebar">
-
-                    <Sidebar page=page_sig />
+                    <Sidebar/>
                 </div>
                 <div id="page" on:load=move |_| trigger.track()>
                     {move || render(page_sig.get().clone())}

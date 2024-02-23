@@ -2865,6 +2865,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "phosphor-leptos"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4b88d582b20c27dc2bffc651cf1566abfb7a10df92392205a71862893abc766"
+dependencies = [
+ "leptos",
+]
+
+[[package]]
 name = "pin-project"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2922,6 +2931,7 @@ dependencies = [
  "enum-iterator",
  "leptos",
  "log",
+ "phosphor-leptos",
  "stylers",
  "toolbox_types",
 ]

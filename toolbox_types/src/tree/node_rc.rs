@@ -12,6 +12,17 @@ use crate::{
 
 use super::{node::PropertyError, NodeBase, NodeFeature, ValidNode};
 
+pub trait NodeRc {
+    fn get_id(&self) -> String;
+}
+
+impl NodeRc for Rc<RefCell<ValidNode>> {
+    fn get_id(&self) -> String {
+        let node_ref = self.borrow();
+        node_ref.id().clone()
+    }
+}
+
 impl NodeBase for Rc<RefCell<ValidNode>> {
     fn id(&self) -> &String {
         panic!("id requires long-life reference");

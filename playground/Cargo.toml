@@ -13,6 +13,7 @@ toolbox_types = { path = "../toolbox_types" }
 console_error_panic_hook = "0.1.7"
 stylers = { version = "1.0.0-alpha" }
 enum-iterator = "1.5.0"
+phosphor-leptos = "0.1"
 
 [build-dependencies]
 stylers = { version = "1.0.0-alpha" }
