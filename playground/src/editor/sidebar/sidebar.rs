@@ -1,12 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use leptos::{component, create_rw_signal, view, IntoView, ReadSignal, Show, SignalGet, SignalSet};
-use toolbox_types::tree::page::Page;
+use leptos::{component, create_rw_signal, view, IntoView, Show, SignalGet};
 
 use crate::editor::{
     context::{switcher::ContextSwitcher, SidebarContext},
-    sidebar::tree::Tree,
+    sidebar::{blocks::Blocks, tree::Tree},
 };
 
 #[component]
@@ -17,14 +13,10 @@ pub fn Sidebar() -> impl IntoView {
         <div>
             <ContextSwitcher context=context/>
             <Show when=move || context.get() == SidebarContext::Pages>
-                <div>
-                    <h1>Page</h1>
-                </div>
+                <Blocks/>
             </Show>
             <Show when=move || context.get() == SidebarContext::Blocks>
-                <div>
-                    <h1>Blocks</h1>
-                </div>
+                <Blocks/>
             </Show>
             <Show when=move || context.get() == SidebarContext::Tree>
                 <Tree/>

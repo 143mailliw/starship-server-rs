@@ -160,7 +160,7 @@ impl NodeBase for ShapeNode {
     }
 
     // TODO: default defining this function crashes rustc so don't do that for now, i guess
-    fn get_property(&self, name: &str) -> Result<Type, PropertyError> {
+    fn get_property(&self, _name: &str) -> Result<Type, PropertyError> {
         Err(PropertyError::NotFound)
     }
 
@@ -170,7 +170,12 @@ impl NodeBase for ShapeNode {
         self.commit_changes(NodeFeature::Metadata);
     }
 
-    fn set_property(&mut self, name: &str, value: Type, notify: bool) -> Result<(), PropertyError> {
+    fn set_property(
+        &mut self,
+        _name: &str,
+        _value: Type,
+        _notify: bool,
+    ) -> Result<(), PropertyError> {
         Err(PropertyError::NotFound)
     }
 
@@ -209,7 +214,7 @@ impl NodeBase for ShapeNode {
         ]
     }
 
-    fn send_event(&self, event: crate::events::Event) -> Result<(), EventError> {
+    fn send_event(&self, _event: crate::events::Event) -> Result<(), EventError> {
         todo!();
     }
 

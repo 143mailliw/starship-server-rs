@@ -8,8 +8,8 @@ use crate::events::{EventVariants, Type};
 use crate::observers::{Observable, Observer};
 use crate::styles::stylesheet::{StyleLayers, StyleOption, Stylesheet};
 use crate::styles::types::{
-    Border, CardinalDirection, Color, Corners, Direction, Font, FontWeight, Graphic, Locked,
-    Margin, Scale, StyleString, TextAlignment, ThemedColor, Transform,
+    Border, Color, Corners, Direction, Font, FontWeight, Graphic, Locked, Margin, Scale,
+    StyleString, TextAlignment, ThemedColor, Transform,
 };
 use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
@@ -196,7 +196,7 @@ impl NodeBase for TextNode {
         ]
     }
 
-    fn send_event(&self, event: crate::events::Event) -> Result<(), EventError> {
+    fn send_event(&self, _event: crate::events::Event) -> Result<(), EventError> {
         todo!();
     }
 
