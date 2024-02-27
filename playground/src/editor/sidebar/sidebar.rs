@@ -7,7 +7,7 @@ use crate::editor::{
 
 #[component]
 pub fn Sidebar() -> impl IntoView {
-    let context = create_rw_signal(SidebarContext::Tree);
+    let context = create_rw_signal(SidebarContext::Blocks);
 
     view! {
         <div>

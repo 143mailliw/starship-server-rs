@@ -74,6 +74,17 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         result
     }
 
+    fn add_child(
+        &mut self,
+        node: Rc<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<(), crate::errors::TreeError> {
+        let clone = self.clone();
+        let mut node_ref = clone.borrow_mut();
+
+        node_ref.add_child(node, index)
+    }
+
     fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
         let node_ref = self.borrow();
         node_ref.get_children()
