@@ -15,7 +15,6 @@ pub fn render_valid(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
             match *(value) {
                 ValidNode::ShapeNode(_) => {
                     drop(value);
-                    info!("rendering shape");
                     shape::render(node.clone()).into_view()
                 }
                 ValidNode::TextNode(_) => {

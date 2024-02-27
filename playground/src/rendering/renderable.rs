@@ -22,7 +22,6 @@ impl Renderable for Rc<RefCell<ValidNode>> {
         let styles = node_borrowed.get_styles();
 
         let css_res = css(&styles, format!("elem-{}", node_borrowed.id()).as_str());
-        info!("{}", css_res);
 
         css_res
     }

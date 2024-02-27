@@ -113,7 +113,6 @@ impl Observable<NodeFeature> for TextNode {
         item: NodeFeature,
         func: &Rc<RefCell<dyn FnMut()>>,
     ) -> &Observer<NodeFeature> {
-        info!("registering observer for feature {:#?}", item);
         let watcher = Observer {
             id: nanoid!(),
             func: Rc::<RefCell<dyn FnMut()>>::downgrade(func),
@@ -130,9 +129,7 @@ impl Observable<NodeFeature> for TextNode {
     }
 
     fn commit_changes(&self, item: NodeFeature) {
-        info!("informing observers for feature {:#?}", item);
         for observer in &self.observers {
-            info!("informing {}", observer.id);
             if observer.item == item {
                 observer.call();
             }

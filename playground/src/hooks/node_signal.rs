@@ -18,7 +18,6 @@ pub fn create_node(
     let (setup, set_setup) = create_signal(false);
 
     let closure = move || {
-        info!("mwomp");
         let x = trigger.try_notify();
         if !x {
             error!("no reactive runtime found while calling observer");
@@ -34,14 +33,10 @@ pub fn create_node(
 
         if !setup.get() {
             for feature in features.clone() {
-                info!("{:#?}", feature);
-
                 node.register(feature, &rc);
             }
             set_setup.set(true);
         }
-
-        info!("count changed");
 
         let id = node.id().clone();
 
