@@ -24,6 +24,7 @@ pub fn create_page(
     let (setup, set_setup) = create_signal(false);
 
     let closure = move || {
+        info!("page changed");
         let x = trigger.try_notify();
         if !x {
             error!("no reactive runtime found while calling observer");
@@ -39,12 +40,14 @@ pub fn create_page(
 
         if !setup.get() {
             for feature in features.clone() {
-                info!("{:#?}", feature);
+                info!("page: {:#?}", feature);
 
                 page.register(feature, &rc);
             }
             set_setup.set(true);
         }
+
+        drop(page);
     });
 
     (page_sig, trigger)
@@ -74,12 +77,19 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
     view! { class = class_name,
         <div id="page" on:load=move |_| trigger.track()>
             <h1 id="page-title">{move || {
+                trigger.track();
+                info!("rendering :)");
                 match &page_sig.get().borrow().title {
                     Title::Basic { content } => content.clone(),
                 }
             }}</h1>
             <div>
-                {move || {render_children(page_sig.get().borrow().get_children())}}
+                {move || {
+                    trigger.track();
+                    let children = page_sig.get().borrow().get_children();
+                    info!("rendering these children: {}", children.clone().unwrap().len());
+                    render_children(children)
+                }}
             </div>
         </div>
     }

@@ -185,6 +185,7 @@ impl NodeBase for Page {
 
         self.children
             .insert(index.unwrap_or(self.children.len()), node);
+
         Ok(())
     }
 

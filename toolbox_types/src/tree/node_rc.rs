@@ -82,7 +82,17 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         let clone = self.clone();
         let mut node_ref = clone.borrow_mut();
 
-        node_ref.add_child(node, index)
+        let result = node_ref.add_child(node, index);
+
+        drop(node_ref);
+
+        // commit changes
+        // this **must** be done with a immutable reference to the node
+        // otherwise the renderer will panic with a borrow error
+        let node = self.borrow();
+        node.commit_changes(NodeFeature::Children);
+
+        result
     }
 
     fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {

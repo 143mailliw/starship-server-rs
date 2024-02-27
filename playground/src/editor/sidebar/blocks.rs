@@ -2,9 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use leptos::{component, use_context, view, For, IntoView, SignalGet, View};
 use stylers::style;
-use toolbox_types::tree::{
-    nodes::{ShapeNode, TextNode},
-    CreatableNode, NodeBase, ValidNode,
+use toolbox_types::{
+    observers::Observable,
+    tree::{
+        nodes::{ShapeNode, TextNode},
+        CreatableNode, NodeBase, NodeFeature, ValidNode,
+    },
 };
 
 use crate::{context::render::EditorContext, editor::nodes::nodeinfo::NodeInfo};
@@ -75,10 +78,16 @@ fn Block(block_type: &'static BlockType) -> impl IntoView {
                 let node = block_type.create();
                 let cell = page_sig.get();
                 let mut borrow = cell.borrow_mut();
+                //let borrow = cell.borrow();
 
                 borrow.add_child(node, None).expect("page should support children");
 
                 drop(borrow);
+
+                let borrow_immut = cell.borrow();
+                borrow_immut.commit_changes(NodeFeature::Children);
+
+                drop(borrow_immut);
             }
         >
             <div class="icon">{move || block_type.icon_from_type("var(--light-dark-black)", "0.75rem")}</div>
