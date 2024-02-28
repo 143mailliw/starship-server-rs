@@ -25,7 +25,7 @@ impl NodeRc for Rc<RefCell<ValidNode>> {
 
 impl NodeBase for Rc<RefCell<ValidNode>> {
     fn id(&self) -> &String {
-        panic!("id requires long-life reference");
+        unimplemented!("id requires long-life reference");
     }
 
     fn features(&self) -> Vec<NodeFeature> {
@@ -34,7 +34,7 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
     }
 
     fn name(&self) -> &String {
-        panic!("name requires long-life reference");
+        unimplemented!("name requires long-life reference");
     }
 
     fn get_property(&self, name: &str) -> Result<Type, PropertyError> {
@@ -109,15 +109,35 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
     }
 
     fn get_default_styles(&self) -> &Stylesheet {
-        panic!("get_default_styles requires long-life reference");
+        unimplemented!("get_default_styles requires long-life reference");
     }
 
     fn styles(&mut self) -> &mut StyleLayers {
-        panic!("styles requires long-life reference");
+        unimplemented!("styles requires long-life reference");
     }
 
     fn get_styles(&self) -> StyleLayers {
         let node_ref = self.borrow();
         node_ref.get_styles()
+    }
+}
+
+impl Observable<NodeFeature> for Rc<RefCell<ValidNode>> {
+    fn register(
+        &mut self,
+        _item: NodeFeature,
+        _func: &Rc<RefCell<dyn FnMut()>>,
+    ) -> &crate::observers::Observer<NodeFeature> {
+        unimplemented!("register requires long-life reference");
+    }
+
+    fn unregister(&mut self, id: &str) {
+        let mut node_ref = self.borrow_mut();
+        node_ref.unregister(id);
+    }
+
+    fn commit_changes(&self, item: NodeFeature) {
+        let node_ref = self.borrow();
+        node_ref.commit_changes(item);
     }
 }

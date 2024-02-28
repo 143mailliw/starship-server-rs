@@ -1,9 +1,10 @@
-use std::cell::RefCell;
 use std::rc::Rc;
+use std::{borrow::Borrow, cell::RefCell};
 
 use leptos::{create_node_ref, html, use_context, view, IntoView, NodeRef, SignalGet};
 use log::info;
 use stylers::style;
+use toolbox_types::observers::Observable;
 use toolbox_types::{
     events::Type,
     tree::{NodeBase, NodeFeature, ValidNode},
@@ -37,16 +38,15 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
         view! {class = class_name,
             <span
                 id={move || node_sig.get().get_render_id()}
-                on:load=move |_| trigger.track()
                 contenteditable
                 class="text"
                 node_ref=input_element
-                on:input=move |e| {
+                on:input=move |_| {
                     if let Some(span) = input_element.get() {
                         let mut cell = node_sig.get();
                         let text = span.inner_text();
-                        info!("setting text: {}", text);
                         cell.set_property("text", Type::String(text), false).expect("text property not found");
+                        cell.commit_changes(NodeFeature::Properties);
                     }
                 }
             >
@@ -58,7 +58,9 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     }}
                 </style>
                 {move || {
-                    trigger.track();
+                    // TODO: find some way to track changes that happen outside of the span
+                    // right now allowing the span to change resets cursor position
+                    //trigger.track();
                     let node_raw = node_sig.get();
 
                     let text: String = node_raw
