@@ -1,5 +1,5 @@
-use std::cell::RefCell;
 use std::rc::Rc;
+use std::{cell::RefCell, rc::Weak};
 
 use log::error;
 
@@ -10,7 +10,8 @@ use crate::{
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
-use super::{node::PropertyError, NodeBase, NodeFeature, ValidNode};
+use super::page::Page;
+use super::{node::PropertyError, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 pub trait NodeRc {
     fn get_id(&self) -> String;
@@ -25,7 +26,7 @@ impl NodeRc for Rc<RefCell<ValidNode>> {
 
 impl NodeBase for Rc<RefCell<ValidNode>> {
     fn id(&self) -> &String {
-        unimplemented!("id requires long-life reference");
+        unimplemented!("id requires long-life reference, use NodeRc::get_id");
     }
 
     fn features(&self) -> Vec<NodeFeature> {
@@ -119,6 +120,28 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
     fn get_styles(&self) -> StyleLayers {
         let node_ref = self.borrow();
         node_ref.get_styles()
+    }
+}
+
+impl RegularNode for Rc<RefCell<ValidNode>> {
+    fn parent(&self) -> Option<Weak<RefCell<ValidNode>>> {
+        let node_ref = self.borrow();
+        node_ref.parent().clone()
+    }
+
+    fn page(&self) -> Option<Weak<RefCell<Page>>> {
+        let node_ref = self.borrow();
+        node_ref.page().clone()
+    }
+
+    fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
+        let mut node_ref = self.borrow_mut();
+        node_ref.set_parent(parent);
+    }
+
+    fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
+        let mut node_ref = self.borrow_mut();
+        node_ref.set_page(page);
     }
 }
 
