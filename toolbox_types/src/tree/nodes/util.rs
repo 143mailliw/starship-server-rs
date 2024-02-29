@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
+use log::info;
+
 use crate::errors::TreeError;
 use crate::tree::page::Page;
 use crate::tree::{NodeBase, RegularNode, ValidNode};
@@ -12,8 +14,9 @@ pub(super) fn add_child(
     weak_self: &Weak<RefCell<ValidNode>>,
     children: &mut Vec<Rc<RefCell<ValidNode>>>,
     parent_node: &Option<Weak<RefCell<ValidNode>>>,
-    page: &Option<Weak<RefCell<Page>>>,
+    page: Option<Weak<RefCell<Page>>>,
 ) -> Result<(), TreeError> {
+    // TODO: inform previous parent (if it exists) that it no longer owns this node
     let cloned = child_node.clone();
     let mut candidate_node = cloned
         .try_borrow_mut()

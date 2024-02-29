@@ -4,9 +4,10 @@ use leptos::{
     component, create_signal, expect_context, use_context, view, For, IntoView, SignalGet,
     SignalSet,
 };
+use log::info;
 use phosphor_leptos::{IconWeight, Minus, Plus};
 use stylers::style;
-use toolbox_types::tree::{node_rc::NodeRc, NodeBase, NodeFeature, ValidNode};
+use toolbox_types::tree::{node_rc::NodeRc, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 use crate::{
     context::render::EditorContext, editor::nodes::nodeinfo::NodeInfoRef, hooks::node_signal,
@@ -54,11 +55,22 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
 
     view! { class = class_name,
         <div class="container">
-            <div class="item" on:click=move |_| {
-                if has_children {
-                    set_show.set(!show_children.get());
+            <div
+                class="item"
+                on:click=move |_| {
+                    if has_children {
+                        set_show.set(!show_children.get());
+                    }
                 }
-            }>
+                draggable="true"
+                on:dragstart=move |e| {
+                    e.stop_propagation();
+                    //e.prevent_default();
+                    let node = node_sig.get();
+                    let path = node.get_path().expect("bad node, can't be dragged"); // FIXME: we should handle this
+                    e.data_transfer().unwrap().set_data("text/plain", &path);
+                }
+            >
                 <div class="icon">
                     {move || node_sig.get().get_icon("var(--light-dark-black)", "0.75rem").into_view()}
                 </div>

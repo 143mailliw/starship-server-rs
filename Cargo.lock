@@ -2934,6 +2934,7 @@ dependencies = [
  "phosphor-leptos",
  "stylers",
  "toolbox_types",
+ "web-sys",
 ]
 
 [[package]]

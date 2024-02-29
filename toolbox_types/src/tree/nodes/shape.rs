@@ -1,3 +1,4 @@
+use log::info;
 use nanoid::nanoid;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
@@ -196,7 +197,7 @@ impl NodeBase for ShapeNode {
             &self.this_node,
             &mut self.children,
             &self.parent,
-            &self.page,
+            self.page.clone(),
         )
     }
 
@@ -256,7 +257,14 @@ impl RegularNode for ShapeNode {
     }
 
     fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
-        self.page = page;
+        self.page = page.clone();
         self.commit_changes(NodeFeature::Metadata);
+
+        for child in self.children.clone() {
+            child
+                .try_borrow_mut()
+                .map(|mut v| v.set_page(page.clone()))
+                .expect("wtf")
+        }
     }
 }

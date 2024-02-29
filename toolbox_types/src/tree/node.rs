@@ -5,6 +5,7 @@ use std::{
 };
 
 use enum_dispatch::enum_dispatch;
+use log::info;
 
 use super::{
     nodes::{ShapeNode, TextNode},
@@ -45,17 +46,17 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
     fn get_path(&self) -> Result<String, PathError> {
         let mut path = vec![self.id().clone()];
 
-        let parent = self
+        let mut parent_option = self
             .parent()
             .map(|v| v.upgrade().ok_or(PathError::BrokenParent));
 
-        while let Some(parent) = parent.clone() {
-            let parent = parent?;
-            let node = parent.borrow();
+        while let Some(parent) = parent_option.clone() {
+            let parent_unwrapped = parent?;
+            let node = parent_unwrapped.borrow();
 
             path.push(node.id().clone());
 
-            let parent = node
+            parent_option = node
                 .parent()
                 .map(|v| v.upgrade().ok_or(PathError::BrokenParent));
         }
