@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TreeError {
     ChildrenUnsupported,
     Loop,
@@ -9,6 +9,7 @@ pub enum TreeError {
     DoesNotExist,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EventError {
     WrittenLuaError,
     CompiledLuaError,
@@ -16,4 +17,16 @@ pub enum EventError {
     UnknownActionCalled,
     UnknownServerActionCalled,
     EventTypeMismatch,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PathError {
+    // read errors
+    NodeNotFound(String),
+    PageNotFound(String),
+    InvalidInput,
+
+    // write errors
+    NoPage,
+    BrokenParent,
 }

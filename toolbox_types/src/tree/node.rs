@@ -11,7 +11,7 @@ use super::{
     page::Page,
 };
 use crate::{
-    errors::{EventError, TreeError},
+    errors::{EventError, PathError, TreeError},
     events::{Event, EventVariants, Type},
     observers::Observable,
     styles::stylesheet::{StyleLayers, Stylesheet},
@@ -41,6 +41,37 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
 
     /// Sets the Node's page.
     fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>);
+
+    fn get_path(&self) -> Result<String, PathError> {
+        let mut path = vec![self.id().clone()];
+
+        let parent = self
+            .parent()
+            .map(|v| v.upgrade().ok_or(PathError::BrokenParent));
+
+        while let Some(parent) = parent.clone() {
+            let parent = parent?;
+            let node = parent.borrow();
+
+            path.push(node.id().clone());
+
+            let parent = node
+                .parent()
+                .map(|v| v.upgrade().ok_or(PathError::BrokenParent));
+        }
+
+        path.reverse();
+
+        let page = self
+            .page()
+            .map(|v| v.upgrade())
+            .flatten()
+            .ok_or(PathError::NoPage)?;
+        let page_ref = page.borrow();
+        let id = page_ref.id();
+
+        Ok(format!("{}:{}", id, path.join("/")))
+    }
 }
 
 #[enum_dispatch]

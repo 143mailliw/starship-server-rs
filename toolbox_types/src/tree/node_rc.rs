@@ -143,6 +143,11 @@ impl RegularNode for Rc<RefCell<ValidNode>> {
         let mut node_ref = self.borrow_mut();
         node_ref.set_page(page);
     }
+
+    fn get_path(&self) -> Result<String, crate::errors::PathError> {
+        let node_ref = self.borrow();
+        node_ref.get_path()
+    }
 }
 
 impl Observable<NodeFeature> for Rc<RefCell<ValidNode>> {
