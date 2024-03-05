@@ -43,6 +43,27 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
     /// Sets the Node's page.
     fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>);
 
+    /// Detaches this node from it's parent or page (if it is a root node). This will remove the
+    /// node from the tree; dropping all references to the node will erase it from memory.
+    fn detach(&mut self) {
+        if let Some(parent) = self.parent() {
+            if let Some(parent) = parent.upgrade() {
+                let mut parent = parent.borrow_mut();
+                parent.remove_child(self.id().clone());
+            }
+        } else if let Some(page) = self.page() {
+            if let Some(page) = page.upgrade() {
+                let mut page = page.borrow_mut();
+                page.remove_child(self.id().clone());
+            }
+        }
+    }
+
+    /// Retrieves the path of the node in the tree. The path is a string that represents the node's
+    /// location in the tree. It is formatted as `page_id:parent_id/.../node_id`. The path
+    /// will always start with the page's ID.
+    ///
+    /// When the node is a root node, the path will be `page_id:node_id`.
     fn get_path(&self) -> Result<String, PathError> {
         let mut path = vec![self.id().clone()];
 
@@ -65,8 +86,7 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
 
         let page = self
             .page()
-            .map(|v| v.upgrade())
-            .flatten()
+            .and_then(|v| v.upgrade())
             .ok_or(PathError::NoPage)?;
         let page_ref = page.borrow();
         let id = page_ref.id();
@@ -126,6 +146,7 @@ pub trait NodeBase {
 
     /// Removes a child from the node based on it's ID.
     fn remove_child(&mut self, id: String) {}
+
     // Events
 
     /// Returns the Events supported by the Node.

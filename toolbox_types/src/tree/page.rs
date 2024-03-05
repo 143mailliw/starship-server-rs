@@ -99,6 +99,41 @@ impl Page {
     pub fn set_project(&mut self, project: Weak<RefCell<Project>>) {
         self.project = project;
     }
+
+    pub fn find_node_by_path(&self, path: String) -> Option<Rc<RefCell<ValidNode>>> {
+        let node_ids = path.split('/');
+        let mut last_node: Option<Rc<RefCell<ValidNode>>> = None;
+
+        for id in node_ids {
+            if let Some(node) = last_node {
+                match node.borrow().get_children() {
+                    Some(children) => {
+                        last_node = children
+                            .iter()
+                            .find(|node| {
+                                let node = node.try_borrow().unwrap();
+                                node.id() == id
+                            })
+                            .cloned();
+                    }
+                    None => return None,
+                }
+            } else {
+                last_node = self
+                    .children
+                    .iter()
+                    .find(|node| {
+                        let node = node.try_borrow().unwrap();
+                        node.id() == id
+                    })
+                    .cloned();
+            }
+
+            last_node.as_ref()?;
+        }
+
+        last_node
+    }
 }
 
 impl Observable<NodeFeature> for Page {
@@ -181,6 +216,7 @@ impl NodeBase for Page {
             .try_borrow_mut()
             .map_err(|_| TreeError::ChildBorrowed)?;
 
+        candidate_node.detach();
         candidate_node.set_page(Some(self.this_node.clone()));
 
         self.children

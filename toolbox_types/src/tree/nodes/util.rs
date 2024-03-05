@@ -43,6 +43,8 @@ pub(super) fn add_child(
         }
     }
 
+    candidate_node.detach();
+
     candidate_node.set_parent(weak_self.clone());
     candidate_node.set_page(page.clone());
 

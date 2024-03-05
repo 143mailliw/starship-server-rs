@@ -148,6 +148,11 @@ impl RegularNode for Rc<RefCell<ValidNode>> {
         let node_ref = self.borrow();
         node_ref.get_path()
     }
+
+    fn detach(&mut self) {
+        let mut node_ref = self.borrow_mut();
+        node_ref.detach();
+    }
 }
 
 impl Observable<NodeFeature> for Rc<RefCell<ValidNode>> {

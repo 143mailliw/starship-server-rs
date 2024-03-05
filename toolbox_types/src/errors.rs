@@ -5,6 +5,7 @@ pub enum TreeError {
     SelfParent,
     ChildBorrowed,
     ParentBorrowed,
+    PageBorrowed,
     TreeNodeBorrowed,
     DoesNotExist,
 }
