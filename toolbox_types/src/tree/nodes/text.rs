@@ -231,11 +231,9 @@ impl RegularNode for TextNode {
     // Setters
     fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
         self.parent = Some(parent);
-        self.commit_changes(NodeFeature::Metadata);
     }
 
     fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
         self.page = page;
-        self.commit_changes(NodeFeature::Metadata);
     }
 }

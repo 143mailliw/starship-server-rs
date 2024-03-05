@@ -253,12 +253,10 @@ impl RegularNode for ShapeNode {
     // Setters
     fn set_parent(&mut self, parent: Weak<RefCell<ValidNode>>) {
         self.parent = Some(parent);
-        self.commit_changes(NodeFeature::Metadata);
     }
 
     fn set_page(&mut self, page: Option<Weak<RefCell<Page>>>) {
         self.page = page.clone();
-        self.commit_changes(NodeFeature::Metadata);
 
         for child in self.children.clone() {
             child
