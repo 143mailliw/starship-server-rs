@@ -114,12 +114,25 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                             let target = page_ref.find_node_by_path(rest.to_string());
                             drop(page_ref);
                             if let Some(target_node) = target {
+                                let previous_parent = target_node.parent();
+
                                 target_node.detach();
                                 let mut node_ref = node.borrow_mut();
                                 node_ref.add_child(target_node.clone(), None);
                                 drop(node_ref);
+
                                 target_node.commit_changes(NodeFeature::Metadata);
                                 node.commit_changes(NodeFeature::Children);
+
+                                if let Some(previous_parent) = previous_parent {
+                                    let upgraded = previous_parent.upgrade();
+                                    if let Some(previous_parent) = upgraded {
+                                        previous_parent.commit_changes(NodeFeature::Children);
+                                    }
+                                } else {
+                                    let page_ref = page.borrow();
+                                    page_ref.commit_changes(NodeFeature::Children);
+                                }
                             }
                         };
                     }
