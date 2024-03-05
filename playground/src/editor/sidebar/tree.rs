@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use leptos::{
-    component, create_signal, expect_context, use_context, view, For, IntoView, SignalGet,
-    SignalSet,
+    component, create_memo, create_signal, expect_context, use_context, view, For, IntoView,
+    SignalGet, SignalSet,
 };
 use log::info;
 use phosphor_leptos::{IconWeight, Minus, Plus};
@@ -14,11 +14,15 @@ use toolbox_types::{
 
 use crate::{
     context::render::EditorContext, editor::nodes::nodeinfo::NodeInfoRef, hooks::node_signal,
+    rendering::page::create_page,
 };
 
 #[component]
 fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
-    let (node_sig, _) = node_signal::create_node(node.clone(), vec![NodeFeature::Metadata]);
+    let (node_sig, trigger) = node_signal::create_node(
+        node.clone(),
+        vec![NodeFeature::Metadata, NodeFeature::Children],
+    );
     let (show_children, set_show) = create_signal(true);
 
     let class_name = style! {
@@ -51,10 +55,14 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
         }
     };
 
-    let node = node_sig.get();
-    let node_ref = node.borrow();
-    let children = node_ref.get_children();
-    let has_children = children.is_some() && !children.as_ref().unwrap().is_empty();
+    let has_children = create_memo(move |_| {
+        trigger.track();
+        let node = node_sig.get();
+        let node_ref = node.borrow();
+        let children = node_ref.get_children();
+
+        children.is_some() && !children.as_ref().unwrap().is_empty()
+    });
 
     let context = use_context::<EditorContext>().expect("there should be a context");
     let project_sig = context.project;
@@ -64,7 +72,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
             <div
                 class="item"
                 on:click=move |_| {
-                    if has_children {
+                    if has_children.get() {
                         set_show.set(!show_children.get());
                     }
                 }
@@ -144,7 +152,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 <div class="text">{move || node_sig.get().get_friendly_name()}</div>
                 <div class="showicon">
                     {move || {
-                        if has_children {
+                        if has_children.get() {
                             if show_children.get() {
                                 view! {<Minus weight={IconWeight::Bold} size="0.75rem"/>}
                             } else {
@@ -156,24 +164,25 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     }}
                 </div>
             </div>
+
             {move || {
-                let m_children = children.clone();
                 if show_children.get() {
-                    if let Some(children) = m_children {
-                        view! { class = children_class_name,
-                            <div class="children">
-                                <For
-                                    each=move || children.clone()
-                                    key=move |node| node.get_id()
-                                    let:value
-                                >
-                                    <TreeItem node={value} />
-                                </For>
-                            </div>
-                        }.into_view()
-                    } else {
-                        ().into_view()
-                    }
+                    view! { class = children_class_name,
+                        <div class="children">
+                            <For
+                                each=move || {
+                                    trigger.track();
+                                    let node = node_sig.get();
+
+                                    node.get_children().unwrap_or(vec![])
+                                }
+                                key=move |node| node.get_id()
+                                let:value
+                            >
+                                <TreeItem node={value} />
+                            </For>
+                        </div>
+                    }.into_view()
                 } else {
                     ().into_view()
                 }
@@ -190,17 +199,19 @@ pub fn Tree() -> impl IntoView {
     };
 
     let context = use_context::<EditorContext>().expect("there should be a context");
-    let page_sig = context.current_page;
-
-    let page = page_sig.get();
-    let page_ref = page.borrow();
-    let children = page_ref.get_children().expect("page should have children");
-    drop(page_ref);
+    let page_sig_global = context.current_page;
+    let (page_sig, trigger) = create_page(page_sig_global.get(), vec![NodeFeature::Children]);
 
     view! { class = class_name,
         <div class="tree">
             <For
-                each=move || children.clone()
+                each=move || {
+                    trigger.track();
+
+                    let page = page_sig.get();
+                    let page_ref = page.borrow();
+                    page_ref.get_children().expect("page should have children")
+                }
                 key=move |node| node.get_id()
                 let:value
             >
