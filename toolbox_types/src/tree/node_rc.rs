@@ -149,8 +149,8 @@ impl RegularNode for Rc<RefCell<ValidNode>> {
         node_ref.get_path()
     }
 
-    fn detach(&mut self) {
-        let mut node_ref = self.borrow_mut();
+    fn detach(&self) {
+        let node_ref = self.borrow();
         node_ref.detach();
     }
 }

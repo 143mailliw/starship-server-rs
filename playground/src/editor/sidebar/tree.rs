@@ -7,7 +7,10 @@ use leptos::{
 use log::info;
 use phosphor_leptos::{IconWeight, Minus, Plus};
 use stylers::style;
-use toolbox_types::tree::{node_rc::NodeRc, NodeBase, NodeFeature, RegularNode, ValidNode};
+use toolbox_types::{
+    observers::Observable,
+    tree::{node_rc::NodeRc, NodeBase, NodeFeature, RegularNode, ValidNode},
+};
 
 use crate::{
     context::render::EditorContext, editor::nodes::nodeinfo::NodeInfoRef, hooks::node_signal,
@@ -53,6 +56,9 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let children = node_ref.get_children();
     let has_children = children.is_some() && !children.as_ref().unwrap().is_empty();
 
+    let context = use_context::<EditorContext>().expect("there should be a context");
+    let project_sig = context.project;
+
     view! { class = class_name,
         <div class="container">
             <div
@@ -69,6 +75,54 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     let node = node_sig.get();
                     let path = node.get_path().expect("bad node, can't be dragged"); // FIXME: we should handle this
                     e.data_transfer().unwrap().set_data("text/plain", &path);
+                }
+                on:dragover=move |e| {
+                    e.prevent_default();
+                }
+                on:drop=move |e| {
+                    e.stop_propagation();
+                    e.prevent_default();
+                    info!("dropped");
+                    let data = e.data_transfer().unwrap().get_data("text/plain");
+
+                    if let Ok(data) = data {
+                        info!("dropped: {}", data);
+                        let split = data.split(':').collect::<Vec<_>>();
+                        let page_id = split.first().unwrap();
+                        let rest = split.last().unwrap();
+
+                        if page_id == rest {
+                            return;
+                        }
+
+                        let node = node_sig.get();
+                        let project = project_sig.get();
+                        let project_ref = project.borrow();
+
+                        let pages = project_ref.pages().unwrap();
+                        let page = pages.iter().find(|p| {
+                            let borrowed = p.borrow();
+                            let this_id = borrowed.id();
+                            info!("{} = {}", this_id, page_id);
+                            this_id == page_id
+                        });
+
+                        if let Some(page) = page {
+                            info!("page found");
+                            let page_ref = page.borrow();
+
+                            let target = page_ref.find_node_by_path(rest.to_string());
+                            drop(page_ref);
+                            if let Some(target_node) = target {
+                                target_node.detach();
+                                let mut node_ref = node.borrow_mut();
+                                node_ref.add_child(target_node.clone(), None);
+                                drop(node_ref);
+                                target_node.commit_changes(NodeFeature::Metadata);
+                                node.commit_changes(NodeFeature::Children);
+                            }
+                        };
+                    }
                 }
             >
                 <div class="icon">

@@ -45,7 +45,7 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
 
     /// Detaches this node from it's parent or page (if it is a root node). This will remove the
     /// node from the tree; dropping all references to the node will erase it from memory.
-    fn detach(&mut self) {
+    fn detach(&self) {
         if let Some(parent) = self.parent() {
             if let Some(parent) = parent.upgrade() {
                 let mut parent = parent.borrow_mut();
@@ -86,7 +86,8 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
 
         let page = self
             .page()
-            .and_then(|v| v.upgrade())
+            .map(|v| v.upgrade())
+            .flatten()
             .ok_or(PathError::NoPage)?;
         let page_ref = page.borrow();
         let id = page_ref.id();

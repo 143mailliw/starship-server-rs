@@ -56,7 +56,7 @@ pub struct Page {
 impl Page {
     #[must_use]
     pub fn create(name: String, project: Weak<RefCell<Project>>) -> Rc<RefCell<Page>> {
-        Rc::new_cyclic(|this| {
+        let page = Rc::new_cyclic(|this| {
             let node = Page {
                 id: nanoid!(),
                 name: name.clone(),
@@ -79,7 +79,7 @@ impl Page {
                 observers: vec![],
                 this_node: this.clone(),
                 children: vec![],
-                project,
+                project: project.clone(),
                 title: Title::Basic {
                     content: name.clone(),
                 },
@@ -89,7 +89,11 @@ impl Page {
             };
 
             RefCell::new(node)
-        })
+        });
+
+        project.upgrade().unwrap().borrow_mut().add_page(&page);
+
+        page
     }
 
     pub fn project(&self) -> Option<Rc<RefCell<Project>>> {
@@ -216,7 +220,7 @@ impl NodeBase for Page {
             .try_borrow_mut()
             .map_err(|_| TreeError::ChildBorrowed)?;
 
-        candidate_node.detach();
+        //candidate_node.detach();
         candidate_node.set_page(Some(self.this_node.clone()));
 
         self.children

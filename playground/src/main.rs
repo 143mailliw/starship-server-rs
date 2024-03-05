@@ -87,17 +87,21 @@ fn main() {
 
     drop(page_ref);
 
-    mount_to_body(|| view! { <App page={page}/> })
+    mount_to_body(|| view! { <App page={page} project={project}/> })
 }
 
 #[component]
-fn App(page: Rc<RefCell<Page>>) -> impl IntoView {
+fn App(page: Rc<RefCell<Page>>, project: Rc<RefCell<project::Project>>) -> impl IntoView {
     let (page_sig, trigger) = create_page(
         page.clone(),
         vec![NodeFeature::Properties, NodeFeature::Children],
     );
 
-    provide_context(render::EditorContext::new(page.clone(), vec![page.clone()]));
+    provide_context(render::EditorContext::new(
+        page.clone(),
+        vec![page.clone()],
+        project,
+    ));
     provide_context(render::RenderingContext::Editor);
 
     let class_name = stylers::style! {

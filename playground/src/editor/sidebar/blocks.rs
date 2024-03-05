@@ -20,7 +20,7 @@ pub enum BlockType {
 
 type BlockCategory = (&'static str, &'static [BlockType]);
 
-const CATEGORIES: &'static [BlockCategory] = &[(&"Basic", &[BlockType::Shape, BlockType::Text])];
+const CATEGORIES: &[BlockCategory] = &[("Basic", &[BlockType::Shape, BlockType::Text])];
 
 impl BlockType {
     fn name_from_type(&self) -> String {
