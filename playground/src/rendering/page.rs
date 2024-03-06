@@ -11,7 +11,7 @@ use toolbox_types::observers::Observable;
 use toolbox_types::tree::page::{Page, Title};
 use toolbox_types::tree::{NodeBase, NodeFeature};
 
-use crate::rendering::nodes::render_children;
+use crate::rendering::nodes::Children;
 
 pub fn create_page(
     page: Rc<RefCell<Page>>,
@@ -92,9 +92,10 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
             }}</h1>
             <div>
                 {move || {
+                    info!("rendering page children");
                     trigger.track();
                     let children = page_sig.get().borrow().get_children();
-                    render_children(children)
+                    view! {<Children nodes={children}/>}
                 }}
             </div>
         </div>

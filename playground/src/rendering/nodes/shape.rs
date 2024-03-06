@@ -3,13 +3,14 @@ use std::rc::Rc;
 
 use crate::{
     hooks::node_signal::create_node,
-    rendering::{nodes::render_children, renderable::Renderable},
+    rendering::{nodes::Children, renderable::Renderable},
 };
-use leptos::{view, IntoView, SignalGet};
+use leptos::{component, view, IntoView, SignalGet};
 use log::info;
 use toolbox_types::tree::{NodeBase, NodeFeature, ValidNode};
 
-pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
+#[component]
+pub fn Shape(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let (node_sig, trigger) = create_node(
         node,
         vec![
@@ -25,14 +26,16 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
             // TODO: Move to head
             <style>
                 {move || {
+                    info!("generating shape styles");
                     trigger.track();
                     node_sig.get().get_css()
                 }}
             </style>
             {move || {
+                info!("rendering shape children");
                 trigger.track();
                 let children = node_sig.get().get_children();
-                render_children(children)
+                view! {<Children nodes={children}/>}
             }}
         </div>
     )

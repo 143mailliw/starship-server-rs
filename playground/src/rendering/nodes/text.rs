@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::{borrow::Borrow, cell::RefCell};
 
-use leptos::{create_node_ref, html, use_context, view, IntoView, NodeRef, SignalGet};
+use leptos::{create_node_ref, html, use_context, view, IntoView, NodeRef, SignalGet, component};
 use log::info;
 use stylers::style;
 use toolbox_types::observers::Observable;
@@ -15,7 +15,8 @@ use crate::{
     rendering::renderable::Renderable,
 };
 
-pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
+#[component]
+pub fn Text(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let (node_sig, trigger) = create_node(
         node.clone(),
         vec![NodeFeature::Properties, NodeFeature::Styles],

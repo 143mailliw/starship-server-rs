@@ -4,35 +4,37 @@ pub mod text;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use leptos::{view, IntoView};
+use leptos::{component, view, IntoView};
 use log::info;
 use toolbox_types::tree::ValidNode;
 
-pub fn render_valid(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
+#[component]
+pub fn Valid(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     view!({
         move || {
             let value = node.borrow();
             match *(value) {
                 ValidNode::ShapeNode(_) => {
                     drop(value);
-                    shape::render(node.clone()).into_view()
+                    view! {<shape::Shape node=node.clone() />}
                 }
                 ValidNode::TextNode(_) => {
                     drop(value);
-                    text::render(node.clone()).into_view()
+                    view! {<text::Text node=node.clone() />}
                 }
             }
         }
     })
 }
 
-pub fn render_children(nodes: Option<Vec<Rc<RefCell<ValidNode>>>>) -> impl IntoView {
+#[component]
+pub fn Children(nodes: Option<Vec<Rc<RefCell<ValidNode>>>>) -> impl IntoView {
     view!({
         move || match nodes.clone() {
             Some(nodes) => {
                 let mut views = vec![];
                 for node in nodes {
-                    views.push(render_valid(node));
+                    views.push(view! {<Valid node=node.clone() />});
                 }
                 views.into_view()
             }
