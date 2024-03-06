@@ -20,13 +20,17 @@ pub fn render(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     );
 
     view!(
-        <div id={move || node_sig.get().get_render_id()} on:load={move |_| trigger.track()}>
+        <div id={move || node_sig.get().get_render_id()}>
             // HACK: Style in body is invalid HTML but efficient
             // TODO: Move to head
             <style>
-                {move || node_sig.get().get_css()}
+                {move || {
+                    trigger.track();
+                    node_sig.get().get_css()
+                }}
             </style>
             {move || {
+                trigger.track();
                 let children = node_sig.get().get_children();
                 render_children(children)
             }}
