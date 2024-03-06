@@ -25,7 +25,7 @@ impl NodeInfo for TextNode {
 
     fn get_icon(color: &str, size: &str) -> impl IntoView {
         view! {
-            <TextT color=color weight=IconWeight::Bold size=size/>
+            <TextT color={color.to_string()} weight=IconWeight::Bold size={size.to_string()}/>
         }
     }
 }
@@ -37,7 +37,7 @@ impl NodeInfo for ShapeNode {
 
     fn get_icon(color: &str, size: &str) -> impl IntoView {
         view! {
-            <Square color=color weight=IconWeight::Bold size=size/>
+            <Square color={color.to_string()} weight=IconWeight::Bold size={size.to_string()}/>
         }
     }
 }
