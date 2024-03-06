@@ -31,7 +31,6 @@ pub fn Shape(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 }}
             </style>
             {move || {
-                info!("rendering shape children");
                 trigger.track();
                 let children = node_sig.get().get_children();
                 view! {<Children nodes={children}/>}

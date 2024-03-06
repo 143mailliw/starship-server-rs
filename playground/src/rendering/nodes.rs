@@ -4,9 +4,9 @@ pub mod text;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use leptos::{component, view, IntoView};
+use leptos::{component, view, For, IntoView};
 use log::info;
-use toolbox_types::tree::ValidNode;
+use toolbox_types::tree::{node_rc::NodeRc, ValidNode};
 
 #[component]
 pub fn Valid(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
@@ -32,11 +32,15 @@ pub fn Children(nodes: Option<Vec<Rc<RefCell<ValidNode>>>>) -> impl IntoView {
     view!({
         move || match nodes.clone() {
             Some(nodes) => {
-                let mut views = vec![];
-                for node in nodes {
-                    views.push(view! {<Valid node=node.clone() />});
+                view! {
+                    <For
+                        each=move || {nodes.clone()}
+                        key=|node| {node.get_id()}
+                        let:node
+                    >
+                        <Valid node=node.clone() />
+                    </For>
                 }
-                views.into_view()
             }
             None => view! {}.into_view(),
         }

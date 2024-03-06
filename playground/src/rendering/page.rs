@@ -92,7 +92,6 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
             }}</h1>
             <div>
                 {move || {
-                    info!("rendering page children");
                     trigger.track();
                     let children = page_sig.get().borrow().get_children();
                     view! {<Children nodes={children}/>}
