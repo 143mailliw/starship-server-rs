@@ -26,7 +26,6 @@ pub fn Shape(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
             // TODO: Move to head
             <style>
                 {move || {
-                    info!("generating shape styles");
                     trigger.track();
                     node_sig.get().get_css()
                 }}

@@ -216,6 +216,7 @@ pub enum NodeFeature {
     Events,
     Properties,
     Metadata,
+    Position,
 }
 
 #[derive(Debug)]

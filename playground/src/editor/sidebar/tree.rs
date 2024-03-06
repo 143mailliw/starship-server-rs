@@ -65,7 +65,6 @@ fn move_node(
                 node_ref.add_child(target_node.clone(), None);
                 drop(node_ref);
 
-                target_node.commit_changes(NodeFeature::Metadata);
                 node.commit_changes(NodeFeature::Children);
 
                 if let Some(previous_parent) = previous_parent {
@@ -77,6 +76,8 @@ fn move_node(
                     let page_ref = page.borrow();
                     page_ref.commit_changes(NodeFeature::Children);
                 }
+
+                target_node.commit_changes(NodeFeature::Position);
             }
         };
     }
