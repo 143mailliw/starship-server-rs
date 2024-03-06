@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use log::error;
+use log::warn;
 
 pub struct Observer<T> {
     pub id: String,
@@ -15,10 +15,10 @@ impl<T> Observer<T> {
             let mut func = cell.borrow_mut();
             func();
         } else {
-            error!(
-                "failed to call observer for {}, perhaps it has gone out of scope?",
+            warn!(
+                "Observer {} has been dropped, but it is still registered. This will leak memory for the lifetime of the Observable.",
                 self.id
-            )
+            );
         }
     }
 }

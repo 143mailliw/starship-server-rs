@@ -2,8 +2,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use leptos::{
-    create_effect, create_signal, create_trigger, view, IntoView, ReadSignal, SignalGet, SignalSet,
-    Trigger,
+    create_effect, create_signal, create_trigger, on_cleanup, view, IntoView, ReadSignal,
+    SignalGet, SignalSet, Trigger,
 };
 use log::{error, info};
 use stylers::style;
@@ -21,7 +21,7 @@ pub fn create_page(
     let (page_sig, _set_page) = create_signal(page);
     // we need to keep our observer closure in scope for the lifetime of this signal
     let (_rc, set_rc) = create_signal::<Option<Rc<RefCell<dyn FnMut()>>>>(None);
-    let (setup, set_setup) = create_signal(false);
+    let (ids, set_ids) = create_signal::<Vec<String>>(vec![]);
 
     let closure = move || {
         let x = trigger.try_notify();
@@ -30,21 +30,32 @@ pub fn create_page(
         }
     };
 
-    let rc: Rc<RefCell<dyn FnMut()>> = Rc::new(RefCell::new(closure));
-    set_rc.set(Some(rc.clone()));
-
     create_effect(move |_| {
         let cell = page_sig.get();
         let mut page = cell.borrow_mut();
 
-        if !setup.get() {
-            for feature in features.clone() {
-                page.register(feature, &rc);
-            }
-            set_setup.set(true);
-        }
+        let rc: Rc<RefCell<dyn FnMut()>> = Rc::new(RefCell::new(closure));
+        set_rc.set(Some(rc.clone()));
+        set_ids.set(
+            features
+                .clone()
+                .iter()
+                .map(|feature| page.register(*feature, &rc).id.clone())
+                .collect(),
+        );
 
+        let id = page.id().clone();
         drop(page);
+        id
+    });
+
+    on_cleanup(move || {
+        let cell = page_sig.get();
+        let mut page = cell.borrow_mut();
+
+        for id in ids.get() {
+            page.unregister(&id);
+        }
     });
 
     (page_sig, trigger)
