@@ -2,20 +2,81 @@ use std::{cell::RefCell, rc::Rc};
 
 use leptos::{
     component, create_memo, create_signal, expect_context, use_context, view, For, IntoView,
-    SignalGet, SignalSet,
+    ReadSignal, RwSignal, SignalGet, SignalSet,
 };
 use log::info;
 use phosphor_leptos::{IconWeight, Minus, Plus};
 use stylers::style;
 use toolbox_types::{
     observers::Observable,
+    project::Project,
     tree::{node_rc::NodeRc, NodeBase, NodeFeature, RegularNode, ValidNode},
 };
+use web_sys::DragEvent;
 
 use crate::{
     context::render::EditorContext, editor::nodes::nodeinfo::NodeInfoRef, hooks::node_signal,
     rendering::page::create_page,
 };
+
+fn move_node(
+    e: DragEvent,
+    node_sig: ReadSignal<Rc<RefCell<ValidNode>>>,
+    project_sig: RwSignal<Rc<RefCell<Project>>>,
+) {
+    e.stop_propagation();
+    e.prevent_default();
+    let data = e.data_transfer().unwrap().get_data("text/plain");
+
+    if let Ok(data) = data {
+        let split = data.split(':').collect::<Vec<_>>();
+        let page_id = split.first().unwrap();
+        let rest = split.last().unwrap();
+
+        if page_id == rest {
+            return;
+        }
+
+        let node = node_sig.get();
+        let project = project_sig.get();
+        let project_ref = project.borrow();
+
+        let pages = project_ref.pages().unwrap();
+        let page = pages.iter().find(|p| {
+            let borrowed = p.borrow();
+            let this_id = borrowed.id();
+            this_id == page_id
+        });
+
+        if let Some(page) = page {
+            let page_ref = page.borrow();
+
+            let target = page_ref.find_node_by_path(rest.to_string());
+            drop(page_ref);
+            if let Some(target_node) = target {
+                let previous_parent = target_node.parent();
+
+                target_node.detach();
+                let mut node_ref = node.borrow_mut();
+                node_ref.add_child(target_node.clone(), None);
+                drop(node_ref);
+
+                target_node.commit_changes(NodeFeature::Metadata);
+                node.commit_changes(NodeFeature::Children);
+
+                if let Some(previous_parent) = previous_parent {
+                    let upgraded = previous_parent.upgrade();
+                    if let Some(previous_parent) = upgraded {
+                        previous_parent.commit_changes(NodeFeature::Children);
+                    }
+                } else {
+                    let page_ref = page.borrow();
+                    page_ref.commit_changes(NodeFeature::Children);
+                }
+            }
+        };
+    }
+}
 
 #[component]
 fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
@@ -87,64 +148,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 on:dragover=move |e| {
                     e.prevent_default();
                 }
-                on:drop=move |e| {
-                    e.stop_propagation();
-                    e.prevent_default();
-                    info!("dropped");
-                    let data = e.data_transfer().unwrap().get_data("text/plain");
-
-                    if let Ok(data) = data {
-                        info!("dropped: {}", data);
-                        let split = data.split(':').collect::<Vec<_>>();
-                        let page_id = split.first().unwrap();
-                        let rest = split.last().unwrap();
-
-                        if page_id == rest {
-                            return;
-                        }
-
-                        let node = node_sig.get();
-                        let project = project_sig.get();
-                        let project_ref = project.borrow();
-
-                        let pages = project_ref.pages().unwrap();
-                        let page = pages.iter().find(|p| {
-                            let borrowed = p.borrow();
-                            let this_id = borrowed.id();
-                            info!("{} = {}", this_id, page_id);
-                            this_id == page_id
-                        });
-
-                        if let Some(page) = page {
-                            info!("page found");
-                            let page_ref = page.borrow();
-
-                            let target = page_ref.find_node_by_path(rest.to_string());
-                            drop(page_ref);
-                            if let Some(target_node) = target {
-                                let previous_parent = target_node.parent();
-
-                                target_node.detach();
-                                let mut node_ref = node.borrow_mut();
-                                node_ref.add_child(target_node.clone(), None);
-                                drop(node_ref);
-
-                                target_node.commit_changes(NodeFeature::Metadata);
-                                node.commit_changes(NodeFeature::Children);
-
-                                if let Some(previous_parent) = previous_parent {
-                                    let upgraded = previous_parent.upgrade();
-                                    if let Some(previous_parent) = upgraded {
-                                        previous_parent.commit_changes(NodeFeature::Children);
-                                    }
-                                } else {
-                                    let page_ref = page.borrow();
-                                    page_ref.commit_changes(NodeFeature::Children);
-                                }
-                            }
-                        };
-                    }
-                }
+                on:drop=move |e| move_node(e, node_sig, project_sig)
             >
                 <div class="icon">
                     {move || node_sig.get().get_icon("var(--light-dark-black)", "0.75rem").into_view()}
@@ -164,7 +168,6 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     }}
                 </div>
             </div>
-
             {move || {
                 if show_children.get() {
                     view! { class = children_class_name,
