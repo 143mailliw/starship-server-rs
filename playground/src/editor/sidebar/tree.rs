@@ -41,6 +41,10 @@ fn move_node(
         let project = project_sig.get();
         let project_ref = project.borrow();
 
+        if !node.features().contains(&NodeFeature::Children) {
+            return;
+        }
+
         let pages = project_ref.pages().unwrap();
         let page = pages.iter().find(|p| {
             let borrowed = p.borrow();
