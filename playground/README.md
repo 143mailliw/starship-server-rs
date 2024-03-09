@@ -15,7 +15,7 @@ Then run `trunk serve --open`.
 | Feature              | Status        | Notes                                                                           |
 |----------------------|---------------|---------------------------------------------------------------------------------|
 | Rendering            | 10% complete  | Basic read-only rendering is implemented. Poorly tested.                        |
-| Editing              | 2% complete   | No actual editing features are implemented at this time.                        |
+| Editing              | 4% complete   | Basic property editing (for text) and tree manipulation is implemented.         |
 | Events               | 0% complete   | No support in `toolbox_types`.                                                  |
 | Lua Execution        | 0% complete   | No support in `toolbox_types`.                                                  |
 | Actions              | 0% complete   | No support in `toolbox_types`.                                                  |

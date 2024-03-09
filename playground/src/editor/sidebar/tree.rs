@@ -15,7 +15,9 @@ use toolbox_types::{
 use web_sys::DragEvent;
 
 use crate::{
-    context::render::EditorContext, editor::nodes::nodeinfo::NodeInfoRef, hooks::node_signal,
+    context::render::{DragState, EditorContext},
+    editor::nodes::nodeinfo::NodeInfoRef,
+    hooks::node_signal,
     rendering::page::create_page,
 };
 
@@ -68,6 +70,8 @@ fn move_node(
             if let Some(target_node) = target {
                 let previous_parent = target_node.parent();
 
+                // TODO: if the node is in the same parent right now this will change the indicies
+                // of the children, so we need to account for that here but currently we don't
                 target_node.detach();
                 match node {
                     TreeType::Node(node) => {
@@ -104,49 +108,55 @@ fn move_node(
 }
 
 #[component]
-fn DropZone(
-    node: TreeType,
-    project_sig: RwSignal<Rc<RefCell<Project>>>,
-    index: Option<usize>,
-) -> impl IntoView {
+fn DropZone(node: TreeType, index: Option<usize>) -> impl IntoView {
+    let (showing, set_showing) = create_signal(false);
+
     let class_name = style! {
         .dropzone {
+            display: none;
             position: relative;
             width: 100%;
             height: 0.5rem;
-            background-color: var(--light-dark-black);
-            top: -0.25rem;
-            left: 0;
-            display: flex;
             z-index: 1;
+            margin-top: -0.25rem;
             margin-bottom: -0.25rem;
         }
         .marker {
+            display: none;
             height: 2px;
             width: 100%;
             background-color: var(--light-light-blue);
             margin: auto;
         }
+        .visible {
+            display: flex;
+        }
     };
 
     let context = use_context::<EditorContext>().expect("there should be a context");
     let project_sig = context.project;
+    let drag_sig = context.dragging;
 
     view! { class = class_name,
-        <div class="dropzone"
+        <div class="dropzone" class:visible=move || {drag_sig.get() == DragState::TreeNode}
             on:dragover=move |e| {
                 e.prevent_default();
                 e.stop_propagation();
-                info!("hello!")
+                set_showing.set(true);
+            }
+            on:dragleave=move |e| {
+                e.prevent_default();
+                e.stop_propagation();
+                set_showing.set(false);
             }
             on:drop=move |e| {
                 e.prevent_default();
                 e.stop_propagation();
-                info!("goodbye!");
+                drag_sig.set(DragState::None);
                 move_node(e, node.clone(), project_sig, index);
             }
         >
-            <div class="marker" />
+            <div class="marker" class:visible=move || showing.get()/>
         </div>
     }
 }
@@ -202,6 +212,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
 
     let context = use_context::<EditorContext>().expect("there should be a context");
     let project_sig = context.project;
+    let drag_sig = context.dragging;
 
     view! { class = class_name,
         <div class="container">
@@ -219,11 +230,19 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     let node = node_sig.get();
                     let path = node.get_path().expect("bad node, can't be dragged"); // FIXME: we should handle this
                     e.data_transfer().unwrap().set_data("text/plain", &path);
+
+                    drag_sig.set(DragState::TreeNode);
+                }
+                on:dragend=move |_| {
+                    drag_sig.set(DragState::None);
                 }
                 on:dragover=move |e| {
                     e.prevent_default();
                 }
-                on:drop=move |e| move_node(e, TreeType::Node(node_sig.get().clone()), project_sig, None)
+                on:drop=move |e| {
+                    drag_sig.set(DragState::None);
+                    move_node(e, TreeType::Node(node_sig.get().clone()), project_sig, None)
+                }
             >
                 <div class="icon">
                     {move || node_sig.get().get_icon("var(--light-dark-black)", "0.75rem").into_view()}
@@ -244,9 +263,6 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                 </div>
             </div>
             {move || {
-                let children = node_sig.get().borrow().get_children().unwrap_or(vec![]);
-                let c_clone = children.clone(); // FIXME: i don't like this
-                let children_len = c_clone.len();
                 trigger.track(); // i'm gonna be honest I have no clue why this is necessary
 
                 if show_children.get() {
@@ -255,19 +271,17 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                             <For
                                 each=move || {
                                     trigger.track();
-                                    0..children_len
+                                    let children = node_sig.get().borrow().get_children().unwrap_or(vec![]);
+                                    children.iter().cloned().enumerate().collect::<Vec<_>>()
                                 }
-                                key=move |index| {
-                                    c_clone[*index].get_id()
-                                }
-                                let:index
+                                key=move |node| node.1.get_id()
+                                let:value
                             >
                                 <DropZone
                                     node={TreeType::Node(node_sig.get().clone())}
-                                    project_sig={project_sig}
-                                    index={Some(index)}
+                                    index={Some(value.0)}
                                 />
-                                <TreeItem node={children[index].clone()} />
+                                <TreeItem node={value.1} />
                             </For>
                         </div>
                     }.into_view()
@@ -298,13 +312,22 @@ pub fn Tree() -> impl IntoView {
 
                     let page = page_sig.get();
                     let page_ref = page.borrow();
-                    page_ref.get_children().expect("page should have children")
+                    let children = page_ref.get_children().expect("page should have children");
+                    children.iter().cloned().enumerate().collect::<Vec<_>>()
                 }
-                key=move |node| node.get_id()
+                key=move |node| node.1.get_id()
                 let:value
             >
-                <TreeItem node={value} />
+                <DropZone
+                    node={TreeType::Page(page_sig.get().clone())}
+                    index={Some(value.0)}
+                />
+                <TreeItem node={value.1.clone()} />
             </For>
+            <DropZone
+                node={TreeType::Page(page_sig.get().clone())}
+                index={None}
+            />
         </div>
     }
 }
