@@ -68,40 +68,15 @@ fn move_node(
             let target = page_ref.find_node_by_path(rest.to_string());
             drop(page_ref);
             if let Some(target_node) = target {
-                let previous_parent = target_node.parent();
-
-                // TODO: if the node is in the same parent right now this will change the indicies
-                // of the children, so we need to account for that here but currently we don't
-                target_node.detach();
-                match node {
-                    TreeType::Node(node) => {
-                        let mut node_ref = node.borrow_mut();
-                        node_ref.add_child(target_node.clone(), index);
-                        drop(node_ref);
-
-                        node.commit_changes(NodeFeature::Children);
-                    }
+                // ignore the error for now
+                // TODO: if the error is not something we expect (like ChildrenUnsupported), we should handle it
+                let _ = match node {
+                    TreeType::Node(mut node) => node.move_into(target_node, index),
                     TreeType::Page(page) => {
-                        let mut page_ref = page.borrow_mut();
-                        page_ref.add_child(target_node.clone(), index);
-                        drop(page_ref);
-
-                        let unmut_ref = page.borrow();
-                        unmut_ref.commit_changes(NodeFeature::Children);
+                        let mut page = page.borrow_mut();
+                        page.move_into(target_node, index)
                     }
-                }
-
-                if let Some(previous_parent) = previous_parent {
-                    let upgraded = previous_parent.upgrade();
-                    if let Some(previous_parent) = upgraded {
-                        previous_parent.commit_changes(NodeFeature::Children);
-                    }
-                } else {
-                    let page_ref = page.borrow();
-                    page_ref.commit_changes(NodeFeature::Children);
-                }
-
-                target_node.commit_changes(NodeFeature::Position);
+                };
             }
         };
     }

@@ -10,6 +10,7 @@ use crate::{
     styles::stylesheet::{StyleLayers, Stylesheet},
 };
 
+use super::nodes::util;
 use super::page::Page;
 use super::{node::PropertyError, NodeBase, NodeFeature, RegularNode, ValidNode};
 
@@ -99,6 +100,33 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
     fn get_children(&self) -> Option<Vec<Rc<RefCell<ValidNode>>>> {
         let node_ref = self.borrow();
         node_ref.get_children()
+    }
+
+    fn move_into(
+        &mut self,
+        target: Rc<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<Option<Weak<RefCell<ValidNode>>>, crate::errors::TreeError> {
+        let page = self.borrow().page();
+        let result = util::move_into_from_reference(self.clone(), target, index)?;
+
+        let node = self.borrow();
+
+        node.commit_changes(NodeFeature::Position);
+
+        drop(node);
+
+        if let Some(previous_parent) = result.clone() {
+            let upgraded = previous_parent.upgrade();
+            if let Some(previous_parent) = upgraded {
+                previous_parent.commit_changes(NodeFeature::Children);
+            }
+        } else if let Some(page) = page.map(|v| v.upgrade()).flatten() {
+            let page_ref = page.borrow();
+            page_ref.commit_changes(NodeFeature::Children);
+        }
+
+        Ok(result)
     }
 
     fn get_events(&self) -> Vec<EventVariants> {

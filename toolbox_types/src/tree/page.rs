@@ -11,6 +11,7 @@ use crate::styles::types::{FlexDirection, Layout, Locked, Margin, Scale};
 use crate::tree::{ContainerNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
 use super::node::PropertyError;
+use super::nodes::util;
 
 static PAGE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Unsupported,
@@ -231,6 +232,14 @@ impl NodeBase for Page {
 
     fn remove_child(&mut self, id: String) {
         self.children.retain(|v| v.borrow().id() != &id);
+    }
+
+    fn move_into(
+        &mut self,
+        target: Rc<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
+        util::move_into(self, target, index)
     }
 
     // Events

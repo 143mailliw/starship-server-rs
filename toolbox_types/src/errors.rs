@@ -8,6 +8,7 @@ pub enum TreeError {
     PageBorrowed,
     TreeNodeBorrowed,
     DoesNotExist,
+    DestinationDoesNotExist,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

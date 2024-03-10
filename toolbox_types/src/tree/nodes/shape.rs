@@ -15,7 +15,7 @@ use crate::tree::node::PropertyError;
 use crate::tree::page::Page;
 use crate::tree::{CreatableNode, NodeBase, NodeFeature, RegularNode, ValidNode};
 
-use super::util::add_child;
+use super::util::{self, add_child};
 
 static SHAPENODE_AUTO_STYLES: Stylesheet = Stylesheet {
     margin: StyleOption::Some(Margin {
@@ -203,6 +203,14 @@ impl NodeBase for ShapeNode {
 
     fn remove_child(&mut self, id: String) {
         self.children.retain(|v| v.borrow().id() != &id);
+    }
+
+    fn move_into(
+        &mut self,
+        target: Rc<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
+        util::move_into(self, target, index)
     }
 
     // Events

@@ -4,8 +4,9 @@ use std::rc::{Rc, Weak};
 use log::info;
 
 use crate::errors::TreeError;
+use crate::tree::node_rc::NodeRc;
 use crate::tree::page::Page;
-use crate::tree::{NodeBase, RegularNode, ValidNode};
+use crate::tree::{NodeBase, NodeFeature, RegularNode, ValidNode};
 
 pub(super) fn add_child(
     child_node: Rc<RefCell<ValidNode>>,
@@ -48,4 +49,86 @@ pub(super) fn add_child(
 
     children.insert(index.unwrap_or(children.len()), child_node);
     Ok(())
+}
+
+pub(crate) fn check_index(
+    index: usize,
+    destination: &mut impl NodeBase,
+    target: Rc<RefCell<ValidNode>>,
+) -> Result<usize, TreeError> {
+    if !destination.features().contains(&NodeFeature::Children) {
+        return Err(TreeError::ChildrenUnsupported);
+    }
+
+    if let Some(parent) = target.parent().map(|v| v.upgrade()).flatten() {
+        if parent.get_id() == *destination.id() {
+            let curent_index = parent
+                .get_children()
+                .expect("parent has no children")
+                .iter()
+                .position(|v| v.id() == target.id())
+                .expect("node not found in parent");
+
+            if index >= curent_index {
+                Ok(index - 1)
+            } else {
+                Ok(index)
+            }
+        } else {
+            Ok(index)
+        }
+    } else {
+        Ok(index)
+    }
+}
+
+pub(crate) fn move_into(
+    destination: &mut impl NodeBase,
+    target: Rc<RefCell<ValidNode>>,
+    index: Option<usize>,
+) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
+    let original_parent = target.parent();
+
+    if !destination.features().contains(&NodeFeature::Children) {
+        return Err(TreeError::ChildrenUnsupported);
+    }
+
+    let checked_index = index
+        .map(|v| check_index(v, destination, target.clone()).ok())
+        .flatten();
+
+    target.detach();
+    destination.add_child(target.clone(), checked_index)?;
+
+    Ok(original_parent)
+}
+
+pub(crate) fn move_into_from_reference(
+    mut destination: Rc<RefCell<ValidNode>>,
+    target: Rc<RefCell<ValidNode>>,
+    index: Option<usize>,
+) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
+    let original_parent = target.parent();
+
+    let mut destination_borrowed = destination
+        .try_borrow_mut()
+        .map_err(|_| TreeError::ParentBorrowed)?;
+
+    if !destination_borrowed
+        .features()
+        .contains(&NodeFeature::Children)
+    {
+        return Err(TreeError::ChildrenUnsupported);
+    }
+
+    let checked_index = index
+        .map(|v| check_index(v, &mut *destination_borrowed, target.clone()).ok())
+        .flatten();
+
+    drop(destination_borrowed);
+
+    target.detach();
+    destination.add_child(target.clone(), checked_index)?;
+
+    Ok(original_parent)
 }

@@ -148,6 +148,15 @@ pub trait NodeBase {
     /// Removes a child from the node based on it's ID.
     fn remove_child(&mut self, id: String) {}
 
+    /// Moves a specified ValidNode into this node. Returns the node's previous parent (if it has one).
+    fn move_into(
+        &mut self,
+        target: Rc<RefCell<ValidNode>>,
+        index: Option<usize>,
+    ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
+        Err(TreeError::ChildrenUnsupported)
+    }
+
     // Events
 
     /// Returns the Events supported by the Node.
