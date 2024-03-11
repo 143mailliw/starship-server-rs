@@ -45,8 +45,7 @@ pub fn create_node(
     });
 
     on_cleanup(move || {
-        let cell = node_sig.get();
-        let mut node = cell.borrow_mut();
+        let mut node = node_sig.get();
 
         for id in ids.get() {
             node.unregister(&id);

@@ -33,7 +33,7 @@ fn main() {
     console_log::init_with_level(Level::Info).expect("error initializing log");
 
     let project = project::Project::create("test".to_string(), project::Type::Component);
-    let page = Page::create("Test Page".to_string(), Rc::downgrade(&project));
+    let mut page = Page::create("Test Page".to_string(), Rc::downgrade(&project));
 
     let shape = nodes::ShapeNode::create();
 
@@ -82,10 +82,7 @@ fn main() {
 
     drop(shape_ref);
 
-    let mut page_ref = page.borrow_mut();
-    page_ref.add_child(shape.clone(), None);
-
-    drop(page_ref);
+    page.add_child(shape.clone(), None);
 
     mount_to_body(|| view! { <App page={page} project={project}/> })
 }

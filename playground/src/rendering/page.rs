@@ -50,8 +50,7 @@ pub fn create_page(
     });
 
     on_cleanup(move || {
-        let cell = page_sig.get();
-        let mut page = cell.borrow_mut();
+        let mut page = page_sig.get();
 
         for id in ids.get() {
             page.unregister(&id);
@@ -93,7 +92,7 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
             <div>
                 {move || {
                     trigger.track();
-                    let children = page_sig.get().borrow().get_children();
+                    let children = page_sig.get().get_children();
                     view! {<Children nodes={children}/>}
                 }}
             </div>

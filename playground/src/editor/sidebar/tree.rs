@@ -61,10 +61,7 @@ fn move_node(
         let page = pages.iter().find(|p| &p.get_id() == page_id);
 
         if let Some(page) = page {
-            let page_ref = page.borrow();
-
-            let target = page_ref.find_node_by_path(rest.to_string());
-            drop(page_ref);
+            let target = page.borrow().find_node_by_path(rest.to_string());
             if let Some(target_node) = target {
                 // ignore the error for now
                 // TODO: if the error is not something we expect (like ChildrenUnsupported), we should handle it
@@ -174,8 +171,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let has_children = create_memo(move |_| {
         trigger.track();
         let node = node_sig.get();
-        let node_ref = node.borrow();
-        let children = node_ref.get_children();
+        let children = node.get_children();
 
         children.is_some() && !children.as_ref().unwrap().is_empty()
     });
@@ -241,7 +237,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                             <For
                                 each=move || {
                                     trigger.track();
-                                    let children = node_sig.get().borrow().get_children().unwrap_or(vec![]);
+                                    let children = node_sig.get().get_children().unwrap_or(vec![]);
                                     children.iter().cloned().enumerate().collect::<Vec<_>>()
                                 }
                                 key=move |node| node.1.get_id()
@@ -281,8 +277,7 @@ pub fn Tree() -> impl IntoView {
                     trigger.track();
 
                     let page = page_sig.get();
-                    let page_ref = page.borrow();
-                    let children = page_ref.get_children().expect("page should have children");
+                    let children = page.get_children().expect("page should have children");
                     children.iter().cloned().enumerate().collect::<Vec<_>>()
                 }
                 key=move |node| node.1.get_id()

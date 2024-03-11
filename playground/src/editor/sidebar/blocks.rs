@@ -76,18 +76,10 @@ fn Block(block_type: &'static BlockType) -> impl IntoView {
             class="item"
             on:click=move |_| {
                 let node = block_type.create();
-                let cell = page_sig.get();
-                let mut borrow = cell.borrow_mut();
-                //let borrow = cell.borrow();
+                let mut page = page_sig.get();
 
-                borrow.add_child(node, None).expect("page should support children");
-
-                drop(borrow);
-
-                let borrow_immut = cell.borrow();
-                borrow_immut.commit_changes(NodeFeature::Children);
-
-                drop(borrow_immut);
+                page.add_child(node, None).expect("page should support children");
+                page.commit_changes(NodeFeature::Children);
             }
         >
             <div class="icon">{move || block_type.icon_from_type("var(--light-dark-black)", "0.75rem")}</div>
