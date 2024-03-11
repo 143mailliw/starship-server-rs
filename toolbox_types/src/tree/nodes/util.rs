@@ -86,6 +86,10 @@ pub(crate) fn move_into(
 ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
     let original_parent = target.parent();
 
+    if destination.id() == &target.get_id() {
+        return Err(TreeError::SelfParent);
+    }
+
     if !destination.features().contains(&NodeFeature::Children) {
         return Err(TreeError::ChildrenUnsupported);
     }
@@ -106,6 +110,10 @@ pub fn move_into_from_reference(
     let original_page = target.page();
 
     let destination_borrowed = destination.borrow();
+
+    if destination_borrowed.id() == &target.get_id() {
+        return Err(TreeError::SelfParent);
+    }
 
     if !destination_borrowed
         .features()
