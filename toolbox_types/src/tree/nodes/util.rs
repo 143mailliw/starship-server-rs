@@ -53,32 +53,28 @@ pub(super) fn add_child(
 
 pub(crate) fn check_index(
     index: usize,
-    destination: &mut impl NodeBase,
+    destination_id: &String,
     target: Rc<RefCell<ValidNode>>,
-) -> Result<usize, TreeError> {
-    if !destination.features().contains(&NodeFeature::Children) {
-        return Err(TreeError::ChildrenUnsupported);
-    }
-
+) -> usize {
     if let Some(parent) = target.parent().map(|v| v.upgrade()).flatten() {
-        if parent.get_id() == *destination.id() {
+        if parent.get_id() == *destination_id {
             let curent_index = parent
                 .get_children()
                 .expect("parent has no children")
                 .iter()
-                .position(|v| v.id() == target.id())
+                .position(|v| v.get_id() == target.get_id())
                 .expect("node not found in parent");
 
             if index >= curent_index {
-                Ok(index - 1)
+                index - 1
             } else {
-                Ok(index)
+                index
             }
         } else {
-            Ok(index)
+            index
         }
     } else {
-        Ok(index)
+        index
     }
 }
 
@@ -93,10 +89,7 @@ pub(crate) fn move_into(
         return Err(TreeError::ChildrenUnsupported);
     }
 
-    let checked_index = index
-        .map(|v| check_index(v, destination, target.clone()).ok())
-        .flatten();
-
+    let checked_index = index.map(|v| check_index(v, destination.id(), target.clone()));
     target.detach();
     destination.add_child(target.clone(), checked_index)?;
 
@@ -110,9 +103,7 @@ pub(crate) fn move_into_from_reference(
 ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
     let original_parent = target.parent();
 
-    let mut destination_borrowed = destination
-        .try_borrow_mut()
-        .map_err(|_| TreeError::ParentBorrowed)?;
+    let destination_borrowed = destination.borrow();
 
     if !destination_borrowed
         .features()
@@ -121,11 +112,9 @@ pub(crate) fn move_into_from_reference(
         return Err(TreeError::ChildrenUnsupported);
     }
 
-    let checked_index = index
-        .map(|v| check_index(v, &mut *destination_borrowed, target.clone()).ok())
-        .flatten();
-
     drop(destination_borrowed);
+
+    let checked_index = index.map(|v| check_index(v, &destination.get_id(), target.clone()));
 
     target.detach();
     destination.add_child(target.clone(), checked_index)?;
