@@ -10,7 +10,9 @@ use stylers::style;
 use toolbox_types::{
     observers::Observable,
     project::Project,
-    tree::{node_rc::NodeRc, page::Page, NodeBase, NodeFeature, RegularNode, ValidNode},
+    tree::{
+        node_rc::NodeRc, nodes::util, page::Page, NodeBase, NodeFeature, RegularNode, ValidNode,
+    },
 };
 use web_sys::DragEvent;
 
@@ -56,11 +58,7 @@ fn move_node(
         }
 
         let pages = project_ref.pages().unwrap();
-        let page = pages.iter().find(|p| {
-            let borrowed = p.borrow();
-            let this_id = borrowed.id();
-            this_id == page_id
-        });
+        let page = pages.iter().find(|p| &p.get_id() == page_id);
 
         if let Some(page) = page {
             let page_ref = page.borrow();
@@ -72,10 +70,7 @@ fn move_node(
                 // TODO: if the error is not something we expect (like ChildrenUnsupported), we should handle it
                 let _ = match node {
                     TreeType::Node(mut node) => node.move_into(target_node, index),
-                    TreeType::Page(page) => {
-                        let mut page = page.borrow_mut();
-                        page.move_into(target_node, index)
-                    }
+                    TreeType::Page(mut page) => page.move_into(target_node, index),
                 };
             }
         };

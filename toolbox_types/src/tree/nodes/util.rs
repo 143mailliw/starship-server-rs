@@ -103,6 +103,7 @@ pub fn move_into_from_reference(
     index: Option<usize>,
 ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
     let original_parent = target.parent();
+    let original_page = target.page();
 
     let destination_borrowed = destination.borrow();
 
@@ -126,6 +127,13 @@ pub fn move_into_from_reference(
 
     destination.borrow().commit_changes(NodeFeature::Children);
     target.borrow().commit_changes(NodeFeature::Metadata);
+
+    if let Some(parent) = original_parent.clone().and_then(|v| v.upgrade()) {
+        parent.commit_changes(NodeFeature::Children);
+    } else if let Some(page) = original_page.and_then(|v| v.upgrade()) {
+        let page_ref = page.borrow();
+        page_ref.commit_changes(NodeFeature::Children);
+    }
 
     Ok(original_parent)
 }

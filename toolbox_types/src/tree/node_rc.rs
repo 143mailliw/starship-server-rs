@@ -28,7 +28,10 @@ where
     }
 }
 
-impl NodeBase for Rc<RefCell<ValidNode>> {
+impl<T> NodeBase for Rc<RefCell<T>>
+where
+    T: NodeBase + Observable<NodeFeature>,
+{
     fn id(&self) -> &String {
         unimplemented!("id requires long-life reference, use NodeRc::get_id");
     }
@@ -110,26 +113,7 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         target: Rc<RefCell<ValidNode>>,
         index: Option<usize>,
     ) -> Result<Option<Weak<RefCell<ValidNode>>>, crate::errors::TreeError> {
-        let page = self.borrow().page();
-        let result = util::move_into_from_reference(self.clone(), target, index)?;
-
-        let node = self.borrow();
-
-        node.commit_changes(NodeFeature::Position);
-
-        drop(node);
-
-        if let Some(previous_parent) = result.clone() {
-            let upgraded = previous_parent.upgrade();
-            if let Some(previous_parent) = upgraded {
-                previous_parent.commit_changes(NodeFeature::Children);
-            }
-        } else if let Some(page) = page.map(|v| v.upgrade()).flatten() {
-            let page_ref = page.borrow();
-            page_ref.commit_changes(NodeFeature::Children);
-        }
-
-        Ok(result)
+        util::move_into_from_reference(self.clone(), target, index)
     }
 
     fn get_events(&self) -> Vec<EventVariants> {
@@ -186,7 +170,10 @@ impl RegularNode for Rc<RefCell<ValidNode>> {
     }
 }
 
-impl Observable<NodeFeature> for Rc<RefCell<ValidNode>> {
+impl<T> Observable<NodeFeature> for Rc<RefCell<T>>
+where
+    T: Observable<NodeFeature>,
+{
     fn register(
         &mut self,
         _item: NodeFeature,
