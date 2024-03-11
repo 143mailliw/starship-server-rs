@@ -4,6 +4,7 @@ use std::rc::{Rc, Weak};
 use log::info;
 
 use crate::errors::TreeError;
+use crate::observers::Observable;
 use crate::tree::node_rc::NodeRc;
 use crate::tree::page::Page;
 use crate::tree::{NodeBase, NodeFeature, RegularNode, ValidNode};
@@ -96,8 +97,8 @@ pub(crate) fn move_into(
     Ok(original_parent)
 }
 
-pub(crate) fn move_into_from_reference(
-    mut destination: Rc<RefCell<ValidNode>>,
+pub fn move_into_from_reference(
+    destination: Rc<RefCell<impl NodeBase + Observable<NodeFeature>>>,
     target: Rc<RefCell<ValidNode>>,
     index: Option<usize>,
 ) -> Result<Option<Weak<RefCell<ValidNode>>>, TreeError> {
@@ -117,7 +118,14 @@ pub(crate) fn move_into_from_reference(
     let checked_index = index.map(|v| check_index(v, &destination.get_id(), target.clone()));
 
     target.detach();
-    destination.add_child(target.clone(), checked_index)?;
+
+    let mut destination_mut = destination.borrow_mut();
+    destination_mut.add_child(target.clone(), checked_index)?;
+
+    drop(destination_mut);
+
+    destination.borrow().commit_changes(NodeFeature::Children);
+    target.borrow().commit_changes(NodeFeature::Metadata);
 
     Ok(original_parent)
 }

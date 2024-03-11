@@ -18,7 +18,10 @@ pub trait NodeRc {
     fn get_id(&self) -> String;
 }
 
-impl NodeRc for Rc<RefCell<ValidNode>> {
+impl<T> NodeRc for Rc<RefCell<T>>
+where
+    T: NodeBase,
+{
     fn get_id(&self) -> String {
         let node_ref = self.borrow();
         node_ref.id().clone()
@@ -84,15 +87,15 @@ impl NodeBase for Rc<RefCell<ValidNode>> {
         let clone = self.clone();
         let mut node_ref = clone.borrow_mut();
 
-        let result = node_ref.add_child(node, index);
+        let result = node_ref.add_child(node.clone(), index);
 
         drop(node_ref);
 
         // commit changes
         // this **must** be done with a immutable reference to the node
         // otherwise the renderer will panic with a borrow error
-        let node = self.borrow();
-        node.commit_changes(NodeFeature::Children);
+        node.borrow().commit_changes(NodeFeature::Metadata);
+        self.borrow().commit_changes(NodeFeature::Children);
 
         result
     }
