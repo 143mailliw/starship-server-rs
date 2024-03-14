@@ -1,6 +1,4 @@
-use super::types::{
-    Border, CardinalDirection, Font, Graphic, Layout, Margin, TextAlignment, Transform,
-};
+use super::types::{Border, Font, Graphic, Layout, Margin, TextAlignment, Transform};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Stylesheet {
@@ -42,6 +40,12 @@ impl Stylesheet {
             border: self.border.or(default.border),
             text_direction: self.text_direction.or(default.text_direction),
         }
+    }
+}
+
+impl Default for Stylesheet {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

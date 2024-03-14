@@ -17,7 +17,7 @@ use toolbox_types::styles::types::{
     Border, BorderSide, BorderStyle, Color, Corners, Locked, Scale, ThemedColor,
 };
 
-use leptos::{component, mount_to_body, provide_context, view, IntoView, ReadSignal, SignalGet};
+use leptos::{component, mount_to_body, provide_context, view, IntoView, SignalGet};
 use toolbox_types::events::Type;
 use toolbox_types::project;
 use toolbox_types::tree::nodes;

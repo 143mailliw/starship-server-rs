@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Locked {
     None,
@@ -208,12 +210,16 @@ pub enum StyleString {
     Dynamic(String),
 }
 
-impl ToString for StyleString {
-    fn to_string(&self) -> String {
-        match self {
-            StyleString::Static(s) => s.to_string(),
-            StyleString::Dynamic(s) => s.clone(),
-        }
+impl Display for StyleString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                StyleString::Static(s) => s.to_string(),
+                StyleString::Dynamic(s) => s.clone(),
+            }
+        )
     }
 }
 

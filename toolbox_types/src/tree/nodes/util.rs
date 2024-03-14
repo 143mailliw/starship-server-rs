@@ -1,8 +1,6 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use log::info;
-
 use crate::errors::TreeError;
 use crate::observers::Observable;
 use crate::tree::node_rc::NodeRc;
@@ -57,7 +55,7 @@ pub(crate) fn check_index(
     destination_id: &String,
     target: Rc<RefCell<ValidNode>>,
 ) -> usize {
-    if let Some(parent) = target.parent().map(|v| v.upgrade()).flatten() {
+    if let Some(parent) = target.parent().and_then(|v| v.upgrade()) {
         if parent.get_id() == *destination_id {
             let curent_index = parent
                 .get_children()

@@ -2,7 +2,7 @@ use leptos::{
     create_effect, create_signal, create_trigger, on_cleanup, ReadSignal, SignalGet, SignalSet,
     Trigger,
 };
-use log::{error, info};
+use log::error;
 use std::cell::RefCell;
 use std::rc::Rc;
 use toolbox_types::observers::Observable;

@@ -1,8 +1,7 @@
+use std::cell::RefCell;
 use std::rc::Rc;
-use std::{borrow::Borrow, cell::RefCell};
 
 use leptos::{component, create_node_ref, html, use_context, view, IntoView, NodeRef, SignalGet};
-use log::info;
 use stylers::style;
 use toolbox_types::observers::Observable;
 use toolbox_types::{

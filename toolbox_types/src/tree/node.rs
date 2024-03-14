@@ -5,7 +5,6 @@ use std::{
 };
 
 use enum_dispatch::enum_dispatch;
-use log::info;
 
 use super::{
     nodes::{ShapeNode, TextNode},
@@ -86,8 +85,7 @@ pub trait RegularNode: Observable<NodeFeature> + NodeBase {
 
         let page = self
             .page()
-            .map(|v| v.upgrade())
-            .flatten()
+            .and_then(|v| v.upgrade())
             .ok_or(PathError::NoPage)?;
         let page_ref = page.borrow();
         let id = page_ref.id();

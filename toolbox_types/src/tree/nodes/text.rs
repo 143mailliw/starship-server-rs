@@ -1,4 +1,3 @@
-use log::info;
 use nanoid::nanoid;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};

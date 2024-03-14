@@ -6,7 +6,6 @@ use crate::{
     rendering::{nodes::Children, renderable::Renderable},
 };
 use leptos::{component, view, IntoView, SignalGet};
-use log::info;
 use toolbox_types::tree::{NodeBase, NodeFeature, ValidNode};
 
 #[component]

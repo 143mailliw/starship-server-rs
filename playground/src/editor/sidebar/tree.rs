@@ -1,18 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
 
 use leptos::{
-    component, create_memo, create_signal, expect_context, use_context, view, For, IntoView,
-    ReadSignal, RwSignal, SignalGet, SignalSet,
+    component, create_memo, create_signal, use_context, view, For, IntoView, RwSignal, SignalGet,
+    SignalSet,
 };
-use log::info;
 use phosphor_leptos::{IconWeight, Minus, Plus};
 use stylers::style;
 use toolbox_types::{
-    observers::Observable,
     project::Project,
-    tree::{
-        node_rc::NodeRc, nodes::util, page::Page, NodeBase, NodeFeature, RegularNode, ValidNode,
-    },
+    tree::{node_rc::NodeRc, page::Page, NodeBase, NodeFeature, RegularNode, ValidNode},
 };
 use web_sys::DragEvent;
 

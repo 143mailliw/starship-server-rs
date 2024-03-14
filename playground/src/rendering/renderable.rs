@@ -1,7 +1,6 @@
+use std::cell::RefCell;
 use std::rc::Rc;
-use std::{cell::RefCell, fmt::format};
 
-use log::info;
 use toolbox_types::tree::{NodeBase, ValidNode};
 
 use crate::styling::make::css;

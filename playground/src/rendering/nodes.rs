@@ -5,7 +5,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use leptos::{component, view, For, IntoView};
-use log::info;
 use toolbox_types::tree::{node_rc::NodeRc, ValidNode};
 
 #[component]

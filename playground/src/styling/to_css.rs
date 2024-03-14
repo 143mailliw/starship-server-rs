@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use toolbox_types::styles::{
     color::light_color_from_themed,
     stylesheet::{StyleOption, Stylesheet},
@@ -115,7 +113,7 @@ impl ToCSS for types::Graphic {
         match self {
             Self::Image { url, size, repeat } => format!(
                 "background-image: url({}); background-size: {}; background-repeat: {};",
-                url.to_string(),
+                url,
                 size.to_css(),
                 if *repeat { "repeat" } else { "no-repeat" }
             ),
