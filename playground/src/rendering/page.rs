@@ -66,7 +66,7 @@ pub fn render(page: Rc<RefCell<Page>>) -> impl IntoView {
 
     let class_name = style! {
         #page {
-            width: 65vw;
+            width: 60vw;
             margin-left: auto;
             margin-right: auto;
             background-color: var(--light-light-white);

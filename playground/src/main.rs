@@ -25,7 +25,7 @@ use toolbox_types::tree::page::Page;
 use toolbox_types::tree::{CreatableNode, NodeBase, NodeFeature};
 
 use crate::context::render;
-use crate::editor::sidebar::Sidebar;
+use crate::editor::sidebar::left::Left;
 use crate::rendering::page::{create_page, render};
 
 fn main() {
@@ -122,12 +122,19 @@ fn App(page: Rc<RefCell<Page>>, project: Rc<RefCell<project::Project>>) -> impl 
             flex-shrink: 0;
         }
 
-        #sidebar {
+        .sidebar {
             width: 15rem;
             background-color: var(--light-white);
-            border-right: 1px solid var(--light-dark-white);
             flex-shrink: 0;
             min-height: 100%;
+        }
+
+        #left-sidebar {
+            border-right: 1px solid var(--light-dark-white);
+        }
+
+        #right-sidebar {
+            border-left: 1px solid var(--light-dark-white);
         }
 
         #page {
@@ -143,11 +150,14 @@ fn App(page: Rc<RefCell<Page>>, project: Rc<RefCell<project::Project>>) -> impl 
         <div id="main-container">
             <div id="toolbar">toolbar</div>
             <div id="editor">
-                <div id="sidebar">
-                    <Sidebar/>
+                <div id="left-sidebar" class="sidebar">
+                    <Left/>
                 </div>
                 <div id="page" on:load=move |_| trigger.track()>
                     {move || render(page_sig.get().clone())}
+                </div>
+                <div id="right-sidebar" class="sidebar">
+                    <Left/>
                 </div>
             </div>
         </div>

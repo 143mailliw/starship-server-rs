@@ -1,6 +1,4 @@
 #[allow(clippy::module_inception)]
 mod blocks;
-mod sidebar;
+pub mod left;
 mod tree;
-
-pub use sidebar::*;
