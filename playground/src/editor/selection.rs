@@ -39,7 +39,7 @@ impl Selection {
         }
     }
 
-    pub fn remove(&mut self, node: Rc<RefCell<ValidNode>>) {
+    pub fn remove(&mut self, node: &Rc<RefCell<ValidNode>>) {
         match self {
             Selection::None => {}
             Selection::Single(v) => {
@@ -63,6 +63,14 @@ impl Selection {
             Selection::None => false,
             Selection::Single(v) => Rc::ptr_eq(v, node),
             Selection::Multiple(nodes) => nodes.iter().any(|n| Rc::ptr_eq(n, node)),
+        }
+    }
+
+    pub fn toggle(&mut self, node: Rc<RefCell<ValidNode>>) {
+        if self.has(&node) {
+            self.remove(&node);
+        } else {
+            self.add(node);
         }
     }
 }

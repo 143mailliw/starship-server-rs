@@ -14,7 +14,7 @@ use web_sys::DragEvent;
 
 use crate::{
     context::render::{DragState, EditorContext},
-    editor::nodes::nodeinfo::NodeInfoRef,
+    editor::{nodes::nodeinfo::NodeInfoRef, selection::Selection},
     hooks::node_signal,
     rendering::page::create_page,
 };
@@ -155,6 +155,12 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
             margin-right: 0.35rem;
             margin-top: -0.05rem;
         }
+        .selected {
+            background-color: var(--light-selection);
+        }
+        .selected:hover {
+            background-color: var(--light-selection-hover);
+        }
     };
 
     let children_class_name = style! {
@@ -175,14 +181,20 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
     let context = use_context::<EditorContext>().expect("there should be a context");
     let project_sig = context.project;
     let drag_sig = context.dragging;
+    let selection_sig = context.selection;
 
     view! { class = class_name,
         <div class="container">
             <div
                 class="item"
+                class:selected=move || selection_sig.get().has(&node_sig.get())
                 on:click=move |e| {
-                    if has_children.get() {
-                        set_show.set(!show_children.get());
+                    if e.ctrl_key() || e.meta_key() {
+                        let mut selection = selection_sig.get();
+                        selection.toggle(node_sig.get());
+                        selection_sig.set(selection);
+                    } else {
+                        selection_sig.set(Selection::single(node_sig.get()));
                     }
                 }
                 draggable="true"

@@ -12,6 +12,9 @@
     --transition-time-small: 0.2s;
 
     --border-radius-small: 0.25rem;
+
+    --light-selection: rgba(96, 165, 250, 0.3);
+    --light-selection-hover: rgba(96, 165, 250, 0.5);
 }
 
 * {
