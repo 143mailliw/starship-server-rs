@@ -5,6 +5,8 @@ use leptos::RwSignal;
 use toolbox_types::project::Project;
 use toolbox_types::tree::page::Page;
 
+use crate::editor::selection::Selection;
+
 #[derive(Debug, Clone, Copy)]
 pub enum RenderingContext {
     Editor,
@@ -24,6 +26,7 @@ pub struct EditorContext {
     pub pages: RwSignal<Vec<Rc<RefCell<Page>>>>,
     pub project: RwSignal<Rc<RefCell<Project>>>,
     pub dragging: RwSignal<DragState>,
+    pub selection: RwSignal<Selection>,
 }
 
 impl EditorContext {
@@ -37,6 +40,7 @@ impl EditorContext {
             pages: RwSignal::new(pages),
             project: RwSignal::new(project),
             dragging: RwSignal::new(DragState::None),
+            selection: RwSignal::new(Selection::None),
         }
     }
 }

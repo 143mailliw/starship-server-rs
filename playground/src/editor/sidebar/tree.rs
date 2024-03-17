@@ -180,7 +180,7 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
         <div class="container">
             <div
                 class="item"
-                on:click=move |_| {
+                on:click=move |e| {
                     if has_children.get() {
                         set_show.set(!show_children.get());
                     }
@@ -210,7 +210,15 @@ fn TreeItem(node: Rc<RefCell<ValidNode>>) -> impl IntoView {
                     {move || node_sig.get().get_icon("var(--light-dark-black)", "0.75rem").into_view()}
                 </div>
                 <div class="text">{move || node_sig.get().get_friendly_name()}</div>
-                <div class="showicon">
+                <div class="showicon"
+                    on:click=move |e| {
+                        e.stop_propagation();
+
+                        if has_children.get() {
+                            set_show.set(!show_children.get());
+                        }
+                    }
+                >
                     {move || {
                         if has_children.get() {
                             if show_children.get() {
