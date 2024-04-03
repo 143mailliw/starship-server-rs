@@ -1,9 +1,27 @@
+use enum_iterator::Sequence;
 use leptos::{component, create_rw_signal, view, IntoView, Show, SignalGet};
 
-use crate::editor::{
-    context::{switcher::ContextSwitcher, SidebarContext},
-    sidebar::{blocks::Blocks, tree::Tree},
+use crate::{
+    components::switcher::{Switchable, Switcher},
+    editor::sidebar::{blocks::Blocks, tree::Tree},
 };
+
+#[derive(Debug, PartialEq, Clone, Copy, Sequence)]
+pub enum SidebarContext {
+    Pages,
+    Blocks,
+    Tree,
+}
+
+impl Switchable for SidebarContext {
+    fn name(&self) -> &str {
+        match self {
+            SidebarContext::Pages => "Pages",
+            SidebarContext::Blocks => "Blocks",
+            SidebarContext::Tree => "Tree",
+        }
+    }
+}
 
 #[component]
 pub fn Left() -> impl IntoView {
@@ -11,7 +29,7 @@ pub fn Left() -> impl IntoView {
 
     view! {
         <div>
-            <ContextSwitcher context=context/>
+            <Switcher context=context/>
             <Show when=move || context.get() == SidebarContext::Pages>
                 <Blocks/>
             </Show>

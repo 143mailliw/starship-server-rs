@@ -1,13 +1,16 @@
 use enum_iterator::all;
+use enum_iterator::Sequence;
 use leptos::{component, view, For, IntoView, RwSignal, SignalGet, SignalSet};
 use stylers::style;
 
-use super::context::Context;
+pub trait Switchable: Sequence + Copy + Clone + PartialEq {
+    fn name(&self) -> &str;
+}
 
 #[component]
-pub fn ContextSwitcher<T>(context: RwSignal<T>) -> impl IntoView
+pub fn Switcher<T>(context: RwSignal<T>) -> impl IntoView
 where
-    T: Context + 'static,
+    T: Switchable + 'static,
 {
     let class_name = style! {
         .switcher {

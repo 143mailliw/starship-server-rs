@@ -3,6 +3,7 @@
 // sometimes rather than never
 #![allow(non_snake_case)]
 
+mod components;
 mod context;
 mod editor;
 mod hooks;
