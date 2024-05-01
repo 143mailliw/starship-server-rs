@@ -7,36 +7,36 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Clone, Copy, Sequence)]
-pub enum SidebarContext {
+pub enum LeftSidebarContext {
     Pages,
     Blocks,
     Tree,
 }
 
-impl Switchable for SidebarContext {
+impl Switchable for LeftSidebarContext {
     fn name(&self) -> &str {
         match self {
-            SidebarContext::Pages => "Pages",
-            SidebarContext::Blocks => "Blocks",
-            SidebarContext::Tree => "Tree",
+            LeftSidebarContext::Pages => "Pages",
+            LeftSidebarContext::Blocks => "Blocks",
+            LeftSidebarContext::Tree => "Tree",
         }
     }
 }
 
 #[component]
 pub fn Left() -> impl IntoView {
-    let context = create_rw_signal(SidebarContext::Blocks);
+    let context = create_rw_signal(LeftSidebarContext::Blocks);
 
     view! {
         <div>
             <Switcher context=context/>
-            <Show when=move || context.get() == SidebarContext::Pages>
+            <Show when=move || context.get() == LeftSidebarContext::Pages>
                 <Blocks/>
             </Show>
-            <Show when=move || context.get() == SidebarContext::Blocks>
+            <Show when=move || context.get() == LeftSidebarContext::Blocks>
                 <Blocks/>
             </Show>
-            <Show when=move || context.get() == SidebarContext::Tree>
+            <Show when=move || context.get() == LeftSidebarContext::Tree>
                 <Tree/>
             </Show>
         </div>

@@ -27,6 +27,7 @@ use toolbox_types::tree::{CreatableNode, NodeBase, NodeFeature};
 
 use crate::context::render;
 use crate::editor::sidebar::left::Left;
+use crate::editor::sidebar::right::Right;
 use crate::rendering::page::{create_page, render};
 
 fn main() {
@@ -158,7 +159,7 @@ fn App(page: Rc<RefCell<Page>>, project: Rc<RefCell<project::Project>>) -> impl 
                     {move || render(page_sig.get().clone())}
                 </div>
                 <div id="right-sidebar" class="sidebar">
-                    <Left/>
+                    <Right/>
                 </div>
             </div>
         </div>
