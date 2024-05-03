@@ -10,7 +10,10 @@ use toolbox_types::{
     },
 };
 
-use crate::{context::render::EditorContext, editor::nodes::nodeinfo::NodeInfo};
+use crate::{
+    context::render::EditorContext,
+    editor::{nodes::nodeinfo::NodeInfo, sidebar::components::Header},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BlockType {
@@ -92,19 +95,14 @@ fn Block(block_type: &'static BlockType) -> impl IntoView {
 fn Category(category: &'static BlockCategory) -> impl IntoView {
     let class_name = style! {
         .title {
-            font-size: 10pt;
-            font-weight: 800;
             margin-top: 0.5rem;
             margin-left: 0.5rem;
-            margin-bottom: 0.2rem;
-            text-transform: uppercase;
-            color: var(--light-light-black);
         }
     };
 
     view! { class = class_name,
         <div>
-            <div class="title">{move || category.0}</div>
+            <div class="title"><Header>{move || category.0}</Header></div>
             <For
                 each=move || category.1
                 key=move |v| (*v)

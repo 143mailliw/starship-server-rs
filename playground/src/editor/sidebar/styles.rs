@@ -7,6 +7,8 @@ use crate::{
     editor::selection::{self, Selection},
 };
 
+use super::components::Header;
+
 #[component]
 fn StyleSegment<T>(
     option: StyleOption<T>,
@@ -15,7 +17,7 @@ fn StyleSegment<T>(
 ) -> impl IntoView {
     let class_name = style! {
       .segment {
-          padding: 0.35rem;
+          padding: 0.5rem;
           border-bottom: 1px solid var(--light-dark-white);
       }
     };
@@ -23,6 +25,7 @@ fn StyleSegment<T>(
     match option {
         StyleOption::Default | StyleOption::Some(_) => view! { class = class_name,
             <div class="segment">
+                <Header>{title}</Header>
                 {children().nodes.iter().collect_view()}
             </div>
         }
@@ -61,6 +64,18 @@ pub fn StyleEditor() -> impl IntoView {
                     view! {
                         <div>
                             <StyleSegment option={style_sheet.transform} title={"Transform"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.layout} title={"Layout"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.font} title={"Text"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.background} title={"Background"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.border} title={"Border"}>
                                 content
                             </StyleSegment>
                         </div>
