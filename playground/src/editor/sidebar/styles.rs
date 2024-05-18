@@ -1,10 +1,16 @@
+mod layout;
+mod transform;
+
 use leptos::{component, use_context, view, Children, CollectView, IntoView, SignalGet, View};
 use stylers::style;
 use toolbox_types::{styles::stylesheet::StyleOption, tree::NodeBase};
 
 use crate::{
     context::render::EditorContext,
-    editor::selection::{self, Selection},
+    editor::{
+        selection::{self, Selection},
+        sidebar::styles::transform::TransformEditor,
+    },
 };
 
 use super::components::Header;
@@ -64,9 +70,15 @@ pub fn StyleEditor() -> impl IntoView {
                     view! {
                         <div>
                             <StyleSegment option={style_sheet.transform} title={"Transform"}>
-                                content
+                                <TransformEditor node/>
                             </StyleSegment>
                             <StyleSegment option={style_sheet.layout} title={"Layout"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.padding} title={"Padding"}>
+                                content
+                            </StyleSegment>
+                            <StyleSegment option={style_sheet.padding} title={"Margin"}>
                                 content
                             </StyleSegment>
                             <StyleSegment option={style_sheet.font} title={"Text"}>
